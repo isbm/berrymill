@@ -1,3 +1,3 @@
-# eb-mill
+# Berrymill
 
-EB Mill is an image builder wrapper around Kiwi.
+Berry Mill is an appliance generator of root filesystems for embedded devices.
