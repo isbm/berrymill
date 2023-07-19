@@ -16,7 +16,7 @@ class ImageMill:
         # Force to help
         if len(sys.argv) == 1:
             sys.argv.append("--help")
-        
+
         p = argparse.ArgumentParser(prog="imagemill",
                                     description="imagemill is a root filesystem generator for embedded devices",
                                     epilog="Have a lot of fun!")
