@@ -1,13 +1,65 @@
 import copy
+import yaml
+import os
+import sys
 
+from typing import Any, List
 
 class ConfigHandler:
     def __init__(self, cf_path: str = ""):
         """
         """
+        self._cfg:List[str] = []
         self.__conf = {}
+
+        if not cf_path:
+            # Load default /etc/berrymill.conf
+            # or in the current directory "berrymill.conf"
+
+            default_conf:str = "/etc/berrymill.conf"
+            if os.path.exists(default_conf):
+                self._cfg.append(default_conf)
+            elif os.path.exists(os.path.basename(default_conf)):
+                self._cfg.append(os.path.basename(default_conf))
+            else:
+                print("WARNING: no default config found at {}".format(default_conf))
+
+    def add_config(self, cf_path: str):
+        """
+        Add an additional config overlay, if any
+        """
+        if os.path.exists(cf_path):
+            self._cfg.append(cf_path)
+        else:
+            print("WARNING: no config found at {}".format(cf_path))
+
+    def _parse_config(self, cf_path:str) -> None:
+        """
+        Parse YAML config from the path and store it to the main storage.
+        """
+        try:
+            data:Any = yaml.load(open(cf_path), Loader=yaml.SafeLoader)
+        except Exception as exc:
+            print("ERROR: unable to load configuration at {}: {}".format(cf_path, exc))
+            sys.exit(1)
+
+        self.__conf.update(data)
+
+    def load(self) -> None:
+        """
+        Load all the configs
+        """
+        if not self._cfg:
+            print("ERROR: no configuration found")
+            sys.exit(1)
+
+        for cfgpath in self._cfg:
+            self._parse_config(cf_path=cfgpath)
 
     @property
     def config(self) -> dict:
+        """
+        Return a deep copy of the configuration.
+        This prevents from its accidental modification.
+        """
         return copy.deepcopy(self.__conf)
-
