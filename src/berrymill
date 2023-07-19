@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+
+from berry_mill import ImageMill
+
+if __name__ == "__main__":
+    mill = ImageMill()
+    mill.run()
