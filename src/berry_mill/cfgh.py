@@ -75,3 +75,9 @@ class ConfigHandler:
         This prevents from its accidental modification.
         """
         return copy.deepcopy(self.__conf)
+
+    def raw_unsafe_config(self) -> dict:
+        """
+        Return the original config, which may be modified.
+        """
+        return self.__conf
