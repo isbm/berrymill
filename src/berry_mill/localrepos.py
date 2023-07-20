@@ -36,7 +36,11 @@ class DebianRepofind(BaseRepofind):
         Return repositories
         """
         with open("/etc/apt/sources.list") as sl:
-            for l in [x.strip() for x in sl.readlines() if x and not x.strip().startswith("#")]:
+            for l in sl.readlines():
+                l = l.strip()
+                if l.startswith("#"):
+                    l = ""
+                if not l: continue
                 print(">>>", l)
 
         return ["x"]
