@@ -1,9 +1,16 @@
 #!/usr/bin/python3
 
 from berry_mill import ImageMill
+from typing import Any
+import sys
 
 if __name__ == "__main__":
-    mill = ImageMill()
+    mill:Any = None
+    try:
+        mill = ImageMill()
+    except Exception as exc:
+        print("General error:", exc)
+        sys.exit(1)
 
     try:
         mill.run()

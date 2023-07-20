@@ -4,7 +4,7 @@ import os
 
 from berry_mill.cfgh import ConfigHandler
 from berry_mill.kiwrap import KiwiBuilder
-
+from berry_mill.localrepos import DebianRepofind
 
 class ImageMill:
     """
@@ -50,6 +50,10 @@ class ImageMill:
                     self._appliance_descr = pth
                     break
 
+        # Set repos
+        for r in DebianRepofind().get_repos():
+            self.cfg.raw_unsafe_config()["repos"].update({"foo": "bar"})
+
 
     def run(self) -> None:
         """
@@ -64,3 +68,5 @@ class ImageMill:
         print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
 
         KiwiBuilder(self._appliance_path, self._appliance_descr).build()
+
+        print(self.cfg.config)
