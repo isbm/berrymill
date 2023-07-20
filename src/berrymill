@@ -4,4 +4,10 @@ from berry_mill import ImageMill
 
 if __name__ == "__main__":
     mill = ImageMill()
-    mill.run()
+
+    try:
+        mill.run()
+    except Exception as exc:
+        print("Error:", exc)
+        if mill.args.debug:
+            raise
