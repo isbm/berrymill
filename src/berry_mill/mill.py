@@ -1,7 +1,9 @@
 import argparse
 import sys
+import os
 
 from berry_mill.cfgh import ConfigHandler
+from berry_mill.kiwrap import KiwiBuilder
 
 
 class ImageMill:
@@ -33,8 +35,31 @@ class ImageMill:
             self.cfg.add_config(self.args.config)
         self.cfg.load()
 
+        # Set appliance paths
+        self._appliance_path: str = os.path.dirname(self.args.image or ".")
+        if self._appliance_path == ".":
+            self._appliance_path = ""
+
+        self._appliance_descr: str = os.path.basename(self.args.image or ".")
+        if self._appliance_descr == ".":
+            self._appliance_descr = ""
+
+        if not self._appliance_descr:
+            for pth in os.listdir(self._appliance_path or "."):
+                if pth.endswith(".kiwi"):
+                    self._appliance_descr = pth
+                    break
+
+
     def run(self) -> None:
         """
         Run imagemill
         """
-        print(self.cfg.config)
+
+        if not self._appliance_descr:
+            raise Exception("Appliance description was not found.")
+        if self._appliance_path:
+            os.chdir(self._appliance_path)
+
+        print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
+        KiwiBuilder(self._appliance_path, self._appliance_descr).build()
