@@ -62,4 +62,5 @@ class ImageMill:
             os.chdir(self._appliance_path)
 
         print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
+
         KiwiBuilder(self._appliance_path, self._appliance_descr).build()
