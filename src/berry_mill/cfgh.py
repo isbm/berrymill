@@ -5,12 +5,24 @@ import sys
 
 from typing import Any, List
 
+class Autodict(dict):
+    def __getitem__(self, __key: Any) -> Any:
+        if __key not in self.keys():
+            self[__key] = Autodict()
+        return super().__getitem__(__key)
+
+    def __setitem__(self, __key: Any, __value: Any) -> None:
+        if type(self.get(__key)) == dict:
+            raise Exception(f"configuration type error: unable directly set to a hash, data container needs an update instead")
+        return super().__setitem__(__key, __value)
+
+
 class ConfigHandler:
     def __init__(self, cf_path: str = ""):
         """
         """
         self._cfg:List[str] = []
-        self.__conf = {}
+        self.__conf:Autodict = Autodict()
 
         if not cf_path:
             # Load default /etc/berrymill.conf
