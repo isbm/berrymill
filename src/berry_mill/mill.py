@@ -2,7 +2,7 @@ import argparse
 import sys
 import os
 
-from berry_mill.cfgh import ConfigHandler
+from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.kiwrap import KiwiBuilder
 from berry_mill.localrepos import DebianRepofind
 
@@ -51,8 +51,14 @@ class ImageMill:
                     break
 
         # Set repos
-        for r in DebianRepofind().get_repos():
-            self.cfg.raw_unsafe_config()["repos"].update({"foo": "bar"})
+        repos = DebianRepofind().get_repos()
+        self.cfg.raw_unsafe_config()["repos"]["local"] = Autodict()
+        for r in repos:
+            jr = r.to_json()
+            for arch in jr.keys():
+                if not self.cfg.raw_unsafe_config()["repos"]["local"].get(arch):
+                    self.cfg.raw_unsafe_config()["repos"]["local"][arch] = Autodict()
+                self.cfg.raw_unsafe_config()["repos"]["local"][arch].update(jr[arch])
 
 
     def run(self) -> None:
