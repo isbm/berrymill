@@ -1,6 +1,7 @@
 import argparse
 import sys
 import os
+import yaml
 
 from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.kiwrap import KiwiBuilder
@@ -75,4 +76,5 @@ class ImageMill:
 
         KiwiBuilder(self._appliance_path, self._appliance_descr).build()
 
-        print(self.cfg.config)
+        # Updated config with added local repos
+        print(yaml.dump(self.cfg.config))
