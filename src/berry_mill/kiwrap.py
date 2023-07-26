@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Set
+from typing import Dict
 import os
 
 
@@ -9,15 +9,16 @@ class KiwiBuilder:
     Kiwi wrapper for appliance builder.
     """
     def __init__(self, pth:str, descr:str):
-        self._repos:Set[str] = set()
+        self._repos:Dict[str, Dict[str, str]] = {}
         self._appliance_path:str = pth
         self._appliance_descr:str = descr
 
-    def add_repo(self, repo:str) -> KiwiBuilder:
+    def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
         Add a repository for the builder
         """
-        self._repos.add(repo)
+        # update key here
+        self._repos[reponame] = repodata
         return self
 
     def _get_repokeys(self) -> str:
@@ -42,3 +43,5 @@ class KiwiBuilder:
 
         # run kiwi here with "appliance_init" which is a ".kiwi" file
         os.system("ls -lah")
+
+        print(self._repos)

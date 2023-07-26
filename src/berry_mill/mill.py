@@ -6,6 +6,7 @@ import yaml
 from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.kiwrap import KiwiBuilder
 from berry_mill.localrepos import DebianRepofind
+from berry_mill.sysinfo import get_local_arch
 
 class ImageMill:
     """
@@ -26,6 +27,7 @@ class ImageMill:
         p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
         p.add_argument("-s", "--show-config", action="store_true", help="shows the building configuration")
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
+        p.add_argument("-a", "--arch", help="specify target arch")
         p.add_argument("-i", "--image", help="path to the image appliance, if it is not found in the current directory")
         p.add_argument("-l", "--local", action="store_true", help="build the appliance directly on the current hardware")
 
@@ -85,4 +87,10 @@ class ImageMill:
         if self._appliance_path:
             os.chdir(self._appliance_path)
 
-        KiwiBuilder(self._appliance_path, self._appliance_descr).build()
+
+        b = KiwiBuilder(self._appliance_path, self._appliance_descr)
+        for r in self.cfg.config["repos"]:
+            for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
+                b.add_repo(rname, repo)
+
+        b.build()
