@@ -20,7 +20,7 @@ class Repodata:
 
     @property
     def is_valid(self) -> bool:
-        return "" not in [self.type, self.url, self.name]
+        return len(list(filter(None, [self.type, self.url, self.name]))) == 3
 
     def __repr__(self) -> str:
         d:List[str] = [f"<Repo: {self.name}", f"Type: {self.type}"]
