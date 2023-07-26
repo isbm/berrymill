@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict
 import os
+import shutil
+import tempfile
+from typing import Dict
 
 
 class KiwiBuilder:
@@ -12,26 +14,30 @@ class KiwiBuilder:
         self._repos:Dict[str, Dict[str, str]] = {}
         self._appliance_path:str = pth
         self._appliance_descr:str = descr
+        self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
         Add a repository for the builder
         """
-        # update key here
+        repodata["key"] = self._get_repokeys(repodata["url"])
         self._repos[reponame] = repodata
         return self
 
-    def _get_repokeys(self) -> str:
+    def _get_repokeys(self, url:str) -> str:
         """
         Download repository keys to a temporary directory
         """
 
-        return ""
+        return f"file://{self._tmpdir}/somekey.gpg"
 
     def _cleanup(self) -> None:
         """
         Cleanup the environment after the build
         """
+        print("Cleaning up...")
+        shutil.rmtree(self._tmpdir)
+        print("Finished")
 
     def build(self) -> None:
         """
@@ -45,3 +51,5 @@ class KiwiBuilder:
         os.system("ls -lah")
 
         print(self._repos)
+
+        self._cleanup()
