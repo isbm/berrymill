@@ -51,30 +51,38 @@ class ImageMill:
                     self._appliance_descr = pth
                     break
 
-        # Set repos
-        repos = DebianRepofind().get_repos()
-        self.cfg.raw_unsafe_config()["repos"]["local"] = Autodict()
-        for r in repos:
+    def _init_local_repos(self) -> None:
+        """
+        Initialise local repositories, those are already configured on the local machine.
+        """
+        if self.cfg.raw_unsafe_config()["repos"].get("local") is not None:
+            return
+        else:
+            self.cfg.raw_unsafe_config()["repos"]["local"] = Autodict()
+
+        for r in DebianRepofind().get_repos():
             jr = r.to_json()
             for arch in jr.keys():
                 if not self.cfg.raw_unsafe_config()["repos"]["local"].get(arch):
                     self.cfg.raw_unsafe_config()["repos"]["local"][arch] = Autodict()
                 self.cfg.raw_unsafe_config()["repos"]["local"][arch].update(jr[arch])
-
+        return
 
     def run(self) -> None:
         """
-        Run imagemill
+        Build an image
         """
+
+        self._init_local_repos()
+
+        if self.args.show_config:
+            print(yaml.dump(self.cfg.config))
+            return
 
         if not self._appliance_descr:
             raise Exception("Appliance description was not found.")
+
         if self._appliance_path:
             os.chdir(self._appliance_path)
 
-        print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
-
         KiwiBuilder(self._appliance_path, self._appliance_descr).build()
-
-        # Updated config with added local repos
-        print(yaml.dump(self.cfg.config))
