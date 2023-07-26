@@ -58,7 +58,6 @@ class Repodata:
                 data[arch] = {}
             data[arch][self._get_name()] = {
                 "url": self.url,
-                "type": self.type,
                 "name": self.name,
                 "components": ",".join(self.components) or "/",  # "/" for flat format
             }
