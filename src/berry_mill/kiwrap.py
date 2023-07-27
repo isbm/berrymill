@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 import shutil
 import tempfile
+import requests
+
+from urllib.parse import urlparse
 from typing import Dict
 
 
@@ -20,16 +23,28 @@ class KiwiBuilder:
         """
         Add a repository for the builder
         """
-        repodata["key"] = self._get_repokeys(repodata["url"])
+        repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
         self._repos[reponame] = repodata
         return self
 
-    def _get_repokeys(self, url:str) -> str:
+    def _get_repokeys(self, reponame, repodata:Dict[str, str]) -> str:
         """
         Download repository keys to a temporary directory
         """
+        url = urlparse(repodata["url"])
+        g_path:str = f"{self._tmpdir}/{reponame}_release.key"
+        if repodata.get("components", "/") != "/":
+            s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
+            # TODO: grab standard keys
+            g_path = ""
+        else:
+            s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
+            response = requests.get(s_url, allow_redirects=True)
+            with open(g_path, "wb") as f_rel:
+                f_rel.write(response.content)
+            response.close()
 
-        return f"file://{self._tmpdir}/somekey.gpg"
+        return g_path
 
     def _cleanup(self) -> None:
         """
