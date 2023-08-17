@@ -52,8 +52,8 @@ class KiwiBuilder:
         self._appliance_descr:str = descr
         self._params:Dict[KiwiParams] = kw
 
-        if "target_dir" in self._params:
-            self._params["target_dir"] = self._params.get("target_dir").rstrip("/")
+        if self._params.get("target_dir"):
+            self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
 
@@ -108,16 +108,17 @@ class KiwiBuilder:
             kiwi_options.append("--debug")
             box_options.append("--box-debug")
         
-        if "cpu" in self._params:
-            box_options = ["--cpu", self._cpu] + box_options
+        if self._params.get("cpu"):
+            box_options = ["--cpu", self._params.get("cpu")] + box_options
         
-        if "box_memory" in self._params:
+        if self._params.get("box_memory"):
             box_options += ["--box-memory", self._params.get("box_memory")]
         
         if platform.machine() == "aarch64":
             box_options += ["--machine", "virt"]
         
-        if self._params.get("cross", False) and platform.machine() == "x84_64":
+        # TODO: When using cross, e.g. cpu param needs to be disabled
+        if self._params.get("cross") and platform.machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
 
@@ -137,14 +138,17 @@ class KiwiBuilder:
         target_dir = self._params.get("target_dir", "/var/tmp")
         target_dir += f"/{image_name[0]}"
 
-        if "profile" in self._params:
+        if self._params.get("profile"):
+            profile = self._params.get("profile")
             profiles = config_tree.xpath("//profile/@name")
-            # TODO handle multiple profiles exist problem
-            print(profiles)
+            if profile in profiles:
+                kiwi_options += ["--profile", profile]
+            else:
+                raise Exception(f"\'{profile}\' is not a valid profile. Available: {profiles}")
         
         if self._params.get("clean", False):
             clean_target = target_dir
-            if "profile" in self._params:
+            if self._params.get("profile"):
                 clean_target += f".{self._params.get('profile')}"
             if self._params.get("local", False):
                 shutil.rmtree(clean_target)
@@ -162,7 +166,9 @@ class KiwiBuilder:
         
         if self._params.get("local", False):
             try:
-                command = ["kiwi-ng"] + kiwi_options + ["system", "build", "--description"] + [self._appliance_path] + ["--target-dir", target_dir] + repo_build_options
+                command = ["kiwi-ng"] + kiwi_options\
+                        + ["system", "build", "--description", self._appliance_path]\
+                        + ["--target-dir", target_dir] + repo_build_options
                 # for debugging, no usage of print() to ensure better readability of insanely long kiwi command with no confusion of important ',' chars
                 # subprocess.run(["echo", "\""] + command + ["\""])
                 subprocess.run(command)
@@ -171,7 +177,10 @@ class KiwiBuilder:
                 sys.exit(1)     
         else:
             try:
-                command = ["kiwi-ng"]+ kiwi_options + ["system", "boxbuild"] + box_options + ["--", "--description"] + [self._appliance_path] + ["--target-dir", target_dir] + repo_build_options
+                command = ["kiwi-ng"]+ kiwi_options\
+                        + ["system", "boxbuild"] + box_options\
+                        + ["--", "--description", self._appliance_path] + ["--target-dir", target_dir]\
+                        + repo_build_options
                 # subprocess.run(["echo", "\""] + command + ["\""])
                 subprocess.run(command)
             except Exception as exc:
