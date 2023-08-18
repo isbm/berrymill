@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import yaml
+from platform import machine
 
 from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.kiwrap import KiwiBuilder
@@ -30,6 +31,12 @@ class ImageMill:
         p.add_argument("-a", "--arch", help="specify target arch")
         p.add_argument("-i", "--image", help="path to the image appliance, if it is not found in the current directory")
         p.add_argument("-l", "--local", action="store_true", help="build the appliance directly on the current hardware")
+        p.add_argument("-p", "--profile", help="select profile for images that makes use of it")
+        p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
+        p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
+        p.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
+        p.add_argument("--target-dir", type=str, default="/var/tmp", help="store image results in given dirpath")
+        p.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -88,7 +95,17 @@ class ImageMill:
             os.chdir(self._appliance_path)
 
 
-        b = KiwiBuilder(self._appliance_path, self._appliance_descr)
+        b = KiwiBuilder(self._appliance_path, 
+                        self._appliance_descr, 
+                        box_memory= self.args.box_memory, 
+                        profile= self.args.profile, 
+                        debug=self.args.debug, 
+                        clean= self.args.clean,
+                        cross= self.args.cross,
+                        cpu= self.args.cpu,
+                        local= self.args.local,
+                        target_dir= self.args.target_dir
+                        )
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
                 b.add_repo(rname, repo)
