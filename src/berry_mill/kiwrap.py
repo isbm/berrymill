@@ -124,7 +124,7 @@ class KiwiBuilder:
 
 
         try:
-            config_tree = etree.parse(f"{self._appliance_path}/{self._appliance_descr}")
+            config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
             print("ERROR: Failure {} while parsing appliance description".format(err))
             sys.exit(1)
@@ -167,7 +167,7 @@ class KiwiBuilder:
         if self._params.get("local", False):
             try:
                 command = ["kiwi-ng"] + kiwi_options\
-                        + ["system", "build", "--description", self._appliance_path]\
+                        + ["system", "build", "--description", '.']\
                         + ["--target-dir", target_dir] + repo_build_options
                 # for debugging, no usage of print() to ensure better readability of insanely long kiwi command with no confusion of important ',' chars
                 # subprocess.run(["echo", "\""] + command + ["\""])
@@ -179,7 +179,7 @@ class KiwiBuilder:
             try:
                 command = ["kiwi-ng"]+ kiwi_options\
                         + ["system", "boxbuild"] + box_options\
-                        + ["--", "--description", self._appliance_path] + ["--target-dir", target_dir]\
+                        + ["--", "--description", '.'] + ["--target-dir", target_dir]\
                         + repo_build_options
                 # subprocess.run(["echo", "\""] + command + ["\""])
                 subprocess.run(command)
