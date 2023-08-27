@@ -12,7 +12,7 @@ import tempfile
 import requests
 from platform import machine
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 from typing import Dict
 
 
@@ -56,6 +56,18 @@ class KiwiBuilder:
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
+        
+        self._fcleanbox = False
+        # tmp boxroot dir only needed when build mode is not local
+        if not self._params.get("local", False):
+            boxdir = os.path.join(self._appliance_path, "boxroot")
+            if not os.path.exists(boxdir):
+                # flag for cleanup to remember to also delete boxroot dir if 
+                # it hasnt existed before already
+                self._fcleanbox = True
+                os.makedirs(boxdir)
+            self._boxtmpdir = tempfile.mkdtemp(prefix="berrymill-keys-",\
+                                               dir= os.path.join(self._appliance_path, "boxroot"))
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
@@ -84,32 +96,54 @@ class KiwiBuilder:
 
         return g_path
     
-    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]], appliance_path) -> None:
+    def _get_relative_file_uri(self, repo_key_path) -> str:
         """
-        Write repo keys from a tmp dir to the boxroot, so kiwi box can access the keys
+        Change the file:// URIs in the repo key values to be relative to the boxroot
+        """
+        return "file://" + \
+               quote( \
+               os.path.join( \
+               os.path.basename(self._boxtmpdir), os.path.basename(repo_key_path)))        
+   
+    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
+        """
+        Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
         It expects a file:// uri to be present in repos[reponame][key]
         """
-        # TODO find better path name for keys in boxroot
-        keys_boxroot_dst = "tmp/repokeys"
-        dst = os.path.join(appliance_path, "boxroot", keys_boxroot_dst)
-
-        os.makedirs(dst, exist_ok=True)
+        dst = self._boxtmpdir
 
         for reponame in repos.keys():
             k = repos.get(reponame, {}).get("key")
-            if k:
-                parsed_url = urlparse(k)
+            if k is not None:
+                try:    
+                    parsed_url = urlparse(k)
+                except Exception as exc:
+                    print(f"ERROR: Failure while trying to parse {k} of {reponame}")
+                    print(exc)
+            else:
+                print(f"ERROR: could not find or download \
+                      repository key for {reponame} in the berrymill config")
+                print("To make sure the repo has a key, provide a valid \
+                      file uri in the key section of the repository config")
+                sys.exit(1)
             if parsed_url.path:
                 shutil.copy(parsed_url.path, dst)
-    
+                repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
+            else:
+                print(f"ERROR: unexpected Error with key {k} in {reponame}")
+                print(parsed_url)
+                sys.exit(1)
+
     def _cleanup(self) -> None:
         """
         Cleanup the environment after the build
         """
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
-        #TODO find better way to clean the tmp repo keys inside the box root
-        shutil.rmtree(self._appliance_path + "/boxroot/tmp/repokeys", ignore_errors=True)
+        shutil.rmtree(self._boxtmpdir)
+        if self._fcleanbox:
+            # if Flag fcleanbox is true an empty boxroot is guranteed to exist
+            shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
         print("Finished")
 
     def build(self) -> None:
@@ -180,6 +214,11 @@ class KiwiBuilder:
             components = repo_content.get("components").split(',')
             for component in components:
                 repo_build_options.append("--add-repo")
+
+                if not self._params.get("local", False):
+                    self._write_repokeys_box(self._repos)
+                    self._get_relative_file_uri()
+
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
                 repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name')},false"]
@@ -196,7 +235,6 @@ class KiwiBuilder:
                 print(exc)
                 sys.exit(1)     
         else:
-            self._write_repokeys_box(self._repos, self._appliance_path)
             try:
                 command = ["kiwi-ng"]+ kiwi_options\
                         + ["system", "boxbuild"] + box_options\
