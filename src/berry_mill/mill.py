@@ -53,10 +53,9 @@ class ImageMill:
         self._appliance_descr: str = os.path.basename(self.args.image or ".")
         if self._appliance_descr == ".":
             self._appliance_descr = ""
-
         if not self._appliance_descr:
             for pth in os.listdir(self._appliance_path or "."):
-                if pth.endswith(".kiwi"):
+                if pth.split('.')[-1] in ["kiwi", "xml"]:
                     self._appliance_descr = pth
                     break
 
