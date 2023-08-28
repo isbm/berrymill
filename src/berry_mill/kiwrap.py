@@ -83,13 +83,31 @@ class KiwiBuilder:
             response.close()
 
         return g_path
+    
+    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]], appliance_path) -> None:
+        """
+        Write repo keys from a tmp dir to the boxroot, so kiwi box can access the keys
+        It expects a file:// uri to be present in repos[reponame][key]
+        """
+        # TODO find better path name for keys in boxroot
+        keys_boxroot_dst = "tmp/repokeys"
+        dst = f'{appliance_path}/boxroot/{keys_boxroot_dst}'
 
+        os.makedirs(dst, exist_ok=True)
+        
+        for reponame in repos.keys():
+            parsed_url = urlparse(repos.get(reponame).get("key"))
+            if parsed_url.path:
+                shutil.copy(parsed_url.path, dst)
+    
     def _cleanup(self) -> None:
         """
         Cleanup the environment after the build
         """
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
+        #TODO find better way to clean the tmp repo keys inside the box root
+        shutil.rmtree(self._appliance_path + "/boxroot/tmp/repokeys")
         print("Finished")
 
     def build(self) -> None:
@@ -176,6 +194,7 @@ class KiwiBuilder:
                 print(exc)
                 sys.exit(1)     
         else:
+            self._write_repokeys_box(self._repos, self._appliance_path)
             try:
                 command = ["kiwi-ng"]+ kiwi_options\
                         + ["system", "boxbuild"] + box_options\
