@@ -91,12 +91,14 @@ class KiwiBuilder:
         """
         # TODO find better path name for keys in boxroot
         keys_boxroot_dst = "tmp/repokeys"
-        dst = f'{appliance_path}/boxroot/{keys_boxroot_dst}'
+        dst = os.path.join(appliance_path, "boxroot", keys_boxroot_dst)
 
         os.makedirs(dst, exist_ok=True)
-        
+
         for reponame in repos.keys():
-            parsed_url = urlparse(repos.get(reponame).get("key"))
+            k = repos.get(reponame, {}).get("key")
+            if k:
+                parsed_url = urlparse(k)
             if parsed_url.path:
                 shutil.copy(parsed_url.path, dst)
     
@@ -107,7 +109,7 @@ class KiwiBuilder:
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
         #TODO find better way to clean the tmp repo keys inside the box root
-        shutil.rmtree(self._appliance_path + "/boxroot/tmp/repokeys")
+        shutil.rmtree(self._appliance_path + "/boxroot/tmp/repokeys", ignore_errors=True)
         print("Finished")
 
     def build(self) -> None:
