@@ -10,6 +10,7 @@ import subprocess
 import shutil
 import tempfile
 import requests
+import inquirer
 from platform import machine
 
 from urllib.parse import urlparse, quote
@@ -110,12 +111,21 @@ class KiwiBuilder:
             # key can never be none due to .setdefault() in _get_repo_keys  
             parsed_url = urlparse(k)
             if not parsed_url.path:
-                print(f"ERROR: key file path is empty for {reponame}")
-                self._cleanup()
-                sys.exit(1)
+                print("Berrymill was not able to retrieve a fitting gpg key")
+                if os.path.exists("/etc/apt/trusted.gpg.d"):
+                    print("Trusted keys found on system")
+                    keylist:List[str] = os.listdir("/etc/apt/trusted.gpg.d")
+                    selected = self._key_selection(reponame, keylist)
+                    if selected:
+                        repodata["key"] = "file://" + os.path.join("/etc/apt/trusted.gpg.d", selected)
+                        self._check_repokey(repodata, reponame)
+                        return
+                #print(f"ERROR: key file path is empty for {reponame}")
+                #self._cleanup()
+                #sys.exit(1)
             if not os.path.exists(parsed_url.path):    
-                print(f"ERROR: Failure while trying to handle the keyfile at {parsed_url.path}")
-                print("{} does not exist".format(parsed_url.path))
+                print(f"ERROR: Failure while trying to handle the keyfile at {reponame}")
+                print(f"{parsed_url.path if parsed_url.path else 'file://'} does not exist")
                 self._cleanup()
                 sys.exit(1)    
 
@@ -150,6 +160,22 @@ class KiwiBuilder:
             shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
         print("Finished")
 
+    def _key_selection(self, reponame:str, options:List[str]) -> str | None:
+        question = [
+        inquirer.List("choice",
+                  message="Choose the right key for {}:".format(reponame),
+                  choices=options + ["none of the above"],
+                  default="none of the above",
+                  carousel=True
+                  ),
+        ]
+        answer = inquirer.prompt(question)
+        print("You selected:", answer["choice"])
+        if answer["choice"] == "none of the above":
+            return None
+        return answer["choice"]
+
+    
     def build(self) -> None:
         """
         Run builder. It supposed to be already within that directory (os.chdir).
