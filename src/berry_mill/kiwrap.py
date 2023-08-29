@@ -73,9 +73,8 @@ class KiwiBuilder:
         """
         Add a repository for the builder
         """
-        if repodata.get("key") is None:
-            # Try downloading a key if there is none provided in the berrymill.conf
-            repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
+        repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
+        self._check_repokey(repodata, reponame)
         self._repos[reponame] = repodata
         return self
 
@@ -95,56 +94,57 @@ class KiwiBuilder:
             with open(g_path, "wb") as f_rel:
                 f_rel.write(response.content)
             response.close()
-
         return g_path
     
     def _get_relative_file_uri(self, repo_key_path) -> str:
         """
         Change the file:// URIs in the repo key values to be relative to the boxroot
         """
-        return "file://" + \
+        print(os.path.basename(self._boxtmpdir))
+        return "file:///" + \
                quote( \
                os.path.join( \
                os.path.basename(self._boxtmpdir), os.path.basename(repo_key_path)))        
    
+    def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
+            k = repodata.get("key")
+            # key can never be none due to .setdefault() in _get_repo_keys
+            try:    
+                parsed_url = urlparse(k)
+            except Exception as exc:
+                print(f"ERROR: Failure while trying to parse {k} of {reponame}")
+                print(exc)
+                self._cleanup()
+                sys.exit(1)
+            if not parsed_url.path:
+                print(f"ERROR: key file path is empty for {reponame}")
+                self._cleanup()
+                sys.exit(1)
+            if not os.path.exists(parsed_url.path):    
+                print(f"ERROR: Failure while trying to handle the keyfile at {parsed_url.path}")
+                print("{} does not exist".format(parsed_url.path))
+                self._cleanup()
+                sys.exit(1)    
+
     def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
         """
         Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
         It expects a file:// uri to be present in repos[reponame][key]
         """
         dst = self._boxtmpdir
+        print("exec")
 
         for reponame in repos.keys():
             k = repos.get(reponame, {}).get("key")
-            if k is not None:
-                try:    
-                    parsed_url = urlparse(k)
-                except Exception as exc:
-                    print(f"ERROR: Failure while trying to parse {k} of {reponame}")
-                    print(exc)
-                    self._cleanup()
-                    sys.exit(1)
-            else:
-                print(f"ERROR: could not find or download \
-                      repository key for {reponame} in the berrymill config")
-                print("To make sure the repo has a key, provide a valid \
-                      file uri in the key section of the repository config")
+            parsed_url = urlparse(k)
+            try:
+                shutil.copy(parsed_url.path, dst)
+            except Exception as exc:
+                print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
+                print(exc)
                 self._cleanup()
-                sys.exit(1)
-            if parsed_url.path:
-                try:
-                    shutil.copy(parsed_url.path, dst)
-                except Exception as exc:
-                    print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
-                    print(exc)
-                    self._cleanup()
-                    sys.exit(1)    
-                repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
-            else:
-                print(f"ERROR: unexpected Error with key {k} in {reponame}")
-                print(parsed_url)
-                self._cleanup()
-                sys.exit(1)
+                sys.exit(1)    
+            repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
     def _cleanup(self) -> None:
         """
@@ -220,15 +220,15 @@ class KiwiBuilder:
         
         
         repo_build_options:List[str] = ["--ignore-repos"]
+
+        if not self._params.get("local", False):
+            self._write_repokeys_box(self._repos)
+
         for repo_name in self._repos.keys():
             repo_content = self._repos.get(repo_name)
             components = repo_content.get("components").split(',')
             for component in components:
                 repo_build_options.append("--add-repo")
-
-                if not self._params.get("local", False):
-                    self._write_repokeys_box(self._repos)
-
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
                 repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name')},false"]
