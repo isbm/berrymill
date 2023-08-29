@@ -154,10 +154,11 @@ class KiwiBuilder:
         """
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
-        shutil.rmtree(self._boxtmpdir)
-        if self._fcleanbox:
-            # if Flag fcleanbox is true an empty boxroot is guranteed to exist
-            shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
+        if not self._params.get("local", False):
+            shutil.rmtree(self._boxtmpdir)
+            if self._fcleanbox:
+                # if Flag fcleanbox is true an empty boxroot is guranteed to exist
+                shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
         print("Finished")
 
     def _key_selection(self, reponame:str, options:List[str]) -> str | None:
