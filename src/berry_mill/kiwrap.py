@@ -107,14 +107,8 @@ class KiwiBuilder:
    
     def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
             k = repodata.get("key")
-            # key can never be none due to .setdefault() in _get_repo_keys
-            try:    
-                parsed_url = urlparse(k)
-            except Exception as exc:
-                print(f"ERROR: Failure while trying to parse {k} of {reponame}")
-                print(exc)
-                self._cleanup()
-                sys.exit(1)
+            # key can never be none due to .setdefault() in _get_repo_keys  
+            parsed_url = urlparse(k)
             if not parsed_url.path:
                 print(f"ERROR: key file path is empty for {reponame}")
                 self._cleanup()
