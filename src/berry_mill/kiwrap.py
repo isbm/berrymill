@@ -228,7 +228,6 @@ class KiwiBuilder:
 
                 if not self._params.get("local", False):
                     self._write_repokeys_box(self._repos)
-                    self._get_relative_file_uri()
 
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
