@@ -73,7 +73,9 @@ class KiwiBuilder:
         """
         Add a repository for the builder
         """
-        repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
+        if repodata.get("key") is None:
+            # Try downloading a key if there is none provided in the berrymill.conf
+            repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
         self._repos[reponame] = repodata
         return self
 
@@ -120,18 +122,28 @@ class KiwiBuilder:
                 except Exception as exc:
                     print(f"ERROR: Failure while trying to parse {k} of {reponame}")
                     print(exc)
+                    self._cleanup()
+                    sys.exit(1)
             else:
                 print(f"ERROR: could not find or download \
                       repository key for {reponame} in the berrymill config")
                 print("To make sure the repo has a key, provide a valid \
                       file uri in the key section of the repository config")
+                self._cleanup()
                 sys.exit(1)
             if parsed_url.path:
-                shutil.copy(parsed_url.path, dst)
+                try:
+                    shutil.copy(parsed_url.path, dst)
+                except Exception as exc:
+                    print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
+                    print(exc)
+                    self._cleanup()
+                    sys.exit(1)    
                 repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
             else:
                 print(f"ERROR: unexpected Error with key {k} in {reponame}")
                 print(parsed_url)
+                self._cleanup()
                 sys.exit(1)
 
     def _cleanup(self) -> None:
@@ -154,7 +166,6 @@ class KiwiBuilder:
         print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
         # options that are solely accepted by kiwi-ng
         kiwi_options = []
-
         # options, solely accepted by box-build plugin
         box_options:List[str] = ["--box","ubuntu"]
 
