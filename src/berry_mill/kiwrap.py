@@ -5,6 +5,7 @@ from typing import TypedDict
 from typing_extensions import Unpack
 from lxml import etree
 import os
+import re
 import sys
 import subprocess
 import shutil
@@ -65,6 +66,40 @@ class KiwiBuilder:
         self._repos[reponame] = repodata
         return self
 
+    def find_repokey(self, url, reponame):
+        """
+        Get repository keys ID and download pub key from ubuntu keyserver
+        Temporar location in /tmp , to be updated
+        """
+        # Get PGP Signature
+        url_s = f"{url}/Release.gpg"
+        response = requests.get(url_s, allow_redirects=True)
+        with open(f"/tmp/{reponame}-Release.gpg", "wb") as f_rel:
+            f_rel.write(response.content)
+            response.close()
+        # Get Hash file
+        url_s = f"{url}/Release"
+        response = requests.get(url_s, allow_redirects=True)
+        with open(f"/tmp/{reponame}-Release", "wb") as f_rel:
+            f_rel.write(response.content)
+            response.close()
+        # Extract Key ID
+        command = f'gpg --keyid-format long --verify /tmp/{reponame}-Release.gpg  /tmp/{reponame}-Release'
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        key_id_pattern = r'using \w+ key ([0-9A-F]+)'
+        key_match = re.search(key_id_pattern, str(result))
+        if key_match:
+            #print(f'key ID is : {key_match.group(1)}')
+            key_id = key_match.group(1)
+            # Download Key
+            url_k = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
+            response = requests.get(url_k, allow_redirects=True)
+            with open(f"/tmp/{reponame}.key", "wb") as f_rel:
+                f_rel.write(response.content)
+                response.close()
+        else:
+            print("Error : Key not found")
+
     def _get_repokeys(self, reponame, repodata:Dict[str, str]) -> str:
         """
         Download repository keys to a temporary directory
@@ -74,6 +109,7 @@ class KiwiBuilder:
         if repodata.get("components", "/") != "/":
             s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
             # TODO: grab standard keys
+            self.find_repokey(s_url,reponame)
             g_path = ""
         else:
             s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
