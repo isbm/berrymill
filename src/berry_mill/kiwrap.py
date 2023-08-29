@@ -100,7 +100,6 @@ class KiwiBuilder:
         """
         Change the file:// URIs in the repo key values to be relative to the boxroot
         """
-        print(os.path.basename(self._boxtmpdir))
         return "file:///" + \
                quote( \
                os.path.join( \
@@ -132,7 +131,6 @@ class KiwiBuilder:
         It expects a file:// uri to be present in repos[reponame][key]
         """
         dst = self._boxtmpdir
-        print("exec")
 
         for reponame in repos.keys():
             k = repos.get(reponame, {}).get("key")
