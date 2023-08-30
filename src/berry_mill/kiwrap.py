@@ -246,12 +246,12 @@ class KiwiBuilder:
 
         for repo_name in self._repos.keys():
             repo_content = self._repos.get(repo_name)
-            components = repo_content.get("components").split(',')
+            components = repo_content.get("components", "/").split(',')
             for component in components:
                 repo_build_options.append("--add-repo")
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
-                repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name')},false"]
+                repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name', '')},false"]
         
         if self._params.get("local", False):
             try:
