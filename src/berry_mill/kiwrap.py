@@ -10,10 +10,12 @@ import subprocess
 import shutil
 import tempfile
 import requests
-from platform import machine
+import inquirer
 
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse, quote
 from typing import Dict
+
+from berry_mill.sysinfo import get_local_arch
 
 
 class KiwiParams(TypedDict):
@@ -54,14 +56,29 @@ class KiwiBuilder:
 
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
+        
+        self._trusted_gpg_d = "/etc/apt/trusted.gpg.d"
 
         self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
+        
+        self._fcleanbox = False
+        # tmp boxroot dir only needed when build mode is not local
+        if not self._params.get("local", False):
+            boxdir = os.path.join(self._appliance_path, "boxroot")
+            if not os.path.exists(boxdir):
+                # flag for cleanup to remember to also delete boxroot dir if 
+                # it hasnt existed before already
+                self._fcleanbox = True
+                os.makedirs(boxdir)
+            self._boxtmpdir = tempfile.mkdtemp(prefix="berrymill-keys-",\
+                                               dir= os.path.join(self._appliance_path, "boxroot"))
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
         Add a repository for the builder
         """
-        repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
+        repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
+        self._check_repokey(repodata, reponame)
         self._repos[reponame] = repodata
         return self
 
@@ -81,8 +98,57 @@ class KiwiBuilder:
             with open(g_path, "wb") as f_rel:
                 f_rel.write(response.content)
             response.close()
-
         return g_path
+    
+    def _get_relative_file_uri(self, repo_key_path) -> str:
+        """
+        Change the file:// URIs in the repo key values to be relative to the boxroot
+        """
+        return "file:///" + \
+               quote( \
+               os.path.join( \
+               os.path.basename(self._boxtmpdir), os.path.basename(repo_key_path)))        
+   
+    def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
+            k = repodata.get("key")
+            # key can never be none due to .setdefault() in _get_repo_keys  
+            parsed_url = urlparse(k)
+            if not parsed_url.path:
+                print("Berrymill was not able to retrieve a fitting gpg key")
+                if os.path.exists(self._trusted_gpg_d):
+                    print("Trusted keys found on system")
+                    keylist:List[str] = os.listdir(self._trusted_gpg_d)
+                    selected = self._key_selection(reponame, keylist)
+                    if selected:
+                        repodata["key"] = ParseResult(scheme="file",
+                                                      path=os.path.join(self._trusted_gpg_d, selected),
+                                                      params=None, query=None, fragment=None,
+                                                      netloc=None).geturl()
+                        self._check_repokey(repodata, reponame)
+                        return
+            if not os.path.exists(parsed_url.path):    
+                print(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
+                self._cleanup()
+                sys.exit(1)    
+
+    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
+        """
+        Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
+        It expects a file:// uri to be present in repos[reponame][key]
+        """
+        dst = self._boxtmpdir
+
+        for reponame in repos:
+            k = repos.get(reponame, {}).get("key")
+            parsed_url = urlparse(k)
+            try:
+                shutil.copy(parsed_url.path, dst)
+            except Exception as exc:
+                print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
+                print(exc)
+                self._cleanup()
+                sys.exit(1)    
+            repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
     def _cleanup(self) -> None:
         """
@@ -90,8 +156,29 @@ class KiwiBuilder:
         """
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
+        if not self._params.get("local", False):
+            shutil.rmtree(self._boxtmpdir)
+            if self._fcleanbox:
+                # if Flag fcleanbox is true an empty boxroot is guranteed to exist
+                shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
         print("Finished")
 
+    def _key_selection(self, reponame:str, options:List[str]) -> str | None:
+        none_of_above = "none of the above"
+        question = [
+        inquirer.List("choice",
+                  message="Choose the right key for {}:".format(reponame),
+                  choices=options + [none_of_above],
+                  default=none_of_above,
+                  carousel=True
+                  ),
+        ]
+        answer = inquirer.prompt(question)
+        print("You selected:", answer["choice"])
+
+        return answer["choice"] != none_of_above and answer["choice"] or None
+
+    
     def build(self) -> None:
         """
         Run builder. It supposed to be already within that directory (os.chdir).
@@ -100,7 +187,6 @@ class KiwiBuilder:
         print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
         # options that are solely accepted by kiwi-ng
         kiwi_options = []
-
         # options, solely accepted by box-build plugin
         box_options:List[str] = ["--box","ubuntu"]
 
@@ -114,11 +200,11 @@ class KiwiBuilder:
         if self._params.get("box_memory"):
             box_options += ["--box-memory", self._params.get("box_memory")]
         
-        if machine() == "aarch64":
+        if get_local_arch() == "aarch64":
             box_options += ["--machine", "virt"]
         
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        if self._params.get("cross") and machine() == "x86_64":
+        if self._params.get("cross") and get_local_arch() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
 
@@ -155,14 +241,18 @@ class KiwiBuilder:
         
         
         repo_build_options:List[str] = ["--ignore-repos"]
+
+        if not self._params.get("local", False):
+            self._write_repokeys_box(self._repos)
+
         for repo_name in self._repos.keys():
             repo_content = self._repos.get(repo_name)
-            components = repo_content.get("components").split(',')
+            components = repo_content.get("components", "/").split(',')
             for component in components:
                 repo_build_options.append("--add-repo")
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
-                repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name')},false"]
+                repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name', '')},false"]
         
         if self._params.get("local", False):
             try:
