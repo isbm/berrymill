@@ -52,6 +52,8 @@ class KiwiBuilder:
         self._appliance_path:str = pth
         self._appliance_descr:str = descr
         self._params:Dict[KiwiParams] = kw
+        self._release_gpg_filename: str = 'Release.gpg'
+        self._release_ref_filename: str = 'Release'
 
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
@@ -66,39 +68,42 @@ class KiwiBuilder:
         self._repos[reponame] = repodata
         return self
 
-    def find_repokey(self, url, reponame):
+    def _import_repokey(self, url: str, reponame: str) -> None:
         """
-        Get repository keys ID and download pub key from ubuntu keyserver
-        Temporar location in /tmp , to be updated
+        Extract repository keys ID and download pub key from ubuntu keyserver
         """
-        # Get PGP Signature
-        url_s = f"{url}/Release.gpg"
-        response = requests.get(url_s, allow_redirects=True)
-        with open(f"/tmp/{reponame}-Release.gpg", "wb") as f_rel:
-            f_rel.write(response.content)
-            response.close()
-        # Get Hash file
-        url_s = f"{url}/Release"
-        response = requests.get(url_s, allow_redirects=True)
-        with open(f"/tmp/{reponame}-Release", "wb") as f_rel:
-            f_rel.write(response.content)
-            response.close()
-        # Extract Key ID
-        command = f'gpg --keyid-format long --verify /tmp/{reponame}-Release.gpg  /tmp/{reponame}-Release'
-        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        key_id_pattern = r'using \w+ key ([0-9A-F]+)'
-        key_match = re.search(key_id_pattern, str(result))
-        if key_match:
-            #print(f'key ID is : {key_match.group(1)}')
-            key_id = key_match.group(1)
-            # Download Key
-            url_k = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
-            response = requests.get(url_k, allow_redirects=True)
-            with open(f"/tmp/{reponame}.key", "wb") as f_rel:
-                f_rel.write(response.content)
-                response.close()
-        else:
-            print("Error : Key not found")
+        try:
+            # Create temporary files for Release.gpg and Release
+            with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release_gpg:
+                temp_release_gpg.write(requests.get(f"{url}/Release.gpg", allow_redirects=True).content)
+                temp_release_gpg_path = temp_release_gpg.name
+
+            with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release:
+                temp_release.write(requests.get(f"{url}/Release", allow_redirects=True).content)
+                temp_release_path = temp_release.name
+
+            # Extract Key ID
+            command = f'gpg --keyid-format long --verify {temp_release_gpg_path}  {temp_release_path}'
+            result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            key_id_pattern = r'using \w+ key ([0-9A-F]+)'
+            key_match = re.search(key_id_pattern, str(result))
+
+            if key_match:
+                key_id = key_match.group(1)
+                # Download Key
+                url_k = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
+                response = requests.get(url_k, allow_redirects=True)
+                with open(f"{self._tmpdir}/{reponame}.key", "wb") as f_rel:
+                    f_rel.write(response.content)
+            else:
+                print(f"Error: Failed to extract Key ID from '{reponame}'")
+
+        except requests.RequestException as req_err:
+            print(f"Request error: {req_err}")
+        except subprocess.CalledProcessError as cmd_err:
+            print(f"Command execution error: {cmd_err}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def _get_repokeys(self, reponame, repodata:Dict[str, str]) -> str:
         """
@@ -109,7 +114,7 @@ class KiwiBuilder:
         if repodata.get("components", "/") != "/":
             s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
             # TODO: grab standard keys
-            self.find_repokey(s_url,reponame)
+            self._import_repokey(s_url,reponame)
             g_path = ""
         else:
             s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
