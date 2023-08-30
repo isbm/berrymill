@@ -13,7 +13,7 @@ import requests
 import inquirer
 from platform import machine
 
-from urllib.parse import urlparse, quote
+from urllib.parse import ParseResult, urlparse, quote
 from typing import Dict
 
 
@@ -55,6 +55,8 @@ class KiwiBuilder:
 
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
+        
+        self._trusted_gpg_d = "/etc/apt/trusted.gpg.d"
 
         self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         
@@ -112,20 +114,19 @@ class KiwiBuilder:
             parsed_url = urlparse(k)
             if not parsed_url.path:
                 print("Berrymill was not able to retrieve a fitting gpg key")
-                if os.path.exists("/etc/apt/trusted.gpg.d"):
+                if os.path.exists(self._trusted_gpg_d):
                     print("Trusted keys found on system")
-                    keylist:List[str] = os.listdir("/etc/apt/trusted.gpg.d")
+                    keylist:List[str] = os.listdir(self._trusted_gpg_d)
                     selected = self._key_selection(reponame, keylist)
                     if selected:
-                        repodata["key"] = "file://" + os.path.join("/etc/apt/trusted.gpg.d", selected)
+                        repodata["key"] = ParseResult(scheme="file",
+                                                      path=os.path.join(self._trusted_gpg_d, selected),
+                                                      params=None, query=None, fragment=None,
+                                                      netloc=None).geturl()
                         self._check_repokey(repodata, reponame)
                         return
-                #print(f"ERROR: key file path is empty for {reponame}")
-                #self._cleanup()
-                #sys.exit(1)
             if not os.path.exists(parsed_url.path):    
-                print(f"ERROR: Failure while trying to handle the keyfile at {reponame}")
-                print(f"{parsed_url.path if parsed_url.path else 'file://'} does not exist")
+                print(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
                 self._cleanup()
                 sys.exit(1)    
 
@@ -136,7 +137,7 @@ class KiwiBuilder:
         """
         dst = self._boxtmpdir
 
-        for reponame in repos.keys():
+        for reponame in repos:
             k = repos.get(reponame, {}).get("key")
             parsed_url = urlparse(k)
             try:
@@ -162,19 +163,19 @@ class KiwiBuilder:
         print("Finished")
 
     def _key_selection(self, reponame:str, options:List[str]) -> str | None:
+        none_of_above = "none of the above"
         question = [
         inquirer.List("choice",
                   message="Choose the right key for {}:".format(reponame),
-                  choices=options + ["none of the above"],
-                  default="none of the above",
+                  choices=options + [none_of_above],
+                  default=none_of_above,
                   carousel=True
                   ),
         ]
         answer = inquirer.prompt(question)
         print("You selected:", answer["choice"])
-        if answer["choice"] == "none of the above":
-            return None
-        return answer["choice"]
+
+        return answer["choice"] != none_of_above and answer["choice"] or None
 
     
     def build(self) -> None:
