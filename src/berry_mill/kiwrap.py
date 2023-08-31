@@ -76,23 +76,23 @@ class KiwiBuilder:
             # Create temporary files for Release.gpg and Release
             with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release_gpg:
                 temp_release_gpg.write(requests.get(f"{url}/Release.gpg", allow_redirects=True).content)
-                temp_release_gpg_path = temp_release_gpg.name
+                temp_release_gpg_path: str = temp_release_gpg.name
 
             with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release:
                 temp_release.write(requests.get(f"{url}/Release", allow_redirects=True).content)
-                temp_release_path = temp_release.name
+                temp_release_path: str = temp_release.name
 
             # Extract Key ID
-            command = f'gpg --keyid-format long --verify {temp_release_gpg_path}  {temp_release_path}'
-            result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            key_id_pattern = r'using \w+ key ([0-9A-F]+)'
-            key_match = re.search(key_id_pattern, str(result))
+            command: str = f'gpg --keyid-format long --verify {temp_release_gpg_path}  {temp_release_path}'
+            result: subprocess.CompletedProcess[str] = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            key_id_pattern: str = r'using \w+ key ([0-9A-F]+)'
+            key_match: str = re.search(key_id_pattern, str(result))
 
             if key_match:
-                key_id = key_match.group(1)
+                key_id: str = key_match.group(1)
                 # Download Key
-                url_k = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
-                response = requests.get(url_k, allow_redirects=True)
+                url_k: str = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
+                response: requests.Response = requests.get(url_k, allow_redirects=True)
                 with open(f"{self._tmpdir}/{reponame}.key", "wb") as f_rel:
                     f_rel.write(response.content)
             else:
