@@ -1,16 +1,22 @@
 import os
 import sys
 from typing import Dict, List
+from abc import ABC, abstractmethod
 from berry_mill.boxwrap import WrapperSystemBoxbuildTask
 
 from berry_mill.localwrap import WrapperSystemBuildTask
 
-class KiwiApp:
-    
+class KiwiApp(ABC):
+    """
+    Abstract Base Class 
+    Posing as a costum API for calling kiwi programmatically
+    """
+    @abstractmethod
     def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
         self._repos = repos
         sys.argv = argv
 
+    @abstractmethod    
     def run(self) -> None:
         pass
 
@@ -40,11 +46,23 @@ class KiwiAppBox(KiwiApp):
         ).process()
 
     def _get_relative_path(self) -> str:
+        """
+        Will return the os path to the .txt file
+        containing the repo specific kiwi arguments,
+        like --add-repo and --ignore-repos.
+
+        The path will be relative the the boxroot in the 
+        appliances path
+        """
         
         return os.path.join("/",os.path.basename(self._tmpd), self._arg_file_name)
     
     def _generate_repo_string(self, repos:Dict[str, Dict[str,str]]) -> str:
-
+        """
+        Accepts Repository Dict
+        Generate and Return the kiwi compliant parameters
+        to add repositories on the command line.
+        """
         repo_build_options:List[str] = ["--ignore-repos"]
 
         for repo_name in repos:
@@ -54,7 +72,7 @@ class KiwiAppBox(KiwiApp):
                 repo_build_options.append("--add-repo")
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
-                repo_build_options += [
+                repo_build_options.append(
                     f"{repo_content.get('url')}," +\
                     f"{repo_content.get('type')}," +\
                     f"{repo_name},,,,"+\
@@ -62,11 +80,16 @@ class KiwiAppBox(KiwiApp):
                     f"{component if component != '/' else ''}," +\
                     f"{repo_content.get('name', '')}," +\
                     "false"
-                    ]
+                )
                 
         return " ".join(repo_build_options)
 
     def _write_repo_string(self, repostring:str) -> None:
+        """
+        Write the required kiwi repo arguments in a .txt file under the boxroot
+        This will avoid passing this long arg string on the command line.
+        So there is no risk of running out of space for arg
+        """
 
         with open(self._arg_file_path, "x") as f_rel:
             f_rel.write(repostring)

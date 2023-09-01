@@ -71,12 +71,9 @@ class KiwiBuilder:
                 self._fcleanbox = True
                 os.makedirs(boxdir)
 
-
-            self._boxtmpkeydir = tempfile.mkdtemp(prefix="berrymill-keys-",\
-                                               dir= self._boxrootdir)
+            self._boxtmpkeydir = tempfile.mkdtemp(prefix="berrymill-keys-", dir= self._boxrootdir)
             
-            self._boxtmpargdir = tempfile.mkdtemp(prefix="berrymill-args-",\
-                                                  dir= self._boxrootdir)
+            self._boxtmpargdir = tempfile.mkdtemp(prefix="berrymill-args-", dir= self._boxrootdir)
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
@@ -242,7 +239,6 @@ class KiwiBuilder:
         
         if self._params.get("profile"):
             profile = self._params.get("profile")
-            profiles = config_tree.xpath("//profile/@name")
             if profile in profiles:
                 kiwi_options += ["--profile", profile]
             else:

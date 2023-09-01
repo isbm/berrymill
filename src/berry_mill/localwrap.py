@@ -21,6 +21,13 @@ log = logging.getLogger('kiwi')
 
 class WrapperSystemBuildTask(SystemBuildTask):
     """
+    Wrapper Class
+    Overwrites self.run(...).
+    run() is mostly copied from the Base Class
+    Only Code to directly alter the xml state
+    to add the in berrymill.conf defined repositories of kiwi is injected
+
+    See the "injected code" comment below
     """
     def run(self, repos:Dict[str, Dict[str,str]]):
         """
