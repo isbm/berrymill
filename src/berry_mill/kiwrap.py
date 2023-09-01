@@ -32,7 +32,7 @@ class KiwiParams(TypedDict):
         cross (bool, Default: False): cross image build on x86_64 to aarch64 target.
         cpu (str, Optional): cpu to use for the QEMU VM (box)
         local (bool, Default: False): run build process locally on this machine. Requires sudo setup and installed KIWI toolchain.
-        target_dir (str, Default:/var/tmp/IMAGE_NAME[.PROFILE_NAME]): store image results in given dirpath.
+        target_dir (str, Default:/tmp/IMAGE_NAME[.PROFILE_NAME]): store image results in given dirpath.
     """
     profile: str
     box_memory: str
@@ -229,16 +229,29 @@ class KiwiBuilder:
             print("ERROR: Failure {} while trying to extract image name", err)
             sys.exit(1)
         
-        target_dir = self._params.get("target_dir", "/var/tmp")
-        target_dir += f"/{image_name[0]}"
+        target_dir = os.path.join(
+            self._params.get("target_dir","/tmp"),\
+            image_name[0],\
+            f".{self._params.get('profile','')}")
 
+        profiles = config_tree.xpath("//profile/@name")
+        
+        if not self._params.get("profile") and profiles:
+            print("No Profile selected.")
+            print("Please select one of the available following profiles using --profile:")
+            print(profiles)
+            self._cleanup()
+            raise Exception("No Profile selected")
+        
         if self._params.get("profile"):
             profile = self._params.get("profile")
             profiles = config_tree.xpath("//profile/@name")
             if profile in profiles:
                 kiwi_options += ["--profile", profile]
             else:
+                self._cleanup()
                 raise Exception(f"\'{profile}\' is not a valid profile. Available: {profiles}")
+
         
         if self._params.get("clean", False):
             clean_target = target_dir
