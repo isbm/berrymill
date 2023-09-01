@@ -15,9 +15,7 @@ from urllib.parse import ParseResult, urlparse, quote
 from typing import Dict
 from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
 from kiwi.kiwi import KiwiError
-
-from berry_mill.sysinfo import get_local_arch
-
+from platform import machine
 
 class KiwiParams(TypedDict):
     """
@@ -208,11 +206,11 @@ class KiwiBuilder:
         if self._params.get("box_memory"):
             box_options += ["--box-memory", self._params.get("box_memory")]
         
-        if get_local_arch() == "aarch64":
+        if machine() == "aarch64":
             box_options += ["--machine", "virt"]
         
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        if self._params.get("cross") and get_local_arch() == "x86_64":
+        if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
 
