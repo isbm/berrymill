@@ -36,9 +36,13 @@ class KiwiAppBox(KiwiApp):
             self._generate_repo_string(self._repos)
         )
         WrapperSystemBoxbuildTask(
-            arg_file_pth=self._arg_file_path
+            arg_file_pth=self._get_relative_path()
         ).process()
 
+    def _get_relative_path(self) -> str:
+        
+        return os.path.join(os.path.basename(self._tmpd), self._arg_file_name)
+    
     def _generate_repo_string(self, repos:Dict[str, Dict[str,str]]) -> str:
 
         repo_build_options:List[str] = ["--ignore-repos"]
