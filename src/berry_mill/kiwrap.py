@@ -231,9 +231,8 @@ class KiwiBuilder:
         
         target_dir = os.path.join(
             self._params.get("target_dir","/tmp"),\
-            image_name[0],\
-            f".{self._params.get('profile','')}")
-
+            f"{image_name[0]}.{self._params.get('profile', '')}")
+        
         profiles = config_tree.xpath("//profile/@name")
         
         if not self._params.get("profile") and profiles:
