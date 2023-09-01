@@ -41,7 +41,7 @@ class KiwiAppBox(KiwiApp):
 
     def _get_relative_path(self) -> str:
         
-        return os.path.join(os.path.basename(self._tmpd), self._arg_file_name)
+        return os.path.join("/",os.path.basename(self._tmpd), self._arg_file_name)
     
     def _generate_repo_string(self, repos:Dict[str, Dict[str,str]]) -> str:
 
