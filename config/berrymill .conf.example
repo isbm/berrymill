@@ -30,25 +30,25 @@ repos:
         components: main,universe,multiverse,restricted
       Nautilos-Devel:
         # no "compoments" defined, therefore repo format is flat
-        url: http://repos.ebgroup.elektrobit.com/nautilos:/2.0:/devel/xUbuntu_22.04/
+        url: http://linux.elektrobit.com/corbos/2/devel/xUbuntu_22.04/
         type: apt-deb
       Nautilos-Devel-Debbuild:
         # no "compoments" defined, therefore repo format is flat
-        url: http://repos.ebgroup.elektrobit.com/nautilos:/2.0:/devel/xUbuntu_22.04_debbuild/
+        url: http://linux.elektrobit.com/corbos/2/devel/xUbuntu_22.04_debbuild/
         type: apt-deb
       Nautilos-Release:
         # no "compoments" defined, therefore repo format is flat
-        url: http://repos.ebgroup.elektrobit.com/nautilos:/2.0:/release/xUbuntu_22.04/
+        url: http://linux.elektrobit.com/corbos/2/release/xUbuntu_22.04/
         type: apt-deb
       Nautilos-Release-Debbuild:
         # no "compoments" defined, therefore repo format is flat
-        url: http://repos.ebgroup.elektrobit.com/nautilos:/2.0:/release/xUbuntu_22.04_debbuild/
+        url: http://linux.elektrobit.com/corbos/2/release/xUbuntu_22.04_debbuild/
         type: apt-deb
     arm64:
       # Just an alias of the repo, free form
       Nautilos-Devel:
         # no "compoments" defined, therefore repo format is flat
-        url: obs://devel/xUbuntu_22.04
+        url: http://linux.elektrobit.com/corbos/2/devel/xUbuntu_22.04/
         type: apt-deb
         key: file:///usr/lib/nautilos/gnupg/keys/build_key_nautilos_2.0_devel.asc
         trusted: true
