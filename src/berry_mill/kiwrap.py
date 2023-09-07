@@ -235,7 +235,7 @@ class KiwiBuilder:
             print("Please select one of the available following profiles using --profile:")
             print(profiles)
             self._cleanup()
-            raise Exception("No Profile selected")
+            sys.exit(1)
         
         if self._params.get("profile"):
             profile = self._params.get("profile")
