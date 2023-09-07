@@ -40,13 +40,12 @@ class KiwiAppBox(KiwiApp):
         self._arg_file_path: str = os.path.join(self._tmpd, self._arg_file_name)
     
     def run(self) -> None:
+        
+        repostring:str = self._generate_repo_string(self._repos)
+        arg_file_path:str = self._get_relative_path()
 
-        self._write_repo_string(
-            self._generate_repo_string(self._repos)
-        )
-        BoxBuildTask(
-            arg_file_pth=self._get_relative_path()
-        ).process()
+        self._write_repo_string(repostring)
+        BoxBuildTask(arg_file_path).process()
 
     def _get_relative_path(self) -> str:
         """

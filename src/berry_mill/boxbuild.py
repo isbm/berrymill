@@ -27,7 +27,4 @@ class BoxBuildTask(SystemBoxbuildTask):
 
     def _validate_kiwi_build_command(self) -> List[str]:
         # construct build command from given command line
-        kiwi_build_command = super()._validate_kiwi_build_command()
-        kiwi_build_command.append('--berrymill')
-        kiwi_build_command.append(self._arg)
-        return kiwi_build_command
+        return super()._validate_kiwi_build_command() + ["--berrymill", self._arg]

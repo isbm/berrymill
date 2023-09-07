@@ -56,24 +56,24 @@ class KiwiBuilder:
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
         
-        self._trusted_gpg_d = "/etc/apt/trusted.gpg.d"
+        self._trusted_gpg_d:str = "/etc/apt/trusted.gpg.d"
 
-        self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
+        self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         
-        self._boxrootdir = os.path.join(self._appliance_path, "boxroot")
-        self._fcleanbox = False
+        self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
+        self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
         if not self._params.get("local", False):
-            boxdir = os.path.join(self._appliance_path, "boxroot")
+            boxdir:str = os.path.join(self._appliance_path, "boxroot")
             if not os.path.exists(boxdir):
                 # flag for cleanup to remember to also delete boxroot dir if 
                 # it hasnt existed before already
                 self._fcleanbox = True
                 os.makedirs(boxdir)
 
-            self._boxtmpkeydir = tempfile.mkdtemp(prefix="berrymill-keys-", dir= self._boxrootdir)
+            self._boxtmpkeydir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir= self._boxrootdir)
             
-            self._boxtmpargdir = tempfile.mkdtemp(prefix="berrymill-args-", dir= self._boxrootdir)
+            self._boxtmpargdir:str = tempfile.mkdtemp(prefix="berrymill-args-", dir= self._boxrootdir)
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
