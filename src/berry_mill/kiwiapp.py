@@ -2,9 +2,9 @@ import os
 import sys
 from typing import Dict, List
 from abc import ABC, abstractmethod
-from berry_mill.boxwrap import WrapperSystemBoxbuildTask
+from berry_mill.boxbuild import BoxBuildTask
 
-from berry_mill.localwrap import WrapperSystemBuildTask
+from berry_mill.localwrap import LocalBuildTask
 
 class KiwiApp(ABC):
     """
@@ -22,9 +22,12 @@ class KiwiApp(ABC):
 
 
 class KiwiAppLocal(KiwiApp):
+
+    def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
+        super().__init__(argv, repos)
     
     def run(self) -> None:
-        WrapperSystemBuildTask().run(self._repos)
+        LocalBuildTask(self._repos).process()
 
 
 class KiwiAppBox(KiwiApp):
@@ -41,7 +44,7 @@ class KiwiAppBox(KiwiApp):
         self._write_repo_string(
             self._generate_repo_string(self._repos)
         )
-        WrapperSystemBoxbuildTask(
+        BoxBuildTask(
             arg_file_pth=self._get_relative_path()
         ).process()
 
