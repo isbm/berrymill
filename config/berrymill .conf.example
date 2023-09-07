@@ -11,32 +11,34 @@ repos:
   release:
     # Architecture
     # Conforms to Debian standard: https://wiki.debian.org/SupportedArchitectures
+
     amd64:
+     # Just an alias of the repo, free form
       Ubuntu-Jammy:
         # Components are defined for a non-flat repos (default Debian)
-        url: http://ports.ubuntu.com/ubuntu-ports
+        url: http://ftp.halifax.rwth-aachen.de/ubuntu/
         type: apt-deb
-
-        # This is too much tailored. How to put own keys?
-        # Idea that we can use dir:// as well, comma separated.
-        # Those keys can be searched then there. Something like:
-        #
-        #    key: dir:///~/my-keys, dir:///etc/eb-mill/defaultkeys
-        #
-        key: file:///usr/lib/nautilos/gnupg/keys/build_key_ubuntu_jammy.gpg
+        key: file:///usr/lib/example/gnupg/keys/build_key_ubuntu_jammy.gpg
 
         # Distro name
         name: jammy
         components: main,universe,multiverse,restricted
+      Your-Repo-Alias:
+        url: http://foo.com/bar/repo
+        type: apt-deb
+
+        # no "key" defined -> berrymill will try and look for key
+        # Currently automatic lookup online only works if your Repo is a flat repo and does not have components
+        # Otherwise berrymill will prompt you with a selection of your trusted keys in (/etc/apt/trusted.gpg.d)
+
+        # no "name" defined, therefore repo format is flat
+        # no "compoments" defined, therefore repo format is flat
 
     arm64:
       # Just an alias of the repo, free form
-      Nautilos-Devel:
+      Your-Arm-Repo-Alias:
         # no "compoments" defined, therefore repo format is flat
-        url: obs://devel/xUbuntu_22.04
+        url: http://foo-arm.com/bar-arm/repo
         type: apt-deb
         key: file:///usr/lib/nautilos/gnupg/keys/build_key_nautilos_2.0_devel.asc
         trusted: true
-
-  devel:
-    amd64:

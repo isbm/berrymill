@@ -6,7 +6,6 @@ from typing_extensions import Unpack
 from lxml import etree
 import os
 import sys
-import subprocess
 import shutil
 import tempfile
 import requests
@@ -14,9 +13,9 @@ import inquirer
 
 from urllib.parse import ParseResult, urlparse, quote
 from typing import Dict
-
-from berry_mill.sysinfo import get_local_arch
-
+from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
+from kiwi.kiwi import KiwiError
+from platform import machine
 
 class KiwiParams(TypedDict):
     """
@@ -31,7 +30,7 @@ class KiwiParams(TypedDict):
         cross (bool, Default: False): cross image build on x86_64 to aarch64 target.
         cpu (str, Optional): cpu to use for the QEMU VM (box)
         local (bool, Default: False): run build process locally on this machine. Requires sudo setup and installed KIWI toolchain.
-        target_dir (str, Default:/var/tmp/IMAGE_NAME[.PROFILE_NAME]): store image results in given dirpath.
+        target_dir (str, Default:/tmp/IMAGE_NAME[.PROFILE_NAME]): store image results in given dirpath.
     """
     profile: str
     box_memory: str
@@ -57,21 +56,24 @@ class KiwiBuilder:
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
         
-        self._trusted_gpg_d = "/etc/apt/trusted.gpg.d"
+        self._trusted_gpg_d:str = "/etc/apt/trusted.gpg.d"
 
-        self._tmpdir = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
+        self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         
-        self._fcleanbox = False
+        self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
+        self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
         if not self._params.get("local", False):
-            boxdir = os.path.join(self._appliance_path, "boxroot")
+            boxdir:str = os.path.join(self._appliance_path, "boxroot")
             if not os.path.exists(boxdir):
                 # flag for cleanup to remember to also delete boxroot dir if 
                 # it hasnt existed before already
                 self._fcleanbox = True
                 os.makedirs(boxdir)
-            self._boxtmpdir = tempfile.mkdtemp(prefix="berrymill-keys-",\
-                                               dir= os.path.join(self._appliance_path, "boxroot"))
+
+            self._boxtmpkeydir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir= self._boxrootdir)
+            
+            self._boxtmpargdir:str = tempfile.mkdtemp(prefix="berrymill-args-", dir= self._boxrootdir)
 
     def add_repo(self, reponame:str, repodata:Dict[str, str]) -> KiwiBuilder:
         """
@@ -107,7 +109,7 @@ class KiwiBuilder:
         return "file:///" + \
                quote( \
                os.path.join( \
-               os.path.basename(self._boxtmpdir), os.path.basename(repo_key_path)))        
+               os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))        
    
     def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
             k = repodata.get("key")
@@ -136,7 +138,7 @@ class KiwiBuilder:
         Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
         It expects a file:// uri to be present in repos[reponame][key]
         """
-        dst = self._boxtmpdir
+        dst = self._boxtmpkeydir
 
         for reponame in repos:
             k = repos.get(reponame, {}).get("key")
@@ -157,7 +159,8 @@ class KiwiBuilder:
         print("Cleaning up...")
         shutil.rmtree(self._tmpdir)
         if not self._params.get("local", False):
-            shutil.rmtree(self._boxtmpdir)
+            shutil.rmtree(self._boxtmpkeydir)
+            shutil.rmtree(self._boxtmpargdir)
             if self._fcleanbox:
                 # if Flag fcleanbox is true an empty boxroot is guranteed to exist
                 shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
@@ -200,11 +203,11 @@ class KiwiBuilder:
         if self._params.get("box_memory"):
             box_options += ["--box-memory", self._params.get("box_memory")]
         
-        if get_local_arch() == "aarch64":
+        if machine() == "aarch64":
             box_options += ["--machine", "virt"]
         
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        if self._params.get("cross") and get_local_arch() == "x86_64":
+        if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
 
@@ -221,16 +224,27 @@ class KiwiBuilder:
             print("ERROR: Failure {} while trying to extract image name", err)
             sys.exit(1)
         
-        target_dir = self._params.get("target_dir", "/var/tmp")
-        target_dir += f"/{image_name[0]}"
-
+        target_dir = os.path.join(
+            self._params.get("target_dir","/tmp"),\
+            f"{image_name[0]}.{self._params.get('profile', '')}")
+        
+        profiles = config_tree.xpath("//profile/@name")
+        
+        if not self._params.get("profile") and profiles:
+            print("No Profile selected.")
+            print("Please select one of the available following profiles using --profile:")
+            print(profiles)
+            self._cleanup()
+            sys.exit(1)
+        
         if self._params.get("profile"):
             profile = self._params.get("profile")
-            profiles = config_tree.xpath("//profile/@name")
             if profile in profiles:
                 kiwi_options += ["--profile", profile]
             else:
+                self._cleanup()
                 raise Exception(f"\'{profile}\' is not a valid profile. Available: {profiles}")
+
         
         if self._params.get("clean", False):
             clean_target = target_dir
@@ -239,45 +253,34 @@ class KiwiBuilder:
             if self._params.get("local", False):
                 shutil.rmtree(clean_target)
         
-        
-        repo_build_options:List[str] = ["--ignore-repos"]
-
         if not self._params.get("local", False):
             self._write_repokeys_box(self._repos)
 
-        for repo_name in self._repos.keys():
-            repo_content = self._repos.get(repo_name)
-            components = repo_content.get("components", "/").split(',')
-            for component in components:
-                repo_build_options.append("--add-repo")
-                # syntax of --add-repo value:
-                # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
-                repo_build_options += [f"{repo_content.get('url')},{repo_content.get('type')},{repo_name},,,,{{{repo_content.get('key')}}},{component if component != '/' else ''},{repo_content.get('name', '')},false"]
-        
         if self._params.get("local", False):
-            try:
-                command = ["kiwi-ng"] + kiwi_options\
-                        + ["system", "build", "--description", '.']\
-                        + ["--target-dir", target_dir] + repo_build_options
-                # for debugging, no usage of print() to ensure better readability of insanely long kiwi command with no confusion of important ',' chars
-                # subprocess.run(["echo", "\""] + command + ["\""])
-                subprocess.run(command)
-            except Exception as exc:
-                print(exc)
-                sys.exit(1)     
-        else:
-            try:
-                command = ["kiwi-ng"]+ kiwi_options\
-                        + ["system", "boxbuild"] + box_options\
-                        + ["--", "--description", '.'] + ["--target-dir", target_dir]\
-                        + repo_build_options
-                # subprocess.run(["echo", "\""] + command + ["\""])
-                subprocess.run(command)
-            except Exception as exc:
-                print(exc)
-                sys.exit(1)
-            
+            command = ["kiwi-ng"] + kiwi_options\
+                    + ["system", "build", "--description", "."]\
+                    + ["--target-dir", target_dir] 
                 
+            try:
+                KiwiAppLocal(command, repos=self._repos).run()
+            except KiwiError as kiwierr:
+                print("KiwiError:", type(kiwierr).__name__)
+                print(kiwierr)
+                self._cleanup()
+                sys.exit(1)
+        else:
+            command = ["kiwi-ng"]+ kiwi_options\
+                    + ["system", "boxbuild"] + box_options\
+                    + ["--", "--description", '.'] + ["--target-dir", target_dir]\
+
+            try:
+                KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
+            except KiwiError as kiwierr:
+                print("KiwiError:", type(kiwierr).__name__)
+                print(kiwierr)
+                self._cleanup()
+                sys.exit(1)
+                           
         # run kiwi here with "appliance_init" which is a ".kiwi" file
         os.system("ls -lah")
 

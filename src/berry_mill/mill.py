@@ -35,7 +35,7 @@ class ImageMill:
         p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
         p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
         p.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
-        p.add_argument("--target-dir", type=str, default="/var/tmp", help="store image results in given dirpath")
+        p.add_argument("--target-dir", type=str, default="/tmp", help="store image results in given dirpath")
         p.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
 
         self.args:argparse.Namespace = p.parse_args()
