@@ -1,0 +1,33 @@
+from kiwi_boxed_plugin.tasks.system_boxbuild import SystemBoxbuildTask
+import logging
+import os
+from docopt import docopt
+from typing import List
+import kiwi.tasks.system_build
+
+
+log = logging.getLogger('kiwi')
+
+
+class BoxBuildTask(SystemBoxbuildTask):
+    """
+    Wrapper Class
+    Overwrites self._validate_kiwi_build_command(...).
+    The method is mostly copied from the Base Class
+    Only Code to add --berrymill parameter is added.
+    The value of the --berrymill parameter will be the temporary path
+    to the repository arguments.
+    
+    The Box will parse this, read the .txt file
+    and call kiwi accordingly
+    """
+    def __init__(self, arg_file_pth: str) -> None:
+        super().__init__()
+        self._arg = arg_file_pth
+
+    def _validate_kiwi_build_command(self) -> List[str]:
+        # construct build command from given command line
+        kiwi_build_command = super()._validate_kiwi_build_command()
+        kiwi_build_command.append('--berrymill')
+        kiwi_build_command.append(self._arg)
+        return kiwi_build_command
