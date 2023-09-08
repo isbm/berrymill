@@ -47,9 +47,10 @@ class KiwiBuilder:
     Kiwi wrapper for appliance builder.
     """
     # TODO handle TypeError
-    def __init__(self, pth:str, descr:str, **kw: Unpack[KiwiParams]):
+    def __init__(self, descr:str, **kw: Unpack[KiwiParams]):
         self._repos:Dict[str, Dict[str, str]] = {}
-        self._appliance_path:str = pth
+        self._appliance_path:str = os.getcwd()
+        print(self._appliance_path)
         self._appliance_descr:str = descr
         self._params:Dict[KiwiParams] = kw
 
@@ -61,6 +62,7 @@ class KiwiBuilder:
         self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
+        print(self._boxrootdir)
         self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
         if not self._params.get("local", False):

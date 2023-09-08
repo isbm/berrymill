@@ -94,8 +94,7 @@ class ImageMill:
             os.chdir(self._appliance_path)
 
 
-        b = KiwiBuilder(self._appliance_path, 
-                        self._appliance_descr, 
+        b = KiwiBuilder(self._appliance_descr, 
                         box_memory= self.args.box_memory, 
                         profile= self.args.profile, 
                         debug=self.args.debug, 
