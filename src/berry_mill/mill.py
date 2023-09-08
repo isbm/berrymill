@@ -81,7 +81,7 @@ class ImageMill:
         Build an image
         """
 
-        self._init_local_repos()
+        # self._init_local_repos()
 
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
