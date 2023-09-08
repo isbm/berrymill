@@ -42,7 +42,8 @@ class LocalBuildTask(SystemBuildTask):
 
             components = repodata.get("components", "/")
             components = components if components != '/' else None
-
+            if components:
+                components = components.replace(",", " ")
             distro = repodata.get("name", None)
             print(repodata.get("key"))
             self.xml_state.add_repository(
