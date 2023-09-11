@@ -123,8 +123,9 @@ class TestCollectionConfigHandler:
 			assert "ERROR: unable to load configuration" in captured.out
 		except SystemExit as e :
 			""" Assert that the exit code is 1 (EPERM) """
-			assert e.code == 1 
+			assert e.code == 1
 
+	@pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
 	def test_load_with_no_config(self, config_handler):
 		config_handler.load()
 		""" Assert if no loaded cfg , default cfg is available """
