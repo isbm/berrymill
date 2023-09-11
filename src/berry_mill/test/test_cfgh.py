@@ -1,8 +1,8 @@
 import sys
-sys.path.append("..")
+sys.path.append("./src/berry_mill")
 
 import pytest
-from berry_mill.cfgh import ConfigHandler, Autodict
+from cfgh import ConfigHandler, Autodict
 
 """
 Test class for Autodict
@@ -91,7 +91,7 @@ class TestCollectionConfigHandler:
 	@pytest.fixture
 	def valid_config(self):
 		""" Read default valid config file """
-		config_path = '../berrymill.conf'
+		config_path = './src/berrymill.conf'
 		return config_path
 
 	@pytest.fixture
