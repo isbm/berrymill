@@ -1,0 +1,4 @@
+python-kiwi
+typing-extensions
+lxml
+inquirer
