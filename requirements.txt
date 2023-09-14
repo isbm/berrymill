@@ -1,6 +1,5 @@
 kiwi
 kiwi-boxed-plugin
-typing-extensions
-lxml
 inquirer
 pytest
+typing_extensions

@@ -92,7 +92,7 @@ class TestCollectionConfigHandler:
 	@pytest.fixture
 	def valid_config(self):
 		""" Read default valid config file """
-		config_path: str = './src/berrymill.conf'
+		config_path: str = './config/berrymill.conf.example'
 		return config_path
 
 	@pytest.fixture
