@@ -1,4 +1,6 @@
-python-kiwi
+kiwi
+kiwi-boxed-plugin
 typing-extensions
 lxml
 inquirer
+pytest
