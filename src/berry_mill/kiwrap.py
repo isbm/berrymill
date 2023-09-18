@@ -95,18 +95,28 @@ class KiwiBuilder:
         """
         Download repository keys to a temporary directory
         """
+        # Check if repo name and date are defined
+        for repo_iter, excep_iter in [(repodata, "Repository data not defined"),
+                             (reponame, "Repository name not defined")]:
+            if not repo_iter:
+                raise Exception(excep_iter)
+            
         url: ParseResult = urlparse(repodata["url"])
-        g_path:str = f"{self._tmpdir}/{reponame}_release.key"
-        if repodata.get("components", "/") != "/":
-            s_url: str = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
-            # TODO: grab standard keys
-            g_path = ""
+        g_path:str = os.path.join(self._tmpdir, f"{reponame}_release.key")
+        if(url.scheme):           
+            if repodata.get("components", "/") != "/":
+                s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'dists', repodata['name'])
+                # TODO: grab standard keys
+                g_path = ""
+            else:
+                s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'Release.key')
+                response = requests.get(s_url, allow_redirects=True)
+                with open(g_path, "wb") as f_rel:
+                    f_rel.write(response.content)
+                response.close()
         else:
-            s_url: str = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
-            response = requests.get(s_url, allow_redirects=True)
-            with open(g_path, "wb") as f_rel:
-                f_rel.write(response.content)
-            response.close()
+            raise Exception("URL not found")
+        
         return g_path
     
     def _get_relative_file_uri(self, repo_key_path) -> str:
