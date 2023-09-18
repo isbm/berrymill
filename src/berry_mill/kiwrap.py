@@ -81,23 +81,28 @@ class KiwiBuilder:
         """
         Add a repository for the builder
         """
-        repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
-        self._check_repokey(repodata, reponame)
-        self._repos[reponame] = repodata
+        if reponame:
+            repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
+            self._check_repokey(repodata, reponame)
+            self._repos[reponame] = repodata
+        else:
+            print("Repository name not defined")
+            sys.exit(1)
+        
         return self
 
-    def _get_repokeys(self, reponame, repodata:Dict[str, str]) -> str:
+    def _get_repokeys(self, reponame: str, repodata:Dict[str, str]) -> str:
         """
         Download repository keys to a temporary directory
         """
-        url = urlparse(repodata["url"])
+        url: ParseResult = urlparse(repodata["url"])
         g_path:str = f"{self._tmpdir}/{reponame}_release.key"
         if repodata.get("components", "/") != "/":
-            s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
+            s_url: str = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'dists', repodata['name'])}"
             # TODO: grab standard keys
             g_path = ""
         else:
-            s_url = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
+            s_url: str = f"{url.scheme}://{url.netloc}{os.path.join(url.path, 'Release.key')}"
             response = requests.get(s_url, allow_redirects=True)
             with open(g_path, "wb") as f_rel:
                 f_rel.write(response.content)
