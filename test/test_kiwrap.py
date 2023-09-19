@@ -15,7 +15,7 @@ class TestCollectionKiwiBuilder:
     """
     def test_kiwrap_add_repo(self):
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
-        # Define some test data 
+        # Define some test data
         reponame: str = "test_repo"
         repodata: dict = {"name": "repo", "url": "http://test.com"}
 
@@ -44,7 +44,7 @@ class TestCollectionKiwiBuilder:
             assert "URL not found" in str(e)
 
     def test_kiwrap_add_repo_no_repo_name(self, capsys: CaptureFixture):
-        
+
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
@@ -57,7 +57,7 @@ class TestCollectionKiwiBuilder:
             assert "Repository name not defined" in captured.out
         except SystemExit as e:
             assert e.code == 1
-    
+
     def test_kiwrap_get_repokeys_no_url(self):
 
         try:
@@ -80,7 +80,7 @@ class TestCollectionKiwiBuilder:
             KiwiBuilder_instance._get_repokeys(reponame, repodata)
         except Exception as e:
             assert "Repository name not defined" in str(e)
- 
+
     def test_kiwrap_get_repokeys_no_repodata(self):
 
         try:
@@ -91,4 +91,4 @@ class TestCollectionKiwiBuilder:
 
             KiwiBuilder_instance._get_repokeys(reponame, repodata)
         except Exception as e:
-            assert "Repository data not defined" in str(e)       
+            assert "Repository data not defined" in str(e)
