@@ -3,6 +3,7 @@ import sys
 sys.path.append("./src")
 
 import pytest
+import requests
 
 from berry_mill.kiwrap import KiwiBuilder
 
@@ -12,8 +13,12 @@ from _pytest.capture import CaptureFixture
 class TestCollectionKiwiBuilder:
     """
     Test class KiwiBuilder
+    Tests the add_repo(), get_repokeys() use cases
     """
     def test_kiwrap_add_repo(self):
+        """
+        Verify that repo name and repo data: url, key, type.. are added correctly
+        """
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
         # Define some test data
         reponame: str = "test_repo"
@@ -34,6 +39,10 @@ class TestCollectionKiwiBuilder:
                 assert KiwiBuilder_instance._repos[reponame] == repodata
 
     def test_kiwrap_add_repo_no_url(self):
+        """
+        Test: add_repo() method with wrong url
+        Expected : Exception URL not found 
+        """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
@@ -44,7 +53,12 @@ class TestCollectionKiwiBuilder:
             assert "URL not found" in str(e)
 
     def test_kiwrap_add_repo_no_repo_name(self, capsys: CaptureFixture):
-
+        """
+        Test: add_repo() without repo name defined
+        Expected: 
+          Exception Repository name not defined
+          Exit code 1
+        """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
@@ -59,7 +73,10 @@ class TestCollectionKiwiBuilder:
             assert e.code == 1
 
     def test_kiwrap_get_repokeys_no_url(self):
-
+        """
+        Test: get_repokeys() without url defined
+        Expected: Exception URL not found
+        """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
@@ -69,8 +86,25 @@ class TestCollectionKiwiBuilder:
         except Exception as e:
             assert "URL not found" in str(e)
 
-    def test_kiwrap_get_repokeys_no_reponame(self):
+    def test_kiwrap_get_repokeys_wrong_url(self):
+        """
+        Test: get_repokeys() with wrong url defined
+        Expected: Exception o connection adapters were found
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Define some test data
+            reponame: str = "test_repo"
+            repodata: dict = {"name": "test", "url": "no_schema"}
+            KiwiBuilder_instance._get_repokeys(reponame, repodata)
+        except requests.exceptions.InvalidSchema as e:
+            assert "No connection adapters were found" in str(e)
 
+    def test_kiwrap_get_repokeys_no_reponame(self):
+        """
+        Test: get_repokeys without repo name defined
+        Expected: Exception Repository name not defined
+        """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
@@ -82,7 +116,10 @@ class TestCollectionKiwiBuilder:
             assert "Repository name not defined" in str(e)
 
     def test_kiwrap_get_repokeys_no_repodata(self):
-
+        """
+        Test: get_repokeys without repo data defined
+        Expected: Exception Repository data not defined
+        """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Define some test data
