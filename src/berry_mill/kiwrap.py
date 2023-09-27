@@ -290,6 +290,7 @@ class KiwiBuilder:
                     + ["--target-dir", target_dir] 
 
             try:
+                print("Starting Kiwi for local build")                
                 KiwiAppLocal(command, repos=self._repos).run()
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)
@@ -302,6 +303,7 @@ class KiwiBuilder:
                     + ["--", "--description", '.'] + ["--target-dir", target_dir]\
 
             try:
+                print("Starting Kiwi Box")
                 KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)

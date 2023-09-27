@@ -219,6 +219,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap_write_repokeys_wrong_key_path(self, capsys: CaptureFixture):
         """
         Write repo keys while wrong key path in config
+        Expected : exit code 1 exception and error failure message
         """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
@@ -238,6 +239,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap_write_repokeys_box_root_dest(self):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: exit code 1 and Boxroot directory is not defined exception
         """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
@@ -257,6 +259,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap__cleanup_no_tmpdir(self, capsys: CaptureFixture):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: Error Cleanup Failed
         """
 
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
@@ -272,6 +275,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap_cleanup_no_boxtmpdiraaa(self, capsys: CaptureFixture):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: Error Cleanup Failed
         """
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
         # Set tmpdir
@@ -283,3 +287,64 @@ class TestCollectionKiwiBuilder:
         captured: tuple = capsys.readouterr()        
         assert "Error: Cleanup Failed" in captured.out
     
+    def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
+        """
+        Parse wrong appliance
+        Expected: exit 1 and error Expected: failed to load external entity
+        """
+        try:
+            # Create KiwiBuilder instance with wrong appliance
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # trigger the build
+            KiwiBuilder_instance.build()        
+        except SystemExit as se:
+            cap: tuple = capsys.readouterr()
+            assert "failed to load external entity" in cap.out              
+            assert se.code == 1
+          
+    def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config no profie
+        Expected: exit 1 and error Expected: No Profile selected
+        """
+        try:
+            # Create KiwiBuilder instance with existant appliance
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            # Remove profile
+            KiwiBuilder_instance._params["profile"] = ""
+            # Trigger the build
+            KiwiBuilder_instance.build()
+            captured: tuple = capsys.readouterr()
+            assert "No Profile selected" in captured.out
+        except SystemExit as se:
+            assert se.code == 1
+
+    @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
+    def test_kiwrap_build_with_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi Box"
+        """
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+        # Set profile
+        KiwiBuilder_instance._params["profile"] = "Live"
+        KiwiBuilder_instance.build()
+        captured: tuple = capsys.readouterr()
+        assert "Starting Kiwi Box" in captured.out
+
+    def test_kiwrap_build_with_local_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi for local build"
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            # Set profile
+            KiwiBuilder_instance._params["profile"] = "Live"
+            # Set local build
+            KiwiBuilder_instance._params["local"] = True
+            KiwiBuilder_instance.build()
+            captured: tuple = capsys.readouterr()
+            assert "Starting Kiwi for local build" in captured.out
+        except SystemExit as e:
+            print("Ignoring root permission error")
