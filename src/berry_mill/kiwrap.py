@@ -10,8 +10,10 @@ import shutil
 import tempfile
 import requests
 import inquirer
+import re
+import subprocess
 
-from urllib.parse import ParseResult, urlparse, quote
+from urllib.parse import ParseResult, urlparse, quote, urljoin
 from typing import Dict
 from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
 from kiwi.kiwi import KiwiError
@@ -58,7 +60,8 @@ class KiwiBuilder:
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._trusted_gpg_d:str = "/etc/apt/trusted.gpg.d"
-
+        self._release_gpg_filename: str = 'Release.gpg'
+        self._release_ref_filename: str = 'Release'
         self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
 
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
@@ -82,7 +85,7 @@ class KiwiBuilder:
         Add a repository for the builder
         """
         if reponame:
-            repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
+            repodata["key"] = "file://" + self._get_repokeys(reponame, repodata)
             self._check_repokey(repodata, reponame)
             self._repos[reponame] = repodata
         else:
@@ -90,6 +93,43 @@ class KiwiBuilder:
             sys.exit(1)
 
         return self
+
+    def _import_repokey(self, url: str, reponame: str, g_path: str) -> None:
+        """
+        Extract repository keys ID and download pub key from ubuntu keyserver
+        """
+        try:
+            # Create temporary files for Release.gpg and Release
+            with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release_gpg:
+                temp_release_gpg.write(requests.get(f"{url}/Release.gpg", allow_redirects=True).content)
+                temp_release_gpg_path: str = temp_release_gpg.name
+
+            with tempfile.NamedTemporaryFile(dir=self._tmpdir, delete=False) as temp_release:
+                temp_release.write(requests.get(f"{url}/Release", allow_redirects=True).content)
+                temp_release_path: str = temp_release.name
+
+            # Extract Key ID
+            command: str = f'gpg --keyid-format long --verify {temp_release_gpg_path}  {temp_release_path}'
+            result: subprocess.CompletedProcess[str] = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            key_id_pattern: str = r'using \w+ key ([0-9A-F]+)'
+            key_match: str = re.search(key_id_pattern, str(result))
+
+            if key_match:
+                key_id: str = key_match.group(1)
+                # Download Key
+                url_k: str = f'http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x{key_id}'
+                response: requests.Response = requests.get(url_k, allow_redirects=True)
+                with open(g_path, "wb") as f_rel:
+                    f_rel.write(response.content)
+            else:
+                print(f"Error: Failed to extract Key ID from '{reponame}'")
+
+        except requests.RequestException as req_err:
+            print(f"Request error: {req_err}")
+        except subprocess.CalledProcessError as cmd_err:
+            print(f"Command execution error: {cmd_err}")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
     def _get_repokeys(self, reponame: str, repodata:Dict[str, str]) -> str:
         """
@@ -106,9 +146,8 @@ class KiwiBuilder:
         g_path:str = os.path.join(self._tmpdir, f"{reponame}_release.key")
 
         if repodata.get("components", "/") != "/":
-            s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'dists', repodata['name'])
-            # TODO: grab standard keys
-            g_path = ""
+            s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
+            self._import_repokey(s_url, reponame, g_path)
             return g_path
         else:
             s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'Release.key')
