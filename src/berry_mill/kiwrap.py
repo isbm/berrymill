@@ -123,32 +123,36 @@ class KiwiBuilder:
         """
         Change the file:// URIs in the repo key values to be relative to the boxroot
         """
+        if not self._boxtmpkeydir:
+            raise Exception("Key directory not available")
+        if not repo_key_path:
+            raise Exception("Key path not defined")
         return "file:///" + \
                quote( \
                os.path.join( \
                os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
 
     def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
-            k = repodata.get("key")
-            # key can never be none due to .setdefault() in _get_repo_keys
-            parsed_url = urlparse(k)
-            if not parsed_url.path:
-                print("Berrymill was not able to retrieve a fitting gpg key")
-                if os.path.exists(self._trusted_gpg_d):
-                    print("Trusted keys found on system")
-                    keylist:List[str] = os.listdir(self._trusted_gpg_d)
-                    selected = self._key_selection(reponame, keylist)
-                    if selected:
-                        repodata["key"] = ParseResult(scheme="file",
-                                                      path=os.path.join(self._trusted_gpg_d, selected),
-                                                      params=None, query=None, fragment=None,
-                                                      netloc=None).geturl()
-                        self._check_repokey(repodata, reponame)
-                        return
-            if not os.path.exists(parsed_url.path):
-                print(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
-                self._cleanup()
-                sys.exit(1)
+        if not repodata.get("key"):
+            raise Exception("Path to the key is not defined")
+        parsed_url = urlparse(repodata.get("key"))
+        if not parsed_url.path:
+            print("Berrymill was not able to retrieve a fitting gpg key")
+            if os.path.exists(self._trusted_gpg_d):
+                keylist:List[str] = os.listdir(self._trusted_gpg_d)
+                selected = self._key_selection(reponame, keylist)
+                if selected:
+                    repodata["key"] = ParseResult(scheme="file",
+                                                path=os.path.join(self._trusted_gpg_d, selected),
+                                                params=None, query=None, fragment=None,
+                                                netloc=None).geturl()
+                    self._check_repokey(repodata, reponame)
+                    return
+            else:
+                print("Trusted key not foud on system")
+        if not os.path.exists(parsed_url.path):
+            self._cleanup()
+            Exception(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
 
     def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
         """
@@ -156,6 +160,8 @@ class KiwiBuilder:
         It expects a file:// uri to be present in repos[reponame][key]
         """
         dst = self._boxtmpkeydir
+        if not dst:
+            raise Exception("ERROR: Boxroot directory is not defined")
 
         for reponame in repos:
             k = repos.get(reponame, {}).get("key")
@@ -169,19 +175,24 @@ class KiwiBuilder:
                 sys.exit(1)
             repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
+
     def _cleanup(self) -> None:
         """
         Cleanup the environment after the build
         """
         print("Cleaning up...")
-        shutil.rmtree(self._tmpdir)
-        if not self._params.get("local", False):
-            shutil.rmtree(self._boxtmpkeydir)
-            shutil.rmtree(self._boxtmpargdir)
-            if self._fcleanbox:
-                # if Flag fcleanbox is true an empty boxroot is guranteed to exist
-                shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
-        print("Finished")
+        try:
+            shutil.rmtree(self._tmpdir)
+            if not self._params.get("local", False):
+                shutil.rmtree(self._boxtmpkeydir)
+                shutil.rmtree(self._boxtmpargdir)
+                if self._fcleanbox:
+                    # if Flag fcleanbox is true an empty boxroot is guranteed to exist
+                    shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
+        except Exception as e:
+            print(f"Error: Cleanup Failed : {e}")
+
+        print("Cleanup finished")
 
     def _key_selection(self, reponame:str, options:List[str]) -> str | None:
         none_of_above = "none of the above"
@@ -279,6 +290,7 @@ class KiwiBuilder:
                     + ["--target-dir", target_dir] 
 
             try:
+                print("Starting Kiwi for local build")                
                 KiwiAppLocal(command, repos=self._repos).run()
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)
@@ -291,6 +303,7 @@ class KiwiBuilder:
                     + ["--", "--description", '.'] + ["--target-dir", target_dir]\
 
             try:
+                print("Starting Kiwi Box")
                 KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)

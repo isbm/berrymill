@@ -3,3 +3,4 @@ kiwi-boxed-plugin
 inquirer
 pytest
 typing_extensions
+qemu

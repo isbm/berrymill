@@ -129,3 +129,222 @@ class TestCollectionKiwiBuilder:
             KiwiBuilder_instance._get_repokeys(reponame, repodata)
         except Exception as e:
             assert "Repository data not defined" in str(e)
+
+    def test_kiwrap_get_relative_file_uri(self):
+        """
+        Test: get_relative_file_uri without key directory defined
+        Expected: Exception Repository data not defined
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Define some test data
+            repo_key_path: str = "path/to/key"
+            KiwiBuilder_instance._boxtmpkeydir: str = ""
+
+            KiwiBuilder_instance._get_relative_file_uri(repo_key_path)
+        except Exception as e:
+            assert "Key directory not available" in str(e)
+
+    def test_kiwrap_get_relative_file_uri(self):
+        """
+        Test: get_relative_file_uri without key directory defined
+        Expected: Exception Repository data not defined
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Define some test data
+            repo_key_path: str = ""
+            KiwiBuilder_instance._boxtmpkeydir: str = "/tmp"
+
+            KiwiBuilder_instance._get_relative_file_uri(repo_key_path)
+        except Exception as e:
+            assert "Key path not defined" in str(e)
+
+    def test_kiwrap_check_repokey_no_key(self):
+        """
+        Test: _check_repokey without key defined
+        Expected: Exception Repository data not defined
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Define some test data
+            reponame: str = "test"
+            repodata: dict = {"name": "test", "url": "http://test", "key": ""}
+
+            KiwiBuilder_instance._check_repokey(repodata, reponame)
+        except Exception as e:
+            assert "Path to the key is not defined" in str(e)
+
+    def test_kiwrap_check_repokey_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
+        """
+        Test: _check_repokey without key defined and trusted key are defined 
+         under /etc/apt/trusted.gpg.d"
+        Expected: Berrymill was not able to retrieve a fitting gpg key
+        """
+
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+        with unittest.mock.patch.object(KiwiBuilder_instance, "_key_selection") as mock_key_selection:
+            # Define some test data
+            reponame: str = "test"
+            repodata: dict = {"name": "test", "url": "http://test", "key": "file://"}
+            mock_key_selection.return_value = ""
+            KiwiBuilder_instance._check_repokey(repodata, reponame)
+            # Capture the error message printed on stdout
+            captured: tuple = capsys.readouterr()
+            # Assert that the error message contains the expected error message
+            assert "Berrymill was not able to retrieve a fitting gpg key" in captured.out
+
+    def test_kiwrap_check_repokey_no_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
+        """
+        Test: _check_repokey with no key defined and no trusted key under /etc/apt/trusted.gpg.d"
+        Expected: Trusted key not foud on system
+        """
+
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+        
+        with unittest.mock.patch.object(KiwiBuilder_instance, "_key_selection") as mock_key_selection:
+            # Define some test data
+            reponame: str = "test"
+            repodata: dict = {"name": "test", "url": "http://test", "key": "file://"}
+            # Disable selection menu
+            mock_key_selection.return_value = ""
+            # Redirect for non existent dir 
+            KiwiBuilder_instance._trusted_gpg_d = "/wrong/path"
+            KiwiBuilder_instance._check_repokey(repodata, reponame)
+            # Capture the error message printed on stdout
+            captured: tuple = capsys.readouterr()
+            # Assert that the error message contains the expected error message
+            assert "Trusted key not foud on system" in captured.out
+
+    def test_kiwrap_write_repokeys_wrong_key_path(self, capsys: CaptureFixture):
+        """
+        Write repo keys while wrong key path in config
+        Expected : exit code 1 exception and error failure message
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Define some test data
+            reponame: str = "test"
+            repodata: dict = {"name": "test", "url": "https://www.example.com", "key": "file:///wrong/path"}
+            repo = {reponame:repodata}
+
+            KiwiBuilder_instance._write_repokeys_box(repo)
+            # Capture the error message printed on stdout
+            captured: tuple = capsys.readouterr()
+            # Assert that the error message contains the expected error message
+            assert "Failure while trying to copying the keyfile" in captured.out
+        except SystemExit as e:
+            assert e.code == 1
+
+    def test_kiwrap_write_repokeys_box_root_dest(self):
+        """
+        Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: exit code 1 and Boxroot directory is not defined exception
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # Override tmp box root directory destination path
+            KiwiBuilder_instance._boxtmpkeydir: str =""
+            # Define some test data
+            reponame: str = "test"
+            repodata: dict = {"name": "test", "url": "https://www.example.com", "key": "file:///wrong/path"}
+            repo = {reponame:repodata}
+
+            KiwiBuilder_instance._write_repokeys_box(repo)
+        except SystemExit as e:
+            assert e.code == 1
+        except Exception as ex:
+            assert "Boxroot directory is not defined" in str(ex)
+
+    def test_kiwrap__cleanup_no_tmpdir(self, capsys: CaptureFixture):
+        """
+        Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: Error Cleanup Failed
+        """
+
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+        # Set tmpdir to empty
+        KiwiBuilder_instance._tmpdir: str =""
+
+        KiwiBuilder_instance._cleanup()
+        # Capture the error message printed on stdout
+        captured: tuple = capsys.readouterr()
+        # Assert that the error message contains the expected error message
+        assert "Error: Cleanup Failed" in captured.out
+
+    def test_kiwrap_cleanup_no_boxtmpdiraaa(self, capsys: CaptureFixture):
+        """
+        Write repo keys from tmp dir to a wrong boxroot destination
+        Expected: Error Cleanup Failed
+        """
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+        # Set tmpdir
+        KiwiBuilder_instance._tmpdir: str = "/tmp"
+        # Set wrok box tmp dir
+        KiwiBuilder_instance._boxtmpkeydir: str = "worng/path"
+        KiwiBuilder_instance._cleanup()
+        # Capture the error message printed on stdout
+        captured: tuple = capsys.readouterr()        
+        assert "Error: Cleanup Failed" in captured.out
+    
+    def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
+        """
+        Parse wrong appliance
+        Expected: exit 1 and error Expected: failed to load external entity
+        """
+        try:
+            # Create KiwiBuilder instance with wrong appliance
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
+            # trigger the build
+            KiwiBuilder_instance.build()        
+        except SystemExit as se:
+            cap: tuple = capsys.readouterr()
+            assert "failed to load external entity" in cap.out              
+            assert se.code == 1
+          
+    def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config no profie
+        Expected: exit 1 and error Expected: No Profile selected
+        """
+        try:
+            # Create KiwiBuilder instance with existant appliance
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            # Remove profile
+            KiwiBuilder_instance._params["profile"] = ""
+            # Trigger the build
+            KiwiBuilder_instance.build()
+            captured: tuple = capsys.readouterr()
+            assert "No Profile selected" in captured.out
+        except SystemExit as se:
+            assert se.code == 1
+
+    @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
+    def test_kiwrap_build_with_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi Box"
+        """
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+        # Set profile
+        KiwiBuilder_instance._params["profile"] = "Live"
+        KiwiBuilder_instance.build()
+        captured: tuple = capsys.readouterr()
+        assert "Starting Kiwi Box" in captured.out
+
+    def test_kiwrap_build_with_local_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi for local build"
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            # Set profile
+            KiwiBuilder_instance._params["profile"] = "Live"
+            # Set local build
+            KiwiBuilder_instance._params["local"] = True
+            KiwiBuilder_instance.build()
+            captured: tuple = capsys.readouterr()
+            assert "Starting Kiwi for local build" in captured.out
+        except SystemExit as e:
+            print("Ignoring root permission error")
