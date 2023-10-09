@@ -25,3 +25,9 @@ class TestImgDescr_Packages:
         """
         assert "schemaversion" in self.ad.s_dom.attrib, "Schema is missing"
         assert "name" in self.ad.s_dom.attrib, "Name is missing"
+
+    def test_id_pkg_resolve_inherit(self):
+        """
+        Resolve links: inherit
+        """
+        assert self.ad.s_dom.find("inherit") is not None, "Appliance description has to have inheritance"
