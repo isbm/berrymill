@@ -66,3 +66,9 @@ class TestImgDescr_Packages:
         assert len(pkg) == 1, "Should be one package in the aggregate"
         assert "name" in pkg[0].attrib, "Should have name attribute"
         assert pkg[0].attrib["name"] == "dracula-kiwi-salad", "Should have a proper package name"
+
+    def test_id_pkg_export(self):
+        """
+        Rough test for overall export
+        """
+        assert "humperdoo" in self.ad.to_str(), "No fun"
