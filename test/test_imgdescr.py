@@ -7,8 +7,21 @@ class TestImgDescr_Packages:
     Unit test suite for `<packages/>` aggregate.
     """
 
-    def test_id_pkg_replace(self):
+    def setup_method(self, method):
         """
-        Replace `<packages/>`.
+        Setup test method
         """
-        assert 1 == 1
+        self.ad = ApplianceDescription(open("test/test_appliance.xml").read())
+
+    def teardown_method(self, method):
+        """
+        Teardown test results
+        """
+        del self.ad
+
+    def test_id_pkg_init(self):
+        """
+        Initial parse
+        """
+        assert "schemaversion" in self.ad.dom_tree.attrib, "Schema is missing"
+        assert "name" in self.ad.dom_tree.attrib, "Name is missing"
