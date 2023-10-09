@@ -5,13 +5,6 @@ import xml.dom.minidom
 from typing import Any
 import xml.etree.ElementTree as ET
 
-def p(d):
-    out = []
-    for x in xml.dom.minidom.parseString(d).toprettyxml(indent="  ").split("\n"):
-        if x.strip():
-            out.append(x.rstrip())
-    print("\n".join(out))
-
 class ApplianceDescription:
     __INHERIT = "inherit"
     __P_AD = "add"
@@ -25,7 +18,17 @@ class ApplianceDescription:
         self._resolve()
         self._apply()
 
-        p(ET.tostring(self.p_dom, encoding="utf-8").decode("utf-8"))
+
+    def to_str(self) -> str:
+        """
+        Export appliance description to an XML string.
+        """
+        out = []
+        for l in xml.dom.minidom.parseString(ET.tostring(self.p_dom, encoding="utf-8")
+                                             .decode("utf-8")).toprettyxml(indent="  ").split("\n"):
+            if l.strip():
+                out.append(l.rstrip())
+        return "\n".join(out)
 
     def _resolve(self):
         """
