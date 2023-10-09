@@ -1,20 +1,17 @@
 
-import sys
-sys.path.append("./src")
-
-import pytest
-import requests
-
-from berry_mill.kiwrap import KiwiBuilder
-
-import unittest.mock
 from _pytest.capture import CaptureFixture
+import unittest.mock
+from berry_mill.kiwrap import KiwiBuilder
+import requests
+import pytest
+
 
 class TestCollectionKiwiBuilder:
     """
     Test class KiwiBuilder
     Tests the add_repo(), get_repokeys() use cases
     """
+
     def test_kiwrap_add_repo(self):
         """
         Verify that repo name and repo data: url, key, type.. are added correctly

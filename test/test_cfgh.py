@@ -1,8 +1,10 @@
-import sys
-sys.path.append("./src/berry_mill")
-
+from _pytest.capture import CaptureFixture
+import yaml
+import os
+import tempfile
+from berry_mill.cfgh import ConfigHandler, Autodict
 import pytest
-from cfgh import ConfigHandler, Autodict
+
 
 """
 Test class for Autodict
