@@ -23,5 +23,5 @@ class TestImgDescr_Packages:
         """
         Initial parse
         """
-        assert "schemaversion" in self.ad.dom_tree.attrib, "Schema is missing"
-        assert "name" in self.ad.dom_tree.attrib, "Name is missing"
+        assert "schemaversion" in self.ad.s_dom.attrib, "Schema is missing"
+        assert "name" in self.ad.s_dom.attrib, "Name is missing"
