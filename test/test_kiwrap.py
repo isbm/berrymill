@@ -38,7 +38,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap_add_repo_no_url(self):
         """
         Test: add_repo() method with wrong url
-        Expected : Exception URL not found 
+        Expected : Exception URL not found
         """
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
@@ -52,7 +52,7 @@ class TestCollectionKiwiBuilder:
     def test_kiwrap_add_repo_no_repo_name(self, capsys: CaptureFixture):
         """
         Test: add_repo() without repo name defined
-        Expected: 
+        Expected:
           Exception Repository name not defined
           Exit code 1
         """
@@ -174,7 +174,7 @@ class TestCollectionKiwiBuilder:
 
     def test_kiwrap_check_repokey_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
         """
-        Test: _check_repokey without key defined and trusted key are defined 
+        Test: _check_repokey without key defined and trusted key are defined
          under /etc/apt/trusted.gpg.d"
         Expected: Berrymill was not able to retrieve a fitting gpg key
         """
@@ -198,14 +198,14 @@ class TestCollectionKiwiBuilder:
         """
 
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
-        
+
         with unittest.mock.patch.object(KiwiBuilder_instance, "_key_selection") as mock_key_selection:
             # Define some test data
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "http://test", "key": "file://"}
             # Disable selection menu
             mock_key_selection.return_value = ""
-            # Redirect for non existent dir 
+            # Redirect for non existent dir
             KiwiBuilder_instance._trusted_gpg_d = "/wrong/path"
             KiwiBuilder_instance._check_repokey(repodata, reponame)
             # Capture the error message printed on stdout
@@ -223,7 +223,7 @@ class TestCollectionKiwiBuilder:
             # Define some test data
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "https://www.example.com", "key": "file:///wrong/path"}
-            repo = {reponame:repodata}
+            repo = {reponame: repodata}
 
             KiwiBuilder_instance._write_repokeys_box(repo)
             # Capture the error message printed on stdout
@@ -241,11 +241,11 @@ class TestCollectionKiwiBuilder:
         try:
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # Override tmp box root directory destination path
-            KiwiBuilder_instance._boxtmpkeydir: str =""
+            KiwiBuilder_instance._boxtmpkeydir: str = ""
             # Define some test data
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "https://www.example.com", "key": "file:///wrong/path"}
-            repo = {reponame:repodata}
+            repo = {reponame: repodata}
 
             KiwiBuilder_instance._write_repokeys_box(repo)
         except SystemExit as e:
@@ -261,7 +261,7 @@ class TestCollectionKiwiBuilder:
 
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
         # Set tmpdir to empty
-        KiwiBuilder_instance._tmpdir: str =""
+        KiwiBuilder_instance._tmpdir: str = ""
 
         KiwiBuilder_instance._cleanup()
         # Capture the error message printed on stdout
@@ -281,9 +281,9 @@ class TestCollectionKiwiBuilder:
         KiwiBuilder_instance._boxtmpkeydir: str = "worng/path"
         KiwiBuilder_instance._cleanup()
         # Capture the error message printed on stdout
-        captured: tuple = capsys.readouterr()        
+        captured: tuple = capsys.readouterr()
         assert "Error: Cleanup Failed" in captured.out
-    
+
     def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
         """
         Parse wrong appliance
@@ -293,12 +293,12 @@ class TestCollectionKiwiBuilder:
             # Create KiwiBuilder instance with wrong appliance
             KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
             # trigger the build
-            KiwiBuilder_instance.build()        
+            KiwiBuilder_instance.build()
         except SystemExit as se:
             cap: tuple = capsys.readouterr()
-            assert "failed to load external entity" in cap.out              
+            assert "failed to load external entity" in cap.out
             assert se.code == 1
-          
+
     def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
         """
         Test config no profie
