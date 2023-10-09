@@ -1,0 +1,1 @@
+from berry_mill.imgdescr.descr import ApplianceDescription
