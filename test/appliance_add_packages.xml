@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Assuming "test_appliance.xml" is in the same directory -->
+<image schemaversion="6.8" name="Ubuntu-22.04_appliance">
+    <inherit path="test/test_appliance.xml"/>
+
+    <!-- Add -->
+    <add>
+        <packages type="image">
+            <package name="humperdoo"/>
+        </packages>
+
+        <!-- Add the whole section -->
+        <packages type="delete">
+            <package name="dracula-kiwi-salad" />
+        </packages>
+    </add>
+</image>
