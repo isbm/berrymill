@@ -4,15 +4,42 @@
 <image schemaversion="6.8" name="Ubuntu-22.04_appliance">
     <inherit path="test/test_appliance.xml"/>
 
-    <!-- Add -->
+    <!-- Remove specific data -->
+    <remove>
+        <!--
+            Remove a specific package, as only
+            the last element is removed, while parents are
+            just "qualifiers" to set the proper matching.
+        -->
+        <packages type="oem">
+            <package name="dracut-kiwi-oem-dump"/>
+        </packages>
+
+        <!-- Remove the entire aggregate -->
+        <packages type="iso" />
+    </remove>
+
+    <!-- Add specific data -->
     <add>
         <packages type="image">
             <package name="humperdoo"/>
         </packages>
 
-        <!-- Add the whole section -->
+        <!-- Add an aggregate as it doesn't exist yet -->
         <packages type="delete">
             <package name="dracula-kiwi-salad" />
         </packages>
     </add>
+
+    <!--
+        Replace and merge works only on aggregates.
+
+        For individual tags e.g. "<repository/>", it should be first
+        removed, then added back differently.
+    -->
+    <merge>
+    </merge>
+
+    <replace>
+    </replace>
 </image>
