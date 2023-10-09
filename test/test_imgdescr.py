@@ -31,3 +31,23 @@ class TestImgDescr_Packages:
         Resolve links: inherit
         """
         assert self.ad.s_dom.find("inherit") is not None, "Appliance description has to have inheritance"
+
+    def test_id_pkg_resolve_add_one_package(self):
+        """
+        Add one package
+        """
+        pkgs = None
+        for aggr in self.ad.p_dom.findall("packages"):
+            if aggr.attrib["type"] == "image":
+                pkgs = aggr
+                break
+
+        assert pkgs is not None, "Package for the images are missing"
+
+        found = False
+        for p in pkgs:
+            if p.attrib["name"] == "humperdoo":
+                found = True
+                break
+
+        assert found, "Humperdoo ran away :)"
