@@ -19,12 +19,13 @@ class ApplianceDescription:
         self._apply()
 
 
-    def to_str(self) -> str:
+
+    def to_str(self, node: ET.Element = None) -> str:
         """
         Export appliance description to an XML string.
         """
         out = []
-        for l in xml.dom.minidom.parseString(ET.tostring(self.p_dom, encoding="utf-8")
+        for l in xml.dom.minidom.parseString(ET.tostring(node or self.p_dom, encoding="utf-8")
                                              .decode("utf-8")).toprettyxml(indent="  ").split("\n"):
             if l.strip():
                 out.append(l.rstrip())
