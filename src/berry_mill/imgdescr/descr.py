@@ -145,10 +145,26 @@ class ApplianceDescription:
                         p = self.get_parent(self.p_dom, tc)
                         p is not None and p.remove(tc)
 
+    @frame
     def _merge(self, e: ET.Element):
         """
         Merge inherited elements
         """
+        s_tag = ApplianceDescription.get_next(e)
+        if s_tag is None:
+            return
+
+        e_xp: str = "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame])
+        for t_tag in ApplianceDescription.find_all(s_tag.tag, self.p_dom, s_tag.attrib):
+            if self.get_xpath(t_tag) == e_xp:
+                for sc in s_tag:
+                    is_new = True
+                    for tc in t_tag:
+                        if tc.tag == sc.tag:
+                            is_new = False
+                            break
+                    if is_new:
+                        t_tag.append(sc)
 
     def _replace(self, e: ET.Element):
         """
