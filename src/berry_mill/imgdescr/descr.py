@@ -101,6 +101,7 @@ class ApplianceDescription:
             if s_tag is not None:
                 return s_tag
 
+    def _add(self, e: ET.Element) -> None:
         """
         Add inherited elements
         """
@@ -123,7 +124,7 @@ class ApplianceDescription:
                 p is not None and p.append(c)
 
     @frame
-    def _remove(self, e: ET.Element):
+    def _remove(self, e: ET.Element) -> None:
         """
         Remove inherited elements
         """
@@ -146,7 +147,7 @@ class ApplianceDescription:
                         p is not None and p.remove(tc)
 
     @frame
-    def _merge(self, e: ET.Element):
+    def _merge(self, e: ET.Element) -> None:
         """
         Merge inherited elements
         """
@@ -166,7 +167,7 @@ class ApplianceDescription:
                     if is_new:
                         t_tag.append(sc)
 
-    def _replace(self, e: ET.Element):
+    def _replace(self, e: ET.Element) -> None:
         """
         Replace inherited elements
         """
