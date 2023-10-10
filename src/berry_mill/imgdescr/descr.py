@@ -53,12 +53,12 @@ class ApplianceDescription:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
 
     @staticmethod
-    def find_all(name: str, e: ET.Element) -> set[ET.Element]:
+    def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
         nodes = []
         for c in e:
-            if c.tag == name:
+            if c.tag == name and (not attrs or c.attrib == attrs):
                 nodes.append(c)
-            nodes.extend(ApplianceDescription.find_all(name, c))
+            nodes.extend(ApplianceDescription.find_all(name, c, attrs=attrs))
         return nodes
 
     @staticmethod
