@@ -47,3 +47,11 @@ class TestImgDescr_ApplianceDescription_Static:
         out:set[ET.Element] = ApplianceDescription.find_all("baz", xd)
 
         assert len(out) == 3, "Data should be length of 3"
+
+    def test_find_all_many_names(self):
+        """
+        Test find_all() static method
+        """
+        xd: Any = ET.fromstring("<foo><bar><baz>some</baz><baz>more</baz><baz>data</baz></bar></foo>".encode("utf-8"))
+        for t in ApplianceDescription.find_all("baz", xd):
+            assert t.tag == "baz", "Baz should be baz!"
