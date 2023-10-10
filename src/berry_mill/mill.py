@@ -63,6 +63,9 @@ class ImageMill:
         """
         Initialise local repositories, those are already configured on the local machine.
         """
+        if not self.cfg.raw_unsafe_config().get("use-global-repos", False): 
+            return
+
         if self.cfg.raw_unsafe_config()["repos"].get("local") is not None:
             return
         else:
@@ -81,7 +84,7 @@ class ImageMill:
         Build an image
         """
 
-        # self._init_local_repos()
+        self._init_local_repos()
 
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
@@ -104,6 +107,9 @@ class ImageMill:
                         local= self.args.local,
                         target_dir= self.args.target_dir
                         )
+        # cross implies a amd64 host and an arm64 target-arch 
+        if self.args.cross:
+            self.args.arch = "arm64"
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
                 b.add_repo(rname, repo)
