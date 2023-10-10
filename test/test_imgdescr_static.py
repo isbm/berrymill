@@ -88,3 +88,10 @@ class TestImgDescr_ApplianceDescription_Static:
         """
         assert ApplianceDescription.get_parent(ET.fromstring("<foo><baz>data</baz></foo>".encode("utf-8")),
                                                ET.Element("junk")) is None, "Humperdoo does not likes junk"
+
+    def test_get_next(self):
+        """
+        Test get_next() static method
+        """
+        p: ET.Element = ApplianceDescription.find_all("packages", self.dom, {"type": "image"})[0]
+        assert ApplianceDescription.get_next(p).attrib["name"] == "humperdoo", "Humperdoo is missing"
