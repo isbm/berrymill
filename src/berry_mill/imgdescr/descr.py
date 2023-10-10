@@ -75,12 +75,6 @@ class ApplianceDescription:
                     return itm
 
     @staticmethod
-    def get_next(e) -> ET.Element:
-        if len(e):
-            for c in e:
-                return c
-
-    @staticmethod
     def get_xpath(e) -> str:
         path = [e.tag]
         parent = e
@@ -100,7 +94,13 @@ class ApplianceDescription:
 
         return out
 
-    def _add(self, e: ET.Element):
+    @staticmethod
+    def get_next(e: ET.Element) -> ET.Element|None:
+        for s_tag in e:
+            if isinstance(s_tag, ET._Comment): continue
+            if s_tag is not None:
+                return s_tag
+
         """
         Add inherited elements
         """
