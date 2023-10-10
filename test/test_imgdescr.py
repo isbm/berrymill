@@ -63,6 +63,17 @@ class TestImgDescr_Packages:
                 break
 
         assert pkg is not None, "Packages for deletion should be found"
+
+    def test_id_pkg_resolve_add_packages_aggregate_content(self):
+        """
+        Add <packages type="delete"/> aggregate
+        """
+        pkg = None
+        for aggr in self.ad.p_dom.findall("packages"):
+            if aggr.attrib.get("type") == "delete":
+                pkg = aggr.findall("package")
+                break
+
         assert len(pkg) == 1, "Should be one package in the aggregate"
         assert "name" in pkg[0].attrib, "Should have name attribute"
         assert pkg[0].attrib["name"] == "dracula-kiwi-salad", "Should have a proper package name"
