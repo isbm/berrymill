@@ -108,4 +108,9 @@ class ImageMill:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
                 b.add_repo(rname, repo)
 
-        b.build()
+        try:
+            b.build()
+        except Exception as exc:
+            print(exc)
+        finally:
+            b.cleanup()

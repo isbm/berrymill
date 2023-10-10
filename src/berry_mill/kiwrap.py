@@ -151,7 +151,6 @@ class KiwiBuilder:
             else:
                 print("Trusted key not foud on system")
         if not os.path.exists(parsed_url.path):
-            self._cleanup()
             Exception(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
 
     def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
@@ -171,12 +170,11 @@ class KiwiBuilder:
             except Exception as exc:
                 print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
                 print(exc)
-                self._cleanup()
-                sys.exit(1)
+                return
             repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
 
-    def _cleanup(self) -> None:
+    def cleanup(self) -> None:
         """
         Cleanup the environment after the build
         """
@@ -208,8 +206,7 @@ class KiwiBuilder:
         print("You selected:", answer["choice"])
 
         return answer["choice"] != none_of_above and answer["choice"] or None
-
-
+    
     def build(self) -> None:
         """
         Run builder. It supposed to be already within that directory (os.chdir).
@@ -259,18 +256,15 @@ class KiwiBuilder:
         profiles = config_tree.xpath("//profile/@name")
 
         if not self._params.get("profile") and profiles:
-            print("No Profile selected.")
-            print("Please select one of the available following profiles using --profile:")
-            print(profiles)
-            self._cleanup()
-            sys.exit(1)
+            raise Exception(f"No Profile selected\n \
+                            Please select one of the available following profiles using --profile:\n\
+                            {profiles}")
 
         if self._params.get("profile"):
             profile = self._params.get("profile")
             if profile in profiles:
                 kiwi_options += ["--profile", profile]
             else:
-                self._cleanup()
                 raise Exception(f"\'{profile}\' is not a valid profile. Available: {profiles}")
 
 
@@ -295,8 +289,7 @@ class KiwiBuilder:
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)
                 print(kiwierr)
-                self._cleanup()
-                sys.exit(1)
+                return
         else:
             command = ["kiwi-ng"]+ kiwi_options\
                     + ["system", "boxbuild"] + box_options\
@@ -308,12 +301,9 @@ class KiwiBuilder:
             except KiwiError as kiwierr:
                 print("KiwiError:", type(kiwierr).__name__)
                 print(kiwierr)
-                self._cleanup()
-                sys.exit(1)
+                return
 
         # run kiwi here with "appliance_init" which is a ".kiwi" file
         os.system("ls -lah")
 
         print(self._repos)
-
-        self._cleanup()
