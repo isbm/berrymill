@@ -25,7 +25,7 @@ class ApplianceDescription:
         Export appliance description to an XML string.
         """
         out = []
-        for l in xml.dom.minidom.parseString(ET.tostring(node or self.p_dom, encoding="utf-8")
+        for l in xml.dom.minidom.parseString(ET.tostring(node if node is not None else self.p_dom, encoding="utf-8")
                                              .decode("utf-8")).toprettyxml(indent="  ").split("\n"):
             if l.strip():
                 out.append(l.rstrip())
