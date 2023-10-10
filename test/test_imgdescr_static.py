@@ -72,3 +72,12 @@ class TestImgDescr_ApplianceDescription_Static:
         """
         xd: Any = ApplianceDescription.find_all("package", self.dom, {"name": "humperdoo"})
         assert xd[0].attrib["name"] == "humperdoo", "Humperdoo ran away somewhere"
+
+    def test_get_parent(self):
+        """
+        Test get_parent() static method
+        """
+        xd: Any = ApplianceDescription.get_parent(
+            self.dom, ApplianceDescription.find_all("package", self.dom, {"name": "humperdoo"})[0])
+
+        assert xd.attrib["type"] == "image", "Humperdoo liks to paint dags!"
