@@ -52,7 +52,7 @@ class TestImgDescr_Packages:
 
         assert found, "Humperdoo ran away :)"
 
-    def test_id_pkg_resolve_add_packages_aggregate(self):
+    def test_id_pkg_resolve_add_packages_aggregate_init(self):
         """
         Add <packages type="delete"/> aggregate
         """
