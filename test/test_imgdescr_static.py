@@ -65,3 +65,10 @@ class TestImgDescr_ApplianceDescription_Static:
         out:set[ET.Element] = ApplianceDescription.find_all("spam", xd)
 
         assert out == [], "Result should be an empty list"
+
+    def test_find_all_precise(self):
+        """
+        Test find_all() static method
+        """
+        xd: Any = ApplianceDescription.find_all("package", self.dom, {"name": "humperdoo"})
+        assert xd[0].attrib["name"] == "humperdoo", "Humperdoo ran away somewhere"
