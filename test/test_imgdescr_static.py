@@ -81,3 +81,10 @@ class TestImgDescr_ApplianceDescription_Static:
             self.dom, ApplianceDescription.find_all("package", self.dom, {"name": "humperdoo"})[0])
 
         assert xd.attrib["type"] == "image", "Humperdoo liks to paint dags!"
+
+    def test_get_parent_none(self):
+        """
+        Test get_parent() static method
+        """
+        xd: Any = ET.fromstring("<foo><baz>data</baz></foo>".encode("utf-8"))
+        assert ApplianceDescription.get_parent(xd, ET.Element("junk")) is None, "Humperdoo does not likes junk"
