@@ -29,3 +29,12 @@ class TestImgDescr_ApplianceDescription_Static:
         out:set[ET.Element] = ApplianceDescription.find_all("baz", xd)
 
         assert out is not None and len(out) == 1, "Should be something, right?"
+
+    def test_find_all_one_name(self):
+        """
+        Test find_all() static method
+        """
+        xd: Any = ET.fromstring("<foo><bar><baz>data</baz></bar></foo>".encode("utf-8"))
+        out:set[ET.Element] = ApplianceDescription.find_all("baz", xd)
+
+        assert list(out)[0].tag == "baz", "No baz, no bar!"
