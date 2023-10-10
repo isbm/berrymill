@@ -105,3 +105,11 @@ class TestImgDescr_Packages:
         Rough test for overall export
         """
         assert "humperdoo" in self.ad.to_str(), "No fun"
+
+    def test_id_pkg_remove_aggregate(self):
+        """
+        Remove one aggregate
+        """
+        for aggr in self.ad.p_dom.findall("packages"):
+            if aggr.attrib.get("type") == "iso":
+                assert False, "No ISO images supposed to be made"
