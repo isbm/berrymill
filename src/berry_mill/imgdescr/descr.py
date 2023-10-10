@@ -3,7 +3,7 @@ from __future__ import annotations
 import os.path
 import xml.dom.minidom
 from typing import Any
-import xml.etree.ElementTree as ET
+import lxml.etree as ET
 
 class ApplianceDescription:
     __INHERIT = "inherit"
@@ -13,7 +13,7 @@ class ApplianceDescription:
     __P_RP = "replace"
 
     def __init__(self, descr: str) -> ApplianceDescription:
-        self.s_dom: ET.Element = ET.fromstring(descr)
+        self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
         self.p_dom: ET.Element = None
         self._resolve()
         self._apply()
@@ -41,7 +41,7 @@ class ApplianceDescription:
         assert os.path.exists(self.p_dom.attrib["path"]), "Unable to find inherited description"
 
         with open(self.p_dom.attrib["path"]) as ihf:
-            self.p_dom = ET.fromstring(ihf.read())
+            self.p_dom = ET.fromstring(ihf.read().encode("utf-8"))
 
     def _apply(self):
         """
