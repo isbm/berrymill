@@ -52,6 +52,12 @@ class ApplianceDescription:
             if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP]:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
 
+    def frame(f):
+        def w(ref, *a, **kw):
+            f.__globals__["frame"] = f.__code__.co_name[1:]
+            return f(ref, *a, **kw)
+        return w
+
     @staticmethod
     def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
         nodes = []
@@ -116,6 +122,7 @@ class ApplianceDescription:
                 p = self.get_parent(self.p_dom, tc)
                 p is not None and p.append(c)
 
+    @frame
     def _remove(self, e: ET.Element):
         """
         Remove inherited elements
@@ -126,7 +133,7 @@ class ApplianceDescription:
                 tgt_aggr: ET.Element = None
                 for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
                     if tgt_aggr.attrib == s_tag.attrib and \
-                        "/".join([x for x in self.get_xpath(s_tag).split("/") if x != "remove"]) == self.get_xpath(tgt_aggr):
+                        "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame]) == self.get_xpath(tgt_aggr):
                         for r_tag in ApplianceDescription.get_last(s_tag):
                             for t_tag in ApplianceDescription.get_last(tgt_aggr):
                                 if t_tag.attrib == r_tag.attrib:
