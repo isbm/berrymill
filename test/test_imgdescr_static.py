@@ -102,3 +102,10 @@ class TestImgDescr_ApplianceDescription_Static:
         """
         p: ET.Element = ApplianceDescription.find_all("package", self.dom, {"name": "humperdoo"})[0]
         assert ApplianceDescription.get_xpath(p) == "/image/add/packages/package", "Humperdoo is somewhere else"
+
+    def test_get_last(self):
+        """
+        Test get_xpath() static method
+        """
+        p: ET.Element = ApplianceDescription.find_all("packages", self.dom, {"type": "image"})[0]
+        assert ApplianceDescription.get_last(p)[0].attrib["name"] == "humperdoo", "Humperdoo was not found"
