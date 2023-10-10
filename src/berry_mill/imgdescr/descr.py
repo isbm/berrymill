@@ -68,6 +68,26 @@ class ApplianceDescription:
                 if c == e:
                     return itm
 
+    @staticmethod
+    def get_xpath(e):
+        path = [e.tag]
+        parent = e
+        while parent.getparent() is not None:
+            parent = parent.getparent()
+            path.insert(0, parent.tag)
+        return '/' + '/'.join(path)
+
+    @staticmethod
+    def get_last(e: ET.Element) -> list[ET.Element]:
+        out: list[ET.Element] = []
+        if len(e):
+            for c in e:
+                out.extend(ApplianceDescription.get_last(c))
+        else:
+            out.append(e)
+
+        return out
+
     def _add(self, e: ET.Element):
         """
         Add inherited elements
@@ -94,6 +114,23 @@ class ApplianceDescription:
         """
         Remove inherited elements
         """
+        for s_tag in e:
+            if len(s_tag):
+                # Aggregate
+                tgt_aggr: ET.Element = None
+                for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
+                    if tgt_aggr.attrib == s_tag.attrib and \
+                        "/".join([x for x in self.get_xpath(s_tag).split("/") if x != "remove"]) == self.get_xpath(tgt_aggr):
+                        for r_tag in ApplianceDescription.get_last(s_tag):
+                            for t_tag in ApplianceDescription.get_last(tgt_aggr):
+                                if t_tag.attrib == r_tag.attrib:
+                                    t_tag.getparent().remove(t_tag)
+            else:
+                # Elements
+                for tc in self.find_all(s_tag.tag, self.p_dom):
+                    if s_tag.attrib == tc.attrib:
+                        p = self.get_parent(self.p_dom, tc)
+                        p and p.remove(tc)
 
     def _merge(self, e: ET.Element):
         """
