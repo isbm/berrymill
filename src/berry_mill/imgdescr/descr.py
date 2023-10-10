@@ -69,6 +69,12 @@ class ApplianceDescription:
                     return itm
 
     @staticmethod
+    def get_next(e) -> ET.Element:
+        if len(e):
+            for c in e:
+                return c
+
+    @staticmethod
     def get_xpath(e):
         path = [e.tag]
         parent = e
