@@ -55,3 +55,12 @@ class TestImgDescr_ApplianceDescription_Static:
         xd: Any = ET.fromstring("<foo><bar><baz>some</baz><baz>more</baz><baz>data</baz></bar></foo>".encode("utf-8"))
         for t in ApplianceDescription.find_all("baz", xd):
             assert t.tag == "baz", "Baz should be baz!"
+
+    def test_find_all_none(self):
+        """
+        Test find_all() static method
+        """
+        xd: Any = ET.fromstring("<foo><bar><baz>data</baz></bar></foo>".encode("utf-8"))
+        out:set[ET.Element] = ApplianceDescription.find_all("spam", xd)
+
+        assert out == [], "Result should be an empty list"
