@@ -86,5 +86,5 @@ class TestImgDescr_ApplianceDescription_Static:
         """
         Test get_parent() static method
         """
-        xd: Any = ET.fromstring("<foo><baz>data</baz></foo>".encode("utf-8"))
-        assert ApplianceDescription.get_parent(xd, ET.Element("junk")) is None, "Humperdoo does not likes junk"
+        assert ApplianceDescription.get_parent(ET.fromstring("<foo><baz>data</baz></foo>".encode("utf-8")),
+                                               ET.Element("junk")) is None, "Humperdoo does not likes junk"
