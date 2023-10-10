@@ -41,5 +41,8 @@
     </merge>
 
     <replace>
+        <packages type="oem">
+            <package name="dragon-scary-yaki-combo"/>
+        </packages>
     </replace>
 </image>
