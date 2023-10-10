@@ -75,7 +75,7 @@ class ApplianceDescription:
                 return c
 
     @staticmethod
-    def get_xpath(e):
+    def get_xpath(e) -> str:
         path = [e.tag]
         parent = e
         while parent.getparent() is not None:
