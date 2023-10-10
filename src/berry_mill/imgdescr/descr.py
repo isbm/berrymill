@@ -147,3 +147,13 @@ class ApplianceDescription:
         """
         Replace inherited elements
         """
+        s_tag = ApplianceDescription.get_next(e)
+        if s_tag is None:
+            return
+
+        for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
+            if tgt_aggr.attrib == s_tag.attrib:
+                print(self.to_str(tgt_aggr))
+                p = tgt_aggr.getparent()
+                p.remove(tgt_aggr)
+                p is not None and p.append(s_tag)
