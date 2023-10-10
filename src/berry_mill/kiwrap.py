@@ -37,6 +37,7 @@ class KiwiParams(TypedDict):
     debug: bool
     clean: bool
     cross: bool
+    accel: bool
     cpu: str
     local: bool
     target_dir: str
@@ -50,10 +51,8 @@ class KiwiBuilder:
     def __init__(self, descr:str, **kw: Unpack[KiwiParams]):
         self._repos:Dict[str, Dict[str, str]] = {}
         self._appliance_path:str = os.getcwd()
-        print(self._appliance_path)
         self._appliance_descr:str = descr
         self._params:Dict[KiwiParams] = kw
-
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
@@ -62,7 +61,7 @@ class KiwiBuilder:
         self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
 
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
-        print(self._boxrootdir)
+
         self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
         if not self._params.get("local", False):
@@ -234,10 +233,15 @@ class KiwiBuilder:
         if machine() == "aarch64":
             box_options += ["--machine", "virt"]
 
+        allow_no_accel:bool = True
         # TODO: When using cross, e.g. cpu param needs to be disabled
         if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
+            allow_no_accel = False
+
+        if self._params.get("accel", False) and allow_no_accel:
+            box_options.append("--no-accel")
 
 
         try:
@@ -310,10 +314,5 @@ class KiwiBuilder:
                 print(kiwierr)
                 self._cleanup()
                 sys.exit(1)
-
-        # run kiwi here with "appliance_init" which is a ".kiwi" file
-        os.system("ls -lah")
-
-        print(self._repos)
 
         self._cleanup()

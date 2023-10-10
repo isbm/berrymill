@@ -2,7 +2,6 @@ import argparse
 import sys
 import os
 import yaml
-from platform import machine
 
 from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.kiwrap import KiwiBuilder
@@ -22,8 +21,8 @@ class ImageMill:
         if len(sys.argv) == 1:
             sys.argv.append("--help")
 
-        p:argparse.ArgumentParser = argparse.ArgumentParser(prog="imagemill",
-                                                            description="imagemill is a root filesystem generator for embedded devices",
+        p:argparse.ArgumentParser = argparse.ArgumentParser(prog="berrymill",
+                                                            description="berrymill is a root filesystem generator for embedded devices",
                                                             epilog="Have a lot of fun!")
         p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
         p.add_argument("-s", "--show-config", action="store_true", help="shows the building configuration")
@@ -37,6 +36,7 @@ class ImageMill:
         p.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
         p.add_argument("--target-dir", type=str, default="/tmp", help="store image results in given dirpath")
         p.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+        p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -102,7 +102,8 @@ class ImageMill:
                         cross= self.args.cross,
                         cpu= self.args.cpu,
                         local= self.args.local,
-                        target_dir= self.args.target_dir
+                        target_dir= self.args.target_dir,
+                        accel=self.args.no_accel
                         )
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
