@@ -1,6 +1,4 @@
 from berry_mill.imgdescr import ApplianceDescription
-import pytest
-
 
 class TestImgDescr_Packages:
     """
