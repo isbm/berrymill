@@ -171,7 +171,7 @@ class ApplianceDescription:
         """
         Replace inherited elements
         """
-        s_tag = ApplianceDescription.get_next(e)
+        s_tag:ET.Element = ApplianceDescription.get_next(e)
         if s_tag is None:
             return
 
