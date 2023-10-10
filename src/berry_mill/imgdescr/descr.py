@@ -114,7 +114,7 @@ class ApplianceDescription:
 
             if is_new:
                 p = self.get_parent(self.p_dom, tc)
-                p and p.append(c)
+                p is not None and p.append(c)
 
     def _remove(self, e: ET.Element):
         """
@@ -136,7 +136,7 @@ class ApplianceDescription:
                 for tc in self.find_all(s_tag.tag, self.p_dom):
                     if s_tag.attrib == tc.attrib:
                         p = self.get_parent(self.p_dom, tc)
-                        p and p.remove(tc)
+                        p is not None and p.remove(tc)
 
     def _merge(self, e: ET.Element):
         """
