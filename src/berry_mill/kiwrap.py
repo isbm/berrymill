@@ -17,6 +17,11 @@ from berry_mill.params import KiwiParams
 
 
 class KiwiParent:
+    """
+    Base Class for Kiwi Tasks, such as build and prepare
+    Implements shared functionality needed for all children
+    such as repository and global kiwi params handling
+    """
     def __init__(self, descr:str, **pkw: Unpack[KiwiParams]):
         self._repos:Dict[str, Dict[str, str]] = {}
         self._appliance_path:str = os.getcwd()

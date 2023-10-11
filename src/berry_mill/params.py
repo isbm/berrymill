@@ -3,7 +3,7 @@ from typing import TypedDict
 
 class KiwiParams(TypedDict):
     """
-    Dictionary for Kiwi Parameters
+    Dictionary for Gobal Kiwi Parameters
 
     Attributes:
 
@@ -15,7 +15,7 @@ class KiwiParams(TypedDict):
 
 class KiwiBuildParams(KiwiParams):
     """
-    Dictionary for Kiwi Parameters
+    Dictionary for Build specifc Kiwi Parameters
 
     Attributes:
 
@@ -36,7 +36,7 @@ class KiwiBuildParams(KiwiParams):
 
 class KiwiPrepParams(KiwiParams):
     """
-    Dictionary for Kiwi Parameters
+    Dictionary for Prepare specific Kiwi Parameters
 
     Attributes:
 
