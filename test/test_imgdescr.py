@@ -125,3 +125,11 @@ class TestImgDescr_Packages:
         """
         u_tag = self.ad.p_dom.xpath("//user")
         assert len(u_tag) == 1, "Should be only one user"
+
+    def test_id_pkg_set_user_attrs_data(self):
+        """
+        Select `<user/>` by XPath and update attributes from YAML
+        """
+        u_tag = self.ad.p_dom.xpath("//user")[0]
+        assert u_tag.attrib["password"] == "linux", "Password should be default set to 'linux'"
+        assert u_tag.attrib["pwdformat"] == "plain", "Password should be in plain format"
