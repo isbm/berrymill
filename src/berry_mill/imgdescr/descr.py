@@ -31,11 +31,13 @@ class ApplianceDescription:
                 out.append(l.rstrip())
         return "\n".join(out)
 
-    def _resolve(self):
+    def _resolve(self) -> None:
         """
         Reads the raw description and finds inherited parts of it.
         """
         self.p_dom = self.s_dom.find(self.__INHERIT)
+        if self.p_dom is None:
+            return
 
         assert self.p_dom is not None, "No inherited descriptions found"
         assert "path" in self.p_dom.attrib, "Inherited element should contain \"path\" attribute"
@@ -44,10 +46,14 @@ class ApplianceDescription:
         with open(self.p_dom.attrib["path"]) as ihf:
             self.p_dom = ET.fromstring(ihf.read().encode("utf-8"))
 
-    def _apply(self):
+    def _apply(self) -> None:
         """
         Apply the inheritance policies
         """
+        # No inherited documents found, stop right here.
+        if self.p_dom is None:
+            self.p_dom = self.s_dom
+            return
         for op in self.s_dom.findall("*"):
             if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP]:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
