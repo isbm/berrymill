@@ -94,8 +94,7 @@ class ApplianceDescription:
                 if k not in node.attrib or node.attrib[k] != v:
                     matches = False
                     break
-            if matches:
-                nodes.add(node)
+            matches and nodes.add(node)
         return nodes
 
     @staticmethod
@@ -117,11 +116,7 @@ class ApplianceDescription:
     @staticmethod
     def get_last(e: ET.Element) -> list[ET.Element]:
         out: list[ET.Element] = []
-        if len(e):
-            for c in e:
-                out.extend(ApplianceDescription.get_last(c))
-        else:
-            out.append(e)
+        len(e) and [out.extend(ApplianceDescription.get_last(c)) for c in e] or out.append(e)
 
         return out
 
@@ -140,8 +135,7 @@ class ApplianceDescription:
             # Elements
             for tc in self.find_all(c.tag, self.p_dom):
                 if c.attrib != tc.attrib: continue
-                for mv_c in c:
-                    tc.append(mv_c)
+                [tc.append(mv_c) for mv_c in c]
 
             # Aggregates
             is_new = True
@@ -166,10 +160,9 @@ class ApplianceDescription:
                 for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
                     if tgt_aggr.attrib == s_tag.attrib and \
                         "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame]) == self.get_xpath(tgt_aggr):
-                        for r_tag in ApplianceDescription.get_last(s_tag):
-                            for t_tag in ApplianceDescription.get_last(tgt_aggr):
-                                if t_tag.attrib == r_tag.attrib:
-                                    t_tag.getparent().remove(t_tag)
+                        [[t_tag.attrib == r_tag.attrib and t_tag.getparent().remove(t_tag)
+                          for t_tag in ApplianceDescription.get_last(tgt_aggr)]
+                          for r_tag in ApplianceDescription.get_last(s_tag)]
             else:
                 # Elements
                 for tc in self.find_all(s_tag.tag, self.p_dom):
@@ -195,8 +188,7 @@ class ApplianceDescription:
                         if tc.tag == sc.tag:
                             is_new = False
                             break
-                    if is_new:
-                        t_tag.append(sc)
+                    is_new and t_tag.append(sc)
 
     def _replace(self, e: ET.Element) -> None:
         """
@@ -223,8 +215,8 @@ class ApplianceDescription:
         if s_tag is None:
             return
 
-        for t_aggr in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib):
-            t_aggr.getparent().remove(t_aggr)
+        [t.getparent().remove(t) for t in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib)]
+
 
     def _set(self, e: ET.Element) -> None:
         """
@@ -234,15 +226,9 @@ class ApplianceDescription:
         if "xpath" not in e.attrib or not attrs:
             return
 
-        p_attrs: dict[Any, Any]|None = None
-
         try:
-            # Crude YAML extract. No de-idents.
-            p_attrs = yaml.safe_load(os.linesep.join(list(filter(None, [l.strip() for l in attrs.split("\n")]))))
+            # Crude YAML with no de-idents.
+            p_attrs: dict[Any, Any] = yaml.safe_load(os.linesep.join(list(filter(None, [l.strip() for l in attrs.split("\n")]))))
+            [list(map(t.set, p_attrs.keys(), p_attrs.values())) for t in self.p_dom.xpath(e.attrib["xpath"])]
         except YamlScannerError as yse:
             log.error(f"Unable to parse set of attributes in YAML for XPath {e.attrib['xpath']}")
-            return
-
-        for t_tag in self.p_dom.xpath(e.attrib["xpath"]):
-            for k, v in p_attrs.items():
-                t_tag.set(k, str(v))
