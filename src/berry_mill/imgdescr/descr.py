@@ -75,13 +75,13 @@ class ApplianceDescription:
         return w
 
     @staticmethod
-    def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
-        nodes = []
+    def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> list[ET.Element]:
+        nodes = set()
         for c in e:
             if c.tag == name and (not attrs or c.attrib == attrs):
-                nodes.append(c)
-            nodes.extend(ApplianceDescription.find_all(name, c, attrs=attrs))
-        return nodes
+                nodes.add(c)
+            nodes.update(ApplianceDescription.find_all(name, c, attrs=attrs))
+        return list(nodes)
 
     @staticmethod
     def find_any(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
