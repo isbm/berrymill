@@ -18,11 +18,9 @@ class Loader:
             raise IOError(f"Exception while accessing \"{pth}\": {exc}")
 
         l_iht:list[ET.Element]|None = ApplianceDescription.find_all("inherit", doc)
-        if not l_iht:
-            return
-
-        self.__i_stack.append(next(iter(l_iht)).attrib["path"])
-        self._traverse(self.__i_stack[-1])
+        if l_iht:
+            self.__i_stack.append(next(iter(l_iht)).attrib["path"])
+            self._traverse(self.__i_stack[-1])
 
     def _flatten(self) -> None:
         """
