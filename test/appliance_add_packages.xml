@@ -65,7 +65,8 @@
         </packages>
     </replace>
 
-    <update xpath="/image/repository">
-        distribution: jammy-updates
-    </update>
+    <set xpath="//user[@name='root' and @groups='root']">
+        pwdformat: plain
+        password: linux
+    </set>
 </image>
