@@ -2,9 +2,10 @@ import os
 import sys
 from typing import Dict, List
 from abc import ABC, abstractmethod
-from berry_mill.boxbuild import BoxBuildTask
 
+from berry_mill.boxbuild import BoxBuildTask
 from berry_mill.localwrap import LocalBuildTask
+from berry_mill.preparetask import PrepareTask
 
 class KiwiApp(ABC):
     """
@@ -19,6 +20,14 @@ class KiwiApp(ABC):
     @abstractmethod    
     def run(self) -> None:
         pass
+
+class KiwiAppPrepare(KiwiApp):
+
+    def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
+        super().__init__(argv, repos)
+    
+    def run(self) -> None:
+        PrepareTask(self._repos).process()
 
 
 class KiwiAppLocal(KiwiApp):
