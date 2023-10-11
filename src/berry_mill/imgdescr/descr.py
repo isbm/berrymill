@@ -11,6 +11,7 @@ class ApplianceDescription:
     __P_RM = "remove"
     __P_MG = "merge"
     __P_RP = "replace"
+    __P_RA = "remove_any"
 
     def __init__(self, descr: str) -> ApplianceDescription:
         self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
@@ -18,6 +19,7 @@ class ApplianceDescription:
         self._resolve()
         self._apply()
 
+        print(self.to_str())
 
 
     def to_str(self, node: ET.Element = None) -> str:
@@ -54,8 +56,9 @@ class ApplianceDescription:
         if self.p_dom is None:
             self.p_dom = self.s_dom
             return
+
         for op in self.s_dom.findall("*"):
-            if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP]:
+            if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP, self.__P_RA]:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
 
     def frame(f):
@@ -71,6 +74,21 @@ class ApplianceDescription:
             if c.tag == name and (not attrs or c.attrib == attrs):
                 nodes.append(c)
             nodes.extend(ApplianceDescription.find_all(name, c, attrs=attrs))
+        return nodes
+
+    @staticmethod
+    def find_any(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
+        nodes = set()
+        if attrs is None:
+            attrs = {}
+        for node in ApplianceDescription.find_all(name, e):
+            matches = True
+            for k, v in attrs.items():
+                if k not in node.attrib or node.attrib[k] != v:
+                    matches = False
+                    break
+            if matches:
+                nodes.add(node)
         return nodes
 
     @staticmethod
@@ -183,7 +201,20 @@ class ApplianceDescription:
 
         for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
             if tgt_aggr.attrib == s_tag.attrib:
-                print(self.to_str(tgt_aggr))
                 p = tgt_aggr.getparent()
                 p.remove(tgt_aggr)
                 p is not None and p.append(s_tag)
+
+    def _remove_any(self, e: ET.Element) -> None:
+        """
+        Remove any data. Anything inside of the `<remove_any/>` tag
+        should at least match by attributes.
+
+        The less specific attributes, the higher is glob matcher.
+        """
+        s_tag = ApplianceDescription.get_next(e)
+        if s_tag is None:
+            return
+
+        for t_aggr in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib):
+            t_aggr.getparent().remove(t_aggr)
