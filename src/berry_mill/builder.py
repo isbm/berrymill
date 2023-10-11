@@ -21,7 +21,7 @@ from berry_mill.params import KiwiBuildParams, KiwiParams
 
 class KiwiBuilder(KiwiParent):
     """
-    Kiwi wrapper for appliance builder.
+    Main Class for Berrymill to prepare the kiwi-ng system (box)build calls
     """
     # TODO handle TypeError
     def __init__(self, descr:str, **kw: Unpack[KiwiBuildParams]):

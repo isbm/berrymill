@@ -11,6 +11,7 @@ class KiwiApp(ABC):
     """
     Abstract Base Class 
     Posing as a costum API for calling kiwi programmatically
+    Functions as Interface between Berrymill and Kiwi-ng Wrappers
     """
     @abstractmethod
     def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
@@ -22,7 +23,9 @@ class KiwiApp(ABC):
         pass
 
 class KiwiAppPrepare(KiwiApp):
-
+    """
+    Interface between Berrymill and Kiwi-ng Prepare Wrapper
+    """
     def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
         super().__init__(argv, repos)
     
@@ -31,6 +34,9 @@ class KiwiAppPrepare(KiwiApp):
 
 
 class KiwiAppLocal(KiwiApp):
+    """
+    Interface between Berrymill and Kiwi-ng build Wrapper
+    """
 
     def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]]):
         super().__init__(argv, repos)
@@ -40,7 +46,9 @@ class KiwiAppLocal(KiwiApp):
 
 
 class KiwiAppBox(KiwiApp):
-    
+    """
+    Interface between Berrymill and Kiwi-ng boxbuild Wrapper
+    """
     def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]], args_tmp_dir:str = None):
         super().__init__(argv, repos)
 

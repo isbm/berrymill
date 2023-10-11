@@ -6,6 +6,9 @@ from berry_mill.params import KiwiPrepParams
 
 
 class KiwiPreparer(KiwiParent):
+    """
+    Main Class for Berrymill to prepare the "kiwi-ng system prepare" call
+    """
     def __init__(self, descr:str, **kw: Unpack[KiwiPrepParams]):
         self._params:Dict[KiwiPrepParams] = kw
 
@@ -14,6 +17,9 @@ class KiwiPreparer(KiwiParent):
                         debug=self._params.get("debug", False))
     
     def process(self) -> None:
+        """
+        Create the arguments for kiwi-ng call and run the Kiwi Prepare Task
+        """
         root:Union[str,None] = self._params.get("root")
 
         assert root is not None
