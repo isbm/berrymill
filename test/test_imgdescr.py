@@ -118,3 +118,10 @@ class TestImgDescr_Packages:
         """
         pkg = self.ad.p_dom.findall("repository")
         assert len(pkg) == 1, "Should be only one repository left"
+
+    def test_id_pkg_set_user_attrs(self):
+        """
+        Select `<user/>` by XPath and update attributes from YAML
+        """
+        u_tag = self.ad.p_dom.findall("user")
+        assert len(u_tag) == 1, "Should be only one user"
