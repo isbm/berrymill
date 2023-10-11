@@ -28,6 +28,7 @@ class Loader:
         """
         Flatten traversal path
         """
+        self.__i_stack.reverse()
 
     def load(self, pth: str) -> str:
         """
