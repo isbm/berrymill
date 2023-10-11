@@ -237,6 +237,7 @@ class ApplianceDescription:
         p_attrs: dict[Any, Any]|None = None
 
         try:
+            # Crude YAML extract. No de-idents.
             p_attrs = yaml.safe_load(os.linesep.join(list(filter(None, [l.strip() for l in attrs.split("\n")]))))
         except YamlScannerError as yse:
             log.error(f"Unable to parse set of attributes in YAML for XPath {e.attrib['xpath']}")
@@ -244,4 +245,4 @@ class ApplianceDescription:
 
         for t_tag in self.p_dom.xpath(e.attrib["xpath"]):
             for k, v in p_attrs.items():
-                t_tag.set(k, v)
+                t_tag.set(k, str(v))
