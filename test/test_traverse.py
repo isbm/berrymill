@@ -7,7 +7,7 @@ class TestLoaderTraversal:
 
     def test_loader_traversal_level_1(self):
         """
-        Load stuff
+        Load chain from a first level
         """
         class XLoader(Loader):
             def load(self, pth: str) -> str:
