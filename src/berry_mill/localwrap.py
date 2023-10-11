@@ -1,23 +1,8 @@
 from typing import Dict
 from kiwi.tasks.system_build import SystemBuildTask
-
-import os
 import logging
-from itertools import zip_longest
-
-# project
-from kiwi.help import Help
-from kiwi.system.prepare import SystemPrepare
-from kiwi.system.setup import SystemSetup
-from kiwi.builder import ImageBuilder
-from kiwi.system.profile import Profile
-from kiwi.defaults import Defaults
-from kiwi.privileges import Privileges
-from kiwi.path import Path
 
 log = logging.getLogger('kiwi')
-
-
 
 class LocalBuildTask(SystemBuildTask):
     """
