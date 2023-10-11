@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import os
+import logging
+import yaml
+from yaml.scanner import ScannerError as YamlScannerError
 import os.path
 import xml.dom.minidom
 from typing import Any
 import lxml.etree as ET
+
+log = logging.getLogger("kiwi")
 
 class ApplianceDescription:
     __INHERIT = "inherit"
@@ -12,6 +18,7 @@ class ApplianceDescription:
     __P_MG = "merge"
     __P_RP = "replace"
     __P_RA = "remove_any"
+    __P_ST = "set"
 
     def __init__(self, descr: str) -> ApplianceDescription:
         self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
@@ -58,7 +65,7 @@ class ApplianceDescription:
             return
 
         for op in self.s_dom.findall("*"):
-            if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP, self.__P_RA]:
+            if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP, self.__P_RA, self.__P_ST]:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
 
     def frame(f):
@@ -218,3 +225,23 @@ class ApplianceDescription:
 
         for t_aggr in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib):
             t_aggr.getparent().remove(t_aggr)
+
+    def _set(self, e: ET.Element) -> None:
+        """
+        [Re]sets attributes to an element
+        """
+        attrs: str = e.text.strip()
+        if "xpath" not in e.attrib or not attrs:
+            return
+
+        p_attrs: dict[Any, Any]|None = None
+
+        try:
+            p_attrs = yaml.safe_load(os.linesep.join(list(filter(None, [l.strip() for l in attrs.split("\n")]))))
+        except YamlScannerError as yse:
+            log.error(f"Unable to parse set of attributes in YAML for XPath {e.attrib['xpath']}")
+            return
+
+        for t_tag in self.p_dom.xpath(e.attrib["xpath"]):
+            for k, v in p_attrs.items():
+                t_tag.set(k, v)
