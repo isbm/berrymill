@@ -123,5 +123,5 @@ class TestImgDescr_Packages:
         """
         Select `<user/>` by XPath and update attributes from YAML
         """
-        u_tag = self.ad.p_dom.findall("user")
+        u_tag = self.ad.p_dom.xpath("//user")
         assert len(u_tag) == 1, "Should be only one user"
