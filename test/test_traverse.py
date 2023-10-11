@@ -5,10 +5,7 @@ class TestLoaderTraversal:
     Unit test suite for Application Description Loader traversal
     """
 
-    def test_loader_traversal_level_1(self):
-        """
-        Load chain from a first level
-        """
+    def setup_class(self):
         class XLoader(Loader):
             def load(self, pth: str) -> str:
                 """
@@ -17,7 +14,14 @@ class TestLoaderTraversal:
                 self._traverse(pth)
                 self._flatten()
 
-        l:XLoader = XLoader()
+        self.XLoader = XLoader
+
+    def test_loader_traversal_level_1(self):
+        """
+        Load chain from a first level
+        """
+
+        l:self.XLoader = self.XLoader()
         l.load("test/chain_a.xml")
         assert l._Loader__i_stack == ['test/test_appliance.xml'], "Traversal path should point to 'test_appliance.xml'"
 
@@ -25,15 +29,7 @@ class TestLoaderTraversal:
         """
         Load full chain
         """
-        class XLoader(Loader):
-            def load(self, pth: str) -> str:
-                """
-                Load appliance description
-                """
-                self._traverse(pth)
-                self._flatten()
-
-        l:XLoader = XLoader()
+        l:self.XLoader = self.XLoader()
         l.load("test/chain_d.xml")
 
         res = ['test/test_appliance.xml', 'test/chain_a.xml', 'test/chain_b.xml', 'test/chain_c.xml']
