@@ -36,10 +36,12 @@ class ImageMill:
 
         sub_p = p.add_subparsers(help="Course of action for berrymill",dest="subparser_name")
         
+        # prepare specific arguments
         prepare_p:argparse.ArgumentParser= sub_p.add_parser("prepare", help="prepare sysroot")
         prepare_p.add_argument("--root", required=True, help="directory of output sysroot")
         prepare_p.add_argument("--allow-existing-root", action="store_true", help="allow existing root")
 
+        # build specific arguments
         build_p:argparse.ArgumentParser = sub_p.add_parser("build", help="build image")
         build_p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
 
@@ -114,6 +116,10 @@ class ImageMill:
 
 
         if self.args.subparser_name == "build":
+            # parameter "cross" implies a amd64 host and an arm64 target-arch
+            if self.args.cross:
+                self.args.arch = "arm64"
+                
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
                             profile= self.args.profile, 
@@ -134,8 +140,7 @@ class ImageMill:
                             )
         else:
             raise argparse.ArgumentError(message="No Action defined (build, prepare)")
-        
-        # parameter "cross" implies a amd64 host and an arm64 target-arch 
+         
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
                 kiwip.add_repo(rname, repo)
