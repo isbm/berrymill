@@ -111,3 +111,10 @@ class TestImgDescr_Packages:
         for aggr in self.ad.p_dom.findall("packages"):
             if aggr.attrib.get("type") == "iso":
                 assert False, "No ISO images supposed to be made"
+
+    def test_id_pkg_remove_any_aggregate(self):
+        """
+        Remove any aggregate that matches only a part of the
+        """
+        pkg = self.ad.p_dom.findall("repository")
+        assert len(pkg) == 1, "Should be only one repository left"
