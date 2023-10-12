@@ -146,6 +146,20 @@ class KiwiBuilder:
                                                 path=os.path.join(self._trusted_gpg_d, selected),
                                                 params=None, query=None, fragment=None,
                                                 netloc=None).geturl()
+                    keybox = '/var/cache/kiwi/apt-get/trusted-keybox.gpg'
+                    gpg_args = [
+                            'gpg', '--no-options', '--no-default-keyring',
+                            '--no-auto-check-trustdb', '--trust-model', 'always',
+                            '--keyring', keybox
+                        ]
+                    key = '/etc/apt/trusted.gpg.d/' + selected
+                    print("key: " + key)
+                    if os.path.exists(keybox):
+                        os.unlink(keybox)
+                    result = subprocess.run(gpg_args + ['--import', '--ignore-time-conflict', key], capture_output=True, text=True)
+                    if result.stderr:
+                        print("gpg check failed. missing /root/.gnupg directory ?")
+                        os.mkdir("/root/.gnupg")
                     self._check_repokey(repodata, reponame)
                     return
             else:
