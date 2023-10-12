@@ -45,3 +45,14 @@ class TestLoaderTraversal:
         l.load("test/test_appliance.xml")
 
         assert l._Loader__i_stack == ["test/test_appliance.xml"], "Wrong root traversal"
+
+    def test_loader_traversal_flatten_c(self):
+        """
+        Load full chain, changes from the level C should be applied.
+        """
+        l:Loader = Loader()
+        lusers = ApplianceDescription.find_all("user", ET.fromstring(l.load("test/chain_d.xml")))
+
+        assert len(lusers) == 1, "Only one luser expected"
+        assert "password" in lusers[0].attrib, "Luser should have a password"
+        assert lusers[0].attrib["password"] == "lainooks :-)", "Password mismatch"
