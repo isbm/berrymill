@@ -1,10 +1,20 @@
 from __future__ import annotations
+from typing import Any
 import lxml.etree as ET
 from berry_mill.imgdescr.descr import ApplianceDescription
 
+class UqList(list):
+    """
+    List that acts like a Set, skipping elements that already exist.
+    """
+    def append(self, __object: Any) -> None:
+        if __object not in self:
+            super().append(__object)
+
+
 class Loader:
     def __init__(self) -> None:
-        self.__i_stack = []
+        self.__i_stack = UqList()
 
     def _traverse(self, pth: str) -> None:
         """
@@ -49,6 +59,6 @@ class Loader:
         out = self._flatten()
 
         # Reset
-        self.__i_stack = []
+        self.__i_stack.clear()
 
         return out
