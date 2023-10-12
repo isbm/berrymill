@@ -42,6 +42,9 @@ class ApplianceDescription:
         """
         Reads the raw description and finds inherited parts of it.
         """
+        if self.p_dom is not None:
+            return
+
         self.p_dom = self.s_dom.find(self.__INHERIT)
         if self.p_dom is None:
             return
