@@ -78,10 +78,9 @@ class ApplianceDescription:
     @staticmethod
     def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> list[ET.Element]:
         nodes = set()
-        for c in e:
-            if c.tag == name and (not attrs or c.attrib == attrs):
-                nodes.add(c)
-            nodes.update(ApplianceDescription.find_all(name, c, attrs=attrs))
+        [nodes.add(c) if c.tag == name and (not attrs or c.attrib == attrs)
+         else nodes.update(ApplianceDescription.find_all(name, c, attrs=attrs)) for c in e]
+
         return list(nodes)
 
     @staticmethod
