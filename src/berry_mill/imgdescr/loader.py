@@ -21,21 +21,34 @@ class Loader:
         if l_iht:
             self.__i_stack.append(next(iter(l_iht)).attrib["path"])
             self._traverse(self.__i_stack[-1])
+        else:
+            self.__i_stack.append(pth)
 
-    def _flatten(self) -> None:
+    def _flatten(self) -> str:
         """
         Flatten traversal path
         """
         self.__i_stack.reverse()
+
+        # init base
+        descr:ApplianceDescription|None = None
+        with open(next(iter(self.__i_stack))) as fd:
+            descr = ApplianceDescription(fd.read())
+
+        for pth in self.__i_stack[1:]:
+            with open(pth) as fp:
+                descr = ApplianceDescription(fp.read(), descr.to_str())
+
+        return descr.to_str()
 
     def load(self, pth: str) -> str:
         """
         Load appliance description
         """
         self._traverse(pth)
-        self._flatten()
+        out = self._flatten()
 
         # Reset
         self.__i_stack = []
 
-        return "xml here"
+        return out
