@@ -20,9 +20,10 @@ class ApplianceDescription:
     __P_RA = "remove_any"
     __P_ST = "set"
 
-    def __init__(self, descr: str) -> ApplianceDescription:
+    def __init__(self, descr: str, parent: str = None) -> ApplianceDescription:
         self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
-        self.p_dom: ET.Element = None
+        self.p_dom: ET.Element|None = parent and ET.fromstring(parent.encode("utf-8")) or None
+
         self._resolve()
         self._apply()
 
