@@ -27,9 +27,6 @@ class ApplianceDescription:
         self._resolve()
         self._apply()
 
-        print(self.to_str())
-
-
     def to_str(self, node: ET.Element = None) -> str:
         """
         Export appliance description to an XML string.
