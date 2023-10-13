@@ -21,4 +21,3 @@ jobs:
 
       - name: Run pytest
         run: pytest --cov=berry_mill test/
-
