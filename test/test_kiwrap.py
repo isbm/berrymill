@@ -17,7 +17,7 @@ class TestCollectionKiwiParent:
         """
         Verify that repo name and repo data: url, key, type.. are added correctly
         """
-        KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
         # Define some test data
         reponame: str = "test_repo"
         repodata: dict = {"name": "repo", "url": "http://test.com"}
@@ -42,7 +42,7 @@ class TestCollectionKiwiParent:
         Expected : Exception URL not found
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test_repo"
             repodata: dict = {"name": "repo", "url": ""}
@@ -76,7 +76,7 @@ class TestCollectionKiwiParent:
         Expected: Exception URL not found
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test_repo"
             repodata: dict = {"name": "test", "url": ""}
@@ -90,7 +90,7 @@ class TestCollectionKiwiParent:
         Expected: Exception o connection adapters were found
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test_repo"
             repodata: dict = {"name": "test", "url": "no_schema"}
@@ -104,7 +104,7 @@ class TestCollectionKiwiParent:
         Expected: Exception Repository name not defined
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = ""
             repodata: dict = {"name": "test", "url": "http://test"}
@@ -119,7 +119,7 @@ class TestCollectionKiwiParent:
         Expected: Exception Repository data not defined
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test_repo"
             repodata: dict = {}
@@ -134,7 +134,7 @@ class TestCollectionKiwiParent:
         Expected: Exception Repository data not defined
         """
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "http://test", "key": ""}
@@ -150,7 +150,7 @@ class TestCollectionKiwiParent:
         Expected: Berrymill was not able to retrieve a fitting gpg key
         """
 
-        KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
         with unittest.mock.patch.object(KiwiParent_instance, "_key_selection") as mock_key_selection:
             # Define some test data
             reponame: str = "test"
@@ -168,7 +168,7 @@ class TestCollectionKiwiParent:
         Expected: Trusted key not foud on system
         """
 
-        KiwiParent_instance: KiwiParent = KiwiParent("test/test_appliance.xml", profile="Virtual")
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
 
         with unittest.mock.patch.object(KiwiParent_instance, "_key_selection") as mock_key_selection:
             # Define some test data
