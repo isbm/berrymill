@@ -2,14 +2,18 @@ name: pytest-workflow
 run-name: Execute Berrymill unit tests
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      - name: Set the importance environment variable
+        run: |
+          echo "GITHUB_ACTIONS_IMPORTANCE=true" >> $GITHUB_ENV
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -21,3 +25,5 @@ jobs:
 
       - name: Run pytest
         run: pytest --cov=berry_mill test/
+
+        if: ${{ env.GITHUB_ACTIONS_IMPORTANCE == 'true' }}
