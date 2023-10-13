@@ -2,3 +2,4 @@
 /src/berrymill.conf
 .gitignore
 .vscode/
+.coverage
