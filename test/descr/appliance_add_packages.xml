@@ -2,7 +2,7 @@
 
 <!-- Assuming "test_appliance.xml" is in the same directory -->
 <image schemaversion="6.8" name="Ubuntu-22.04_appliance">
-    <inherit path="test/test_appliance.xml"/>
+    <inherit path="test/descr/test_appliance.xml"/>
 
     <!--
         Remove specific data. Anything inside of the "remove"
