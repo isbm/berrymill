@@ -22,7 +22,7 @@ class ApplianceDescription:
 
     def __init__(self, descr: str, parent: str = None) -> ApplianceDescription:
         self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
-        self.p_dom: ET.Element|None = parent and ET.fromstring(parent.encode("utf-8")) or None
+        self.p_dom: ET.Element|None = ET.fromstring(parent.encode("utf-8")) if parent is not None else None
 
         self._resolve()
         self._apply()
