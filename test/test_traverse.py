@@ -25,7 +25,7 @@ class TestLoaderTraversal:
 
         l:self.XLoader = self.XLoader()
         l.load("test/descr/chain_a.xml")
-        assert l._Loader__i_stack == ['test/descr/test_appliance.xml'], "Traversal path should point to 'test_appliance.xml'"
+        assert l._Loader__i_stack == ['test/descr/test_appliance.xml', 'test/descr/chain_a.xml'], "Traversal path should point to 'test_appliance.xml'"
 
     def test_loader_traversal_level_last(self):
         """
@@ -34,7 +34,7 @@ class TestLoaderTraversal:
         l:self.XLoader = self.XLoader()
         l.load("test/descr/chain_d.xml")
 
-        res = ['test/descr/test_appliance.xml', 'test/descr/chain_a.xml', 'test/descr/chain_b.xml', 'test/descr/chain_c.xml']
+        res = ['test/descr/test_appliance.xml', 'test/descr/chain_a.xml', 'test/descr/chain_b.xml', 'test/descr/chain_c.xml', 'test/descr/chain_d.xml']
         assert l._Loader__i_stack == res, "Traversal path should point to a four documents"
 
     def test_loader_traversal_level_root(self):
