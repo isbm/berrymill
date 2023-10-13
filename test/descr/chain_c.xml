@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <image schemaversion="6.8" name="Ubuntu-22.04_appliance">
-    <inherit path="test/chain_b.xml"/>
+    <inherit path="test/descr/chain_b.xml"/>
 
     <set xpath="//user[@name='root' and @groups='root']">
         pwdformat: plain
