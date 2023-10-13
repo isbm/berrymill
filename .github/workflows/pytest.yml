@@ -1,9 +1,8 @@
 name: pytest-workflow
 run-name: Execute Berrymill unit tests
 on:
-  push:
-    branches:
-      - utests
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
@@ -11,9 +10,12 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
       - name: Display curent dir
         run : ls -la $GITHUB_WORKSPACE
+
       - name: Install dependencies
         run: pip install -r requirements.txt
+
       - name: Run pytest
-        run: pytest -v 
+        run: pytest
