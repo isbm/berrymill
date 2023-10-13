@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Assuming "test_appliance.xml" is in the same directory -->
+<image schemaversion="6.8" name="Ubuntu-22.04_appliance">
+    <inherit path="test/descr/test_appliance.xml"/>
+
+    <!--
+        Remove specific data. Anything inside of the "remove"
+        tag should precisely match by attributes.
+    -->
+    <remove>
+        <!--
+            Remove a specific package, as only
+            the last element is removed, while parents are
+            just "qualifiers" to set the proper matching.
+        -->
+        <packages type="oem">
+            <package name="dracut-kiwi-oem-dump"/>
+        </packages>
+
+        <!-- Remove the entire aggregate -->
+        <packages type="iso" />
+    </remove>
+
+    <!--
+        Remove any data. Anything inside of the "remove_any"
+        tag should at least match by attributes. The less
+        specific attributes, the higher is glob matcher.
+    -->
+    <remove_any>
+        <!-- This will remove any "repository" tag that has these attributes -->
+        <repository components="main multiverse restricted universe"/>
+    </remove_any>
+
+    <!-- Add specific data -->
+    <add>
+        <packages type="image">
+            <package name="humperdoo"/>
+        </packages>
+
+        <!-- Add an aggregate as it doesn't exist yet -->
+        <packages type="delete">
+            <package name="dracula-kiwi-salad" />
+        </packages>
+    </add>
+
+    <!--
+        Replace and merge works only on aggregates.
+
+        For individual tags e.g. "<repository/>", it should be first
+        removed, then added back differently.
+    -->
+    <merge>
+        <description type="system">
+            <author>Herr Starr</author>
+            <!-- If MIT is too mainstream... -->
+            <license>GLWTS</license>
+        </description>
+    </merge>
+
+    <!-- This replaces the end-tag without XPath -->
+    <replace>
+        <packages type="oem">
+            <package name="dragon-scary-yaki-combo"/>
+        </packages>
+    </replace>
+
+    <set xpath="//user[@name='root' and @groups='root']">
+        pwdformat: plain
+        password: linux
+    </set>
+</image>
