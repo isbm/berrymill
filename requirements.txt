@@ -1,6 +1,7 @@
+inquirer
 kiwi
 kiwi-boxed-plugin
-inquirer
 pytest
-typing_extensions
+pytest-cov
 qemu
+typing_extensions
