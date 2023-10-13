@@ -13,7 +13,7 @@ class TestCollectionKiwiBuilder:
         Expected: Exception Repository data not defined
         """
         try:
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml", profile="Virtual")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             repo_key_path: str = "path/to/key"
             KiwiBuilder_instance._boxtmpkeydir: str = ""
@@ -28,7 +28,7 @@ class TestCollectionKiwiBuilder:
         Expected: Exception Repository data not defined
         """
         try:
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml", profile="Virtual")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             repo_key_path: str = ""
             KiwiBuilder_instance._boxtmpkeydir: str = "/tmp"
@@ -84,7 +84,7 @@ class TestCollectionKiwiBuilder:
         Expected: Error Cleanup Failed
         """
 
-        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml", profile="Virtual")
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml", profile="Virtual")
         # Set tmpdir to empty
         KiwiBuilder_instance._tmpdir: str = ""
 
@@ -99,7 +99,7 @@ class TestCollectionKiwiBuilder:
         Write repo keys from tmp dir to a wrong boxroot destination
         Expected: Error Cleanup Failed
         """
-        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml", profile="Virtual")
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml", profile="Virtual")
         # Set tmpdir
         KiwiBuilder_instance._tmpdir: str = "/tmp"
         # Set wrok box tmp dir
@@ -131,7 +131,7 @@ class TestCollectionKiwiBuilder:
         """
         try:
             # Create KiwiBuilder instance with existant appliance
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
             # Remove profile
             KiwiBuilder_instance._params["profile"] = ""
             # Trigger the build
@@ -147,7 +147,7 @@ class TestCollectionKiwiBuilder:
         Test config  profie is
         Expected: message "Starting Kiwi Box"
         """
-        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
         # Set profile
         KiwiBuilder_instance._params["profile"] = "Live"
         KiwiBuilder_instance.process()
@@ -160,7 +160,7 @@ class TestCollectionKiwiBuilder:
         Expected: message "Starting Kiwi for local build"
         """
         try:
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
             # Set profile
             KiwiBuilder_instance._params["profile"] = "Live"
             # Set local build
