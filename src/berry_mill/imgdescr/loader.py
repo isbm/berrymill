@@ -20,6 +20,7 @@ class Loader:
         """
         Traverse the inheritance path
         """
+        self.__i_stack.append(pth)
         doc: ET.Element|None = None
         try:
             with open(pth) as fp:
