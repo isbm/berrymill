@@ -1,6 +1,8 @@
 name: pytest-workflow
 run-name: Execute Berrymill unit tests
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
