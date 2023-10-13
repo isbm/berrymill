@@ -13,7 +13,7 @@ class TestImgDescr_ApplianceDescription_Static:
         """
         Setup test method
         """
-        with open("test/appliance_add_packages.xml") as x_files:
+        with open("test/descr/appliance_add_packages.xml") as x_files:
             self.dom = ET.fromstring(x_files.read().encode("utf-8"))
 
     def teardown_method(self, m):

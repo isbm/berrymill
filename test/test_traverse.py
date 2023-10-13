@@ -24,17 +24,17 @@ class TestLoaderTraversal:
         """
 
         l:self.XLoader = self.XLoader()
-        l.load("test/chain_a.xml")
-        assert l._Loader__i_stack == ['test/test_appliance.xml'], "Traversal path should point to 'test_appliance.xml'"
+        l.load("test/descr/chain_a.xml")
+        assert l._Loader__i_stack == ['test/descr/test_appliance.xml'], "Traversal path should point to 'test_appliance.xml'"
 
     def test_loader_traversal_level_last(self):
         """
         Load full chain
         """
         l:self.XLoader = self.XLoader()
-        l.load("test/chain_d.xml")
+        l.load("test/descr/chain_d.xml")
 
-        res = ['test/test_appliance.xml', 'test/chain_a.xml', 'test/chain_b.xml', 'test/chain_c.xml']
+        res = ['test/descr/test_appliance.xml', 'test/descr/chain_a.xml', 'test/descr/chain_b.xml', 'test/descr/chain_c.xml']
         assert l._Loader__i_stack == res, "Traversal path should point to a four documents"
 
     def test_loader_traversal_level_root(self):
@@ -42,16 +42,16 @@ class TestLoaderTraversal:
         Load no chain at all
         """
         l:self.XLoader = self.XLoader()
-        l.load("test/test_appliance.xml")
+        l.load("test/descr/test_appliance.xml")
 
-        assert l._Loader__i_stack == ["test/test_appliance.xml"], "Wrong root traversal"
+        assert l._Loader__i_stack == ["test/descr/test_appliance.xml"], "Wrong root traversal"
 
     def test_loader_traversal_flatten_c(self):
         """
         Load full chain, changes from the level C should be applied.
         """
         l:Loader = Loader()
-        lusers = ApplianceDescription.find_all("user", ET.fromstring(l.load("test/chain_d.xml")))
+        lusers = ApplianceDescription.find_all("user", ET.fromstring(l.load("test/descr/chain_d.xml")))
 
         assert len(lusers) == 1, "Only one luser expected"
         assert "password" in lusers[0].attrib, "Luser should have a password"

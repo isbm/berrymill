@@ -9,7 +9,7 @@ class TestImgDescr_Packages:
         """
         Setup test method
         """
-        self.ad = ApplianceDescription(open("test/appliance_add_packages.xml").read())
+        self.ad = ApplianceDescription(open("test/descr/appliance_add_packages.xml").read())
 
     def teardown_method(self, method):
         """
