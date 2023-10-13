@@ -10,7 +10,7 @@ import tempfile
 import requests
 import inquirer
 from lxml import etree
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import ParseResult, urljoin, urlparse
 from typing import Dict
 
 from berry_mill.params import KiwiParams
@@ -104,12 +104,13 @@ class KiwiParent:
         g_path:str = os.path.join(self._tmpdir, f"{reponame}_release.key")
 
         if repodata.get("components", "/") != "/":
-            s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'dists', repodata['name'])
+            s_url: str = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
             # TODO: grab standard keys
             g_path = ""
             return g_path
         else:
-            s_url: str = os.path.join(url.scheme + "://" + url.netloc, url.path, 'Release.key')
+            s_url: str = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
+            print(s_url)
             response = requests.get(s_url, allow_redirects=True)
             with open(g_path, "wb") as f_rel:
                 f_rel.write(response.content)
