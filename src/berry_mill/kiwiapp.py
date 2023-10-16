@@ -28,8 +28,10 @@ class KiwiAppLocal(KiwiApp):
         super().__init__(argv, repos)
     
     def run(self) -> None:
-        p = pathlib.Path().home().joinpath(".gnupg")
-        p.exists() or [ print("missing", p, "directory, creating one ..."), p.mkdir() ]
+        try:
+            pathlib.Path().home().joinpath(".gnupg").mkdir()
+        except FileExistsError:
+            pass
         LocalBuildTask(self._repos).process()
 
 
