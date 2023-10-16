@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from berry_mill.boxbuild import BoxBuildTask
 
 from berry_mill.localwrap import LocalBuildTask
+import pathlib
 
 class KiwiApp(ABC):
     """
@@ -27,6 +28,10 @@ class KiwiAppLocal(KiwiApp):
         super().__init__(argv, repos)
     
     def run(self) -> None:
+        try:
+            pathlib.Path().home().joinpath(".gnupg").mkdir()
+        except FileExistsError:
+            pass
         LocalBuildTask(self._repos).process()
 
 
