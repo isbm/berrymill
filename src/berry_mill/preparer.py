@@ -20,9 +20,9 @@ class KiwiPreparer(KiwiParent):
         """
         Create the arguments for kiwi-ng call and run the Kiwi Prepare Task
         """
-        root:Union[str,None] = self._params.get("root")
+        root:str|None = self._params.get("root")
 
-        assert root is not None
+        assert root is not None, "output directory for root folder mandatory"
 
         command:List[str] = ["kiwi-ng"] + self._kiwi_options + ["system", "prepare"]
         command += ["--description", self._appliance_path]
