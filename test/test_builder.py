@@ -7,7 +7,7 @@ import pytest
 
 
 class TestCollectionKiwiBuilder:
-    def test_kiwrap_get_relative_file_uri(self):
+    def test_builder_get_relative_file_uri(self):
         """
         Test: get_relative_file_uri without key directory defined
         Expected: Exception Repository data not defined
@@ -22,7 +22,7 @@ class TestCollectionKiwiBuilder:
         except Exception as e:
             assert "Key directory not available" in str(e)
 
-    def test_kiwrap_get_relative_file_uri(self):
+    def test_builder_get_relative_file_uri(self):
         """
         Test: get_relative_file_uri without key directory defined
         Expected: Exception Repository data not defined
@@ -38,7 +38,7 @@ class TestCollectionKiwiBuilder:
             assert "Key path not defined" in str(e)
 
 
-    def test_kiwrap_write_repokeys_wrong_key_path(self, capsys: CaptureFixture):
+    def test_builder_write_repokeys_wrong_key_path(self, capsys: CaptureFixture):
         """
         Write repo keys while wrong key path in config
         Expected : exit code 1 exception and error failure message
@@ -58,7 +58,7 @@ class TestCollectionKiwiBuilder:
         except SystemExit as e:
             assert e.code == 1
 
-    def test_kiwrap_write_repokeys_box_root_dest(self):
+    def test_builder_write_repokeys_box_root_dest(self):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
         Expected: exit code 1 and Boxroot directory is not defined exception
@@ -78,9 +78,9 @@ class TestCollectionKiwiBuilder:
         except Exception as ex:
             assert "Boxroot directory is not defined" in str(ex)
 
-    def test_kiwrap__cleanup_no_tmpdir(self, capsys: CaptureFixture):
+    def test_builder__cleanup_no_tmpdir(self, capsys: CaptureFixture):
         """
-        Write repo keys from tmp dir to a wrong boxroot destination
+        Wrong tmp dir
         Expected: Error Cleanup Failed
         """
 
@@ -94,7 +94,7 @@ class TestCollectionKiwiBuilder:
         # Assert that the error message contains the expected error message
         assert "Error: Cleanup Failed" in captured.out
 
-    def test_kiwrap_cleanup_no_boxtmpdiraaa(self, capsys: CaptureFixture):
+    def test_builder_cleanup_no_boxtmpdiraaa(self, capsys: CaptureFixture):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
         Expected: Error Cleanup Failed
@@ -109,7 +109,7 @@ class TestCollectionKiwiBuilder:
         captured: tuple = capsys.readouterr()
         assert "Error: Cleanup Failed" in captured.out
 
-    def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
+    def test_builder_build_wrong_appliance(self, capsys: CaptureFixture):
         """
         Parse wrong appliance
         Expected: exit 1 and error Expected: failed to load external entity
@@ -124,7 +124,7 @@ class TestCollectionKiwiBuilder:
             assert "failed to load external entity" in cap.out
             assert se.code == 1
 
-    def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
+    def test_builder_build_no_profile_set(self, capsys: CaptureFixture):
         """
         Test config no profie
         Expected: exit 1 and error Expected: No Profile selected
@@ -142,7 +142,7 @@ class TestCollectionKiwiBuilder:
             assert se.code == 1
 
     @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
-    def test_kiwrap_build_with_profile_set(self, capsys: CaptureFixture):
+    def test_builder_build_with_profile_set(self, capsys: CaptureFixture):
         """
         Test config  profie is
         Expected: message "Starting Kiwi Box"
@@ -154,7 +154,7 @@ class TestCollectionKiwiBuilder:
         captured: tuple = capsys.readouterr()
         assert "Starting Kiwi Box" in captured.out
 
-    def test_kiwrap_build_with_local_set(self, capsys: CaptureFixture):
+    def test_builder_build_with_local_set(self, capsys: CaptureFixture):
         """
         Test config  profie is
         Expected: message "Starting Kiwi for local build"

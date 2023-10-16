@@ -183,4 +183,35 @@ class TestCollectionKiwiParent:
             captured: tuple = capsys.readouterr()
             # Assert that the error message contains the expected error message
             assert "Trusted key not foud on system" in captured.out
+    
+    def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
+        """
+        Parse wrong appliance
+        Expected: exit 1 and error Expected: failed to load external entity
+        """
+        try:
+            # Create KiwiParent instance with wrong appliance
+            KiwiParent_instance: KiwiParent = KiwiParent("test.txt")
+            # trigger the build
+            KiwiParent_instance.process()
+        except SystemExit as se:
+            cap: tuple = capsys.readouterr()
+            assert "failed to load external entity" in cap.out
+            assert se.code == 1
 
+    def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config no profie
+        Expected: exit 1 and error Expected: No Profile selected
+        """
+        try:
+            # Create KiwiParent instance with existant appliance
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml")
+            # Remove profile
+            KiwiParent_instance._params["profile"] = ""
+            # Trigger the build
+            KiwiParent_instance.process()
+            captured: tuple = capsys.readouterr()
+            assert "No Profile selected" in captured.out
+        except SystemExit as se:
+            assert se.code == 1
