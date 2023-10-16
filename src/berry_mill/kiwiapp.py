@@ -27,6 +27,11 @@ class KiwiAppLocal(KiwiApp):
         super().__init__(argv, repos)
     
     def run(self) -> None:
+        home_dir = os.path.expanduser( '~' )
+        gpg_dir = os.path.join(home_dir, ".gnupg")
+        if not os.path.isdir(gpg_dir):
+            print("missing", gpg_dir, "directory, creating one ...")
+            os.mkdir(gpg_dir)
         LocalBuildTask(self._repos).process()
 
 
