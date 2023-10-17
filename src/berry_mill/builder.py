@@ -1,4 +1,6 @@
 from __future__ import annotations
+import argparse
+import logging
 
 from typing import List
 from typing_extensions import Unpack
@@ -17,7 +19,7 @@ from berry_mill.kiwrap import KiwiParent
 
 from berry_mill.params import KiwiBuildParams, KiwiParams
 
-
+log = logging.getLogger('kiwi')
 
 class KiwiBuilder(KiwiParent):
     """
@@ -35,34 +37,28 @@ class KiwiBuilder(KiwiParent):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
-        print(self._boxrootdir)
+        log.debug(f"Using box root at {self._boxrootdir}")
         self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
         if not self._params.get("local", False):
-            boxdir:str = os.path.join(self._appliance_path, "boxroot")
-            if not os.path.exists(boxdir):
+            if not os.path.exists(self._boxrootdir):
                 # flag for cleanup to remember to also delete boxroot dir if
                 # it hasnt existed before already
                 self._fcleanbox = True
-                os.makedirs(boxdir)
-
-            self._boxtmpkeydir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir= self._boxrootdir)
-
-            self._boxtmpargdir:str = tempfile.mkdtemp(prefix="berrymill-args-", dir= self._boxrootdir)
+                os.makedirs(self._boxrootdir)
+                log.debug(f"No box root found at {self._boxrootdir}. Creating one")
+            self._boxtmpkeydir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir=self._boxrootdir)
+            self._boxtmpargdir:str = tempfile.mkdtemp(prefix="berrymill-args-", dir=self._boxrootdir)
 
 
     def _get_relative_file_uri(self, repo_key_path) -> str:
         """
         Change the file:// URIs in the repo key values to be relative to the boxroot
         """
-        if not self._boxtmpkeydir:
-            raise Exception("Key directory not available")
-        if not repo_key_path:
-            raise Exception("Key path not defined")
-        return "file:///" + \
-               quote( \
-               os.path.join( \
-               os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
+        assert bool(self._boxtmpkeydir), "Key directory not available"
+        assert bool(repo_key_path), "Key path not defined"
+
+        return "file:///"+quote(os.path.join(os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
 
 
     def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
@@ -70,18 +66,15 @@ class KiwiBuilder(KiwiParent):
         Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
         It expects a file:// uri to be present in repos[reponame][key]
         """
-        dst = self._boxtmpkeydir
-        if not dst:
-            raise Exception("ERROR: Boxroot directory is not defined")
+        assert bool(self._boxtmpkeydir), "Boxroot directory is not defined"
 
         for reponame in repos:
             k = repos.get(reponame, {}).get("key")
             parsed_url = urlparse(k)
             try:
-                shutil.copy(parsed_url.path, dst)
+                shutil.copy(parsed_url.path, self._boxtmpkeydir)
             except Exception as exc:
-                print(f"ERROR: Failure while trying to copying the keyfile at {parsed_url.path}")
-                print(exc)
+                log.critical(f"Failure while trying to copying the keyfile at {parsed_url.path}\n{exc}")
                 return
             repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
@@ -114,31 +107,30 @@ class KiwiBuilder(KiwiParent):
             kiwi_options += ["--target-arch", "aarch64"]
             allow_no_accel = False
 
-        if self._params.get("accel", False) and allow_no_accel:
+        if self._params.get("no_accel", False) and allow_no_accel:
             box_options.append("--no-accel")
 
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
-            print("ERROR: Failure {} while parsing appliance description".format(err))
+            log.critical(f"Failure {err} while parsing appliance description")
             return
 
         try:
             image_name:list = config_tree.xpath("//image/@name")
         except Exception as err:
-            print("ERROR: Failure {} while trying to extract image name", err)
+            log.critical(f"Failure {err} while trying to extract image name")
             return
 
-        target_dir = os.path.join(
-            self._params.get("target_dir","/tmp"),\
-            f"{image_name[0]}.{self._kiwiparams.get('profile', '')}")
+        assert self._params.get("target_dir") is not None, log.critical("No Target Directory for built image files specified")
 
+        target_dir = os.path.join(self._params.get("target_dir"), image_name[0])
+        
+        if self._kiwiparams.get("profile") is not None:
+            target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
+        
         if self._params.get("clean", False):
-            clean_target = target_dir
-            if self._params.get("profile"):
-                clean_target += f".{self._params.get('profile')}"
-            if self._params.get("local", False):
-                shutil.rmtree(clean_target)
+            shutil.rmtree(target_dir, ignore_errors=True)
 
         if not self._params.get("local", False):
             self._write_repokeys_box(self._repos)
@@ -152,8 +144,7 @@ class KiwiBuilder(KiwiParent):
                 print("Starting Kiwi for local build")                
                 KiwiAppLocal(command, repos=self._repos).run()
             except KiwiError as kiwierr:
-                print("KiwiError:", type(kiwierr).__name__)
-                print(kiwierr)
+                log.critical(f"KiwiError:, {type(kiwierr).__name__}\n{kiwierr}")
                 return
         else:
             command = ["kiwi-ng"]+ kiwi_options\
@@ -164,16 +155,8 @@ class KiwiBuilder(KiwiParent):
                 print("Starting Kiwi Box")
                 KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
             except KiwiError as kiwierr:
-                print("KiwiError:", type(kiwierr).__name__)
-                print(kiwierr)
+                log.critical(f"KiwiError:, {type(kiwierr).__name__}\n{kiwierr}")
                 return
-
-        # run kiwi here with "appliance_init" which is a ".kiwi" file
-        os.system("ls -lah")
-
-        print(self._repos)
-
-
 
     def cleanup(self) -> None:
         """
@@ -181,18 +164,16 @@ class KiwiBuilder(KiwiParent):
         """
         super().cleanup()
         if not self._initialized:
-            print("Cleanup finished")
+            log.info("Cleanup finished")
             return
         try:
             if not self._params.get("local", False):
-                if os.path.exists(self._boxtmpkeydir):
-                    shutil.rmtree(self._boxtmpkeydir)
-                if os.path.exists(self._boxtmpargdir):
-                    shutil.rmtree(self._boxtmpargdir)
+                shutil.rmtree(self._boxtmpkeydir, ignore_errors=True)
+                shutil.rmtree(self._boxtmpargdir, ignore_errors=True)
                 if self._fcleanbox:
                     # if Flag fcleanbox is true an empty boxroot is guranteed to exist
-                    shutil.rmtree(os.path.join(self._appliance_path, "boxroot"))
+                    shutil.rmtree(self._boxrootdir, ignore_errors=True)
         except Exception as e:
-            print(f"Error: Cleanup Failed : {e}")
+            log.warning(f"Error: Cleanup Failed : {e}")
 
-        print("Cleanup finished")
+        log.info("Cleanup finished")

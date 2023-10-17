@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 import os
 import yaml
@@ -8,6 +9,9 @@ from berry_mill.localrepos import DebianRepofind
 from berry_mill.sysinfo import get_local_arch
 from berry_mill.preparer import KiwiPreparer
 from berry_mill.builder import KiwiBuilder
+
+log = logging.getLogger('kiwi')
+
 
 class ImageMill:
     """
@@ -53,7 +57,6 @@ class ImageMill:
         build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
         build_p.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
         build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
-
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -113,8 +116,6 @@ class ImageMill:
         if self._appliance_path:
             os.chdir(self._appliance_path)
 
-
-
         if self.args.subparser_name == "build":
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
@@ -128,7 +129,7 @@ class ImageMill:
                             cpu= self.args.cpu,
                             local= self.args.local,
                             target_dir= self.args.target_dir,
-                            accel= self.args.no_accel                          
+                            no_accel= self.args.no_accel                          
                             )
         elif self.args.subparser_name == "prepare":           
             kiwip = KiwiPreparer(self._appliance_descr,
@@ -147,7 +148,7 @@ class ImageMill:
         try:
             kiwip.process()
         except Exception as err:
-            print(err)
+            log.critical(err)
         finally:
             kiwip.cleanup()
 

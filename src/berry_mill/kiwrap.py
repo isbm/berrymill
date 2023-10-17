@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
-
+import logging
 from typing import List
 from typing_extensions import Unpack
 import os
@@ -15,6 +15,7 @@ from typing import Dict
 
 from berry_mill.params import KiwiParams
 
+log = logging.getLogger('kiwi')
 
 class KiwiParent:
     """
@@ -26,15 +27,10 @@ class KiwiParent:
         self._repos:Dict[str, Dict[str, str]] = {}
         self._appliance_path:str = os.getcwd()
         self._appliance_descr:str = descr
-
         self._trusted_gpg_d:str = "/etc/apt/trusted.gpg.d"
-
         self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
-
         self._kiwiparams:Dict[KiwiParams] = pkw
-
         self._kiwi_options:List[str] = []
-
         self._initialized:bool = False
 
         if self._kiwiparams.get("debug", False):
@@ -45,21 +41,20 @@ class KiwiParent:
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
-            print("ERROR: Failure {} while parsing appliance description".format(err))
+            log.critical("Failure {} while parsing appliance description".format(err))
+            self.cleanup()
             sys.exit(1)
 
         try:
             profiles = config_tree.xpath("//profile/@name")
         except Exception as err:
-            print("ERROR: Failure {} while trying to extract profile names", err)
+            log.critical("Failure {} while trying to extract profile names", err)
             self.cleanup()
             sys.exit(1)
 
-
         if not self._kiwiparams.get("profile") and profiles:
-            print("No Profile selected.")
-            print("Please select one of the available following profiles using --profile:")
-            print(profiles)
+            log.error("No Profile selected.")
+            log.info(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
             sys.exit(1)
 
@@ -69,7 +64,7 @@ class KiwiParent:
                 self._kiwi_options += ["--profile", profile]
             else:
                 self.cleanup()
-                print(f"\'{profile}\' is not a valid profile. Available: {profiles}")
+                log.error(f"\'{profile}\' is not a valid profile. Available: {profiles}")
                 sys.exit(1)
 
         self._initialized = True
@@ -117,11 +112,12 @@ class KiwiParent:
             return g_path
         
     def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
-        if not repodata.get("key"):
-            raise Exception("Path to the key is not defined")
+        
+        assert len(repodata.get("key", "")) > 0, log.critical("Path to the key is not defined")
+        
         parsed_url = urlparse(repodata.get("key"))
         if not parsed_url.path:
-            print("Berrymill was not able to retrieve a fitting gpg key")
+            log.warning("Berrymill was not able to retrieve a fitting gpg key")
             if os.path.exists(self._trusted_gpg_d):
                 keylist:List[str] = os.listdir(self._trusted_gpg_d)
                 selected = self._key_selection(reponame, keylist)
@@ -156,11 +152,11 @@ class KiwiParent:
         """
         Cleanup the environment after the build
         """
-        print("Cleaning up...")
+        log.info("Cleaning up...")
         try:
             shutil.rmtree(self._tmpdir)
         except Exception as e:
-            print(f"Error: Cleanup Failed : {e}")
+            log.warning(f"Cleanup Failed: {e}")
 
     @abstractmethod
     def process(self) -> None:

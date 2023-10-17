@@ -1,6 +1,8 @@
-from pytest import CaptureFixture
+import logging
+from pytest import CaptureFixture, LogCaptureFixture
 from berry_mill.preparer import KiwiPreparer
 
+log = logging.getLogger('kiwi')
 
 class TestCollectionKiwiPreparer:
 
@@ -17,20 +19,18 @@ class TestCollectionKiwiPreparer:
         except AssertionError as asserr:
             assert "output directory for root folder mandatory" in str(asserr)
 
-    def test_preparer_prep_with_wrong_appliance_descr(self, capsys: CaptureFixture):
+    def test_preparer_prep_with_wrong_appliance_descr(self, caplog: LogCaptureFixture):
         """
         Start preparing the sysroot when no valid 
         appliance descr is given
         Expected: SystemExit
         """
         try:
-            KiwiPreparer_instance:KiwiPreparer = KiwiPreparer("test.txt", root="/tmp")
-
-            KiwiPreparer_instance.process()
-        except SystemExit as se:
-            cap: tuple = capsys.readouterr()
-            assert "failed to load external entity" in cap.out
-            assert se.code == 1
-    
+            with caplog.at_level(logging.CRITICAL):
+                KiwiPreparer_instance:KiwiPreparer = KiwiPreparer("test.txt", root="/tmp")
+                KiwiPreparer_instance.process()
+        except SystemExit as e:
+            assert e.code == 1
+            assert "while parsing appliance description" in caplog.text
 
             

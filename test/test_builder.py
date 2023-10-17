@@ -1,10 +1,9 @@
-
-from _pytest.capture import CaptureFixture
-import unittest.mock
+import logging
+from pytest import CaptureFixture, LogCaptureFixture
 from berry_mill.builder import KiwiBuilder
-import requests
 import pytest
 
+log = logging.getLogger('kiwi')
 
 class TestCollectionKiwiBuilder:
     def test_builder_get_relative_file_uri(self):
@@ -78,23 +77,25 @@ class TestCollectionKiwiBuilder:
         except Exception as ex:
             assert "Boxroot directory is not defined" in str(ex)
 
-    def test_builder__cleanup_no_tmpdir(self, capsys: CaptureFixture):
+    def test_builder_cleanup_no_tmpdir(self, caplog: LogCaptureFixture):
         """
         Wrong tmp dir
         Expected: Error Cleanup Failed
         """
+        log.info("Testing....")
 
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml", profile="Virtual")
         # Set tmpdir to empty
         KiwiBuilder_instance._tmpdir: str = ""
-
-        KiwiBuilder_instance.cleanup()
+        
         # Capture the error message printed on stdout
-        captured: tuple = capsys.readouterr()
+        with caplog.at_level(logging.WARNING):
+            KiwiBuilder_instance.cleanup()
         # Assert that the error message contains the expected error message
-        assert "Error: Cleanup Failed" in captured.out
+        assert "Cleanup Failed" in caplog.text
+        
 
-    def test_builder_cleanup_no_boxtmpdiraaa(self, capsys: CaptureFixture):
+    def test_builder_cleanup_no_boxtmpdiraaa(self, caplog: LogCaptureFixture):
         """
         Write repo keys from tmp dir to a wrong boxroot destination
         Expected: Error Cleanup Failed
@@ -104,25 +105,25 @@ class TestCollectionKiwiBuilder:
         KiwiBuilder_instance._tmpdir: str = "/tmp"
         # Set wrok box tmp dir
         KiwiBuilder_instance._boxtmpkeydir: str = "worng/path"
-        KiwiBuilder_instance.cleanup()
+        
         # Capture the error message printed on stdout
-        captured: tuple = capsys.readouterr()
-        assert "Error: Cleanup Failed" in captured.out
+        with caplog.at_level(logging.WARNING):
+            KiwiBuilder_instance.cleanup()
+        # Assert that the error message contains the expected error message
+        assert "Cleanup Failed" in caplog.text
 
-    def test_builder_build_wrong_appliance(self, capsys: CaptureFixture):
+    def test_builder_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
         Parse wrong appliance
         Expected: exit 1 and error Expected: failed to load external entity
         """
         try:
-            # Create KiwiBuilder instance with wrong appliance
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test.txt")
-            # trigger the build
-            KiwiBuilder_instance.process()
-        except SystemExit as se:
-            cap: tuple = capsys.readouterr()
-            assert "failed to load external entity" in cap.out
-            assert se.code == 1
+            with caplog.at_level(logging.CRITICAL):
+                Kiwibuilder_instance:KiwiBuilder = KiwiBuilder("test.txt")
+                Kiwibuilder_instance.process()
+        except SystemExit as e:
+            assert e.code == 1
+            assert "while parsing appliance description" in caplog.text
 
     def test_builder_build_no_profile_set(self, capsys: CaptureFixture):
         """

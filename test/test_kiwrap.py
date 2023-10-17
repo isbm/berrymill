@@ -1,11 +1,15 @@
 
+import logging
 from _pytest.capture import CaptureFixture
 import unittest.mock
+
+from pytest import LogCaptureFixture
 from berry_mill.builder import KiwiBuilder
 from berry_mill.kiwrap import KiwiParent
 import requests
 import pytest
 
+log = logging.getLogger('kiwi')
 
 class TestCollectionKiwiParent:
     """
@@ -128,22 +132,24 @@ class TestCollectionKiwiParent:
         except Exception as e:
             assert "Repository data not defined" in str(e)
 
-    def test_kiwrap_check_repokey_no_key(self):
+    def test_kiwrap_check_repokey_no_key(self, caplog: LogCaptureFixture):
         """
         Test: _check_repokey without key defined
         Expected: Exception Repository data not defined
         """
+        
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
+        # Define some test data
+        reponame: str = "test"
+        repodata: dict = {"name": "test", "url": "http://test", "key": ""}
+
         try:
-            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
-            # Define some test data
-            reponame: str = "test"
-            repodata: dict = {"name": "test", "url": "http://test", "key": ""}
+            with caplog.at_level(logging.CRITICAL):
+                KiwiParent_instance._check_repokey(repodata, reponame)
+        except AssertionError:
+            assert "Path to the key is not defined" in caplog.text
 
-            KiwiParent_instance._check_repokey(repodata, reponame)
-        except Exception as e:
-            assert "Path to the key is not defined" in str(e)
-
-    def test_kiwrap_check_repokey_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
+    def test_kiwrap_check_repokey_trusted_key_and_no_key_path(self, caplog: LogCaptureFixture):
         """
         Test: _check_repokey without key defined and trusted key are defined
          under /etc/apt/trusted.gpg.d"
@@ -156,11 +162,9 @@ class TestCollectionKiwiParent:
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "http://test", "key": "file://"}
             mock_key_selection.return_value = ""
-            KiwiParent_instance._check_repokey(repodata, reponame)
-            # Capture the error message printed on stdout
-            captured: tuple = capsys.readouterr()
-            # Assert that the error message contains the expected error message
-            assert "Berrymill was not able to retrieve a fitting gpg key" in captured.out
+            with caplog.at_level(logging.WARNING):
+                KiwiParent_instance._check_repokey(repodata, reponame)
+            assert "Berrymill was not able to retrieve a fitting gpg key" in caplog.text
 
     def test_kiwrap_check_repokey_no_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
         """
@@ -184,20 +188,18 @@ class TestCollectionKiwiParent:
             # Assert that the error message contains the expected error message
             assert "Trusted key not foud on system" in captured.out
     
-    def test_kiwrap_build_wrong_appliance(self, capsys: CaptureFixture):
+    def test_kiwrap_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
         Parse wrong appliance
         Expected: exit 1 and error Expected: failed to load external entity
         """
         try:
-            # Create KiwiParent instance with wrong appliance
-            KiwiParent_instance: KiwiParent = KiwiParent("test.txt")
-            # trigger the build
-            KiwiParent_instance.process()
-        except SystemExit as se:
-            cap: tuple = capsys.readouterr()
-            assert "failed to load external entity" in cap.out
-            assert se.code == 1
+            with caplog.at_level(logging.CRITICAL):
+                KiwiParent_instance:KiwiParent = KiwiParent("test.txt")
+                KiwiParent_instance.process()
+        except SystemExit as e:
+            assert e.code == 1
+            assert "while parsing appliance description" in caplog.text
 
     def test_kiwrap_build_no_profile_set(self, capsys: CaptureFixture):
         """

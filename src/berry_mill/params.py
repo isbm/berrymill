@@ -32,7 +32,7 @@ class KiwiBuildParams(KiwiParams):
     cpu: str
     local: bool
     target_dir: str
-    accel: bool
+    no_accel: bool
 
 class KiwiPrepParams(KiwiParams):
     """
