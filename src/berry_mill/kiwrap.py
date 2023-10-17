@@ -36,7 +36,7 @@ class KiwiParent:
         if self._kiwiparams.get("debug", False):
             self._kiwi_options.append("--debug")
 
-        print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
+        log.info("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
 
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
