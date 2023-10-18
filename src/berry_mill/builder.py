@@ -29,18 +29,18 @@ class KiwiBuilder(KiwiParent):
     def __init__(self, descr:str, **kw: Unpack[KiwiBuildParams]):
         super().__init__(descr=descr,
                         profile=kw.get("profile"),
-                        debug=kw.get("debug", False))
+                        debug=kw.get("debug"))
         
         self._params:Dict[KiwiBuildParams] = kw
 
-        if self._params.get("target_dir"):
+        if "target_dir" in self._params:
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
         log.debug(f"Using box root at {self._boxrootdir}")
         self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
-        if not self._params.get("local", False):
+        if "local" not in self._params:
             if not os.path.exists(self._boxrootdir):
                 # flag for cleanup to remember to also delete boxroot dir if
                 # it hasnt existed before already
@@ -58,7 +58,7 @@ class KiwiBuilder(KiwiParent):
         assert bool(self._boxtmpkeydir), "Key directory not available"
         assert bool(repo_key_path), "Key path not defined"
 
-        return "file:///"+quote(os.path.join(os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
+        return "file:///" + quote(os.path.join(os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
 
 
     def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
@@ -73,10 +73,10 @@ class KiwiBuilder(KiwiParent):
             parsed_url = urlparse(k)
             try:
                 shutil.copy(parsed_url.path, self._boxtmpkeydir)
+                repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
             except Exception as exc:
                 log.critical(f"Failure while trying to copying the keyfile at {parsed_url.path}\n{exc}")
                 return
-            repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
 
     def process(self) -> None:
         """
@@ -88,13 +88,13 @@ class KiwiBuilder(KiwiParent):
         # options, solely accepted by box-build plugin
         box_options:List[str] = ["--box","ubuntu"]
 
-        if self._kiwiparams.get("debug", False):
+        if "debug" in self._kiwiparams:
             box_options.append("--box-debug")
 
-        if self._params.get("cpu"):
+        if "cpu" in self._params:
             box_options = ["--cpu", self._params.get("cpu")] + box_options
 
-        if self._params.get("box_memory"):
+        if "box_memory" in self._params:
             box_options += ["--box-memory", self._params.get("box_memory")]
 
         if machine() == "aarch64":
@@ -102,12 +102,12 @@ class KiwiBuilder(KiwiParent):
 
         allow_no_accel:bool = True
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        if self._params.get("cross") and machine() == "x86_64":
+        if "cross" in self._params and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
             allow_no_accel = False
 
-        if self._params.get("no_accel", False) and allow_no_accel:
+        if "no_accel" in self._params and allow_no_accel:
             box_options.append("--no-accel")
 
         try:
@@ -126,16 +126,13 @@ class KiwiBuilder(KiwiParent):
 
         target_dir = os.path.join(self._params.get("target_dir"), image_name[0])
         
-        if self._kiwiparams.get("profile") is not None:
+        if "profile" in self._kiwiparams:
             target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
         
-        if self._params.get("clean", False):
+        if "clean" in self._params:
             shutil.rmtree(target_dir, ignore_errors=True)
 
-        if not self._params.get("local", False):
-            self._write_repokeys_box(self._repos)
-
-        if self._params.get("local", False):
+        if "local" in self._params:
             command = ["kiwi-ng"] + kiwi_options\
                     + ["system", "build", "--description", "."]\
                     + ["--target-dir", target_dir] 
@@ -147,6 +144,7 @@ class KiwiBuilder(KiwiParent):
                 log.critical(f"KiwiError:, {type(kiwierr).__name__}\n{kiwierr}")
                 return
         else:
+            self._write_repokeys_box(self._repos)
             command = ["kiwi-ng"]+ kiwi_options\
                     + ["system", "boxbuild"] + box_options\
                     + ["--", "--description", '.'] + ["--target-dir", target_dir]\
@@ -167,7 +165,7 @@ class KiwiBuilder(KiwiParent):
             log.info("Cleanup finished")
             return
         try:
-            if not self._params.get("local", False):
+            if "local" not in self._params:
                 shutil.rmtree(self._boxtmpkeydir, ignore_errors=True)
                 shutil.rmtree(self._boxtmpargdir, ignore_errors=True)
                 if self._fcleanbox:

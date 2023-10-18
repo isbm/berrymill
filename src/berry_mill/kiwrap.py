@@ -33,7 +33,7 @@ class KiwiParent:
         self._kiwi_options:List[str] = []
         self._initialized:bool = False
 
-        if self._kiwiparams.get("debug", False):
+        if "debug" in self._kiwiparams:
             self._kiwi_options.append("--debug")
 
         log.info("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
@@ -52,13 +52,13 @@ class KiwiParent:
             self.cleanup()
             sys.exit(1)
 
-        if not self._kiwiparams.get("profile") and profiles:
+        if "profile" not in self._kiwiparams and profiles is not None:
             log.error("No Profile selected.")
             log.info(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
             sys.exit(1)
 
-        if self._kiwiparams.get("profile"):
+        if "profile" in self._kiwiparams:
             profile = self._kiwiparams.get("profile")
             if profile in profiles:
                 self._kiwi_options += ["--profile", profile]

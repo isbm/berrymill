@@ -12,7 +12,7 @@ class KiwiPreparer(KiwiParent):
     def __init__(self, descr:str, **kw: Unpack[KiwiPrepParams]):
         super().__init__(descr=descr,
                         profile=kw.get("profile"),
-                        debug=kw.get("debug", False))
+                        debug=kw.get("debug"))
         
         self._params:Dict[KiwiPrepParams] = kw
     
@@ -28,7 +28,7 @@ class KiwiPreparer(KiwiParent):
         command += ["--description", self._appliance_path]
         command += ["--root", root]
 
-        if self._params.get("allow_existing_root", False):
+        if "allow_existing_root" in self._params:
             command.append("--allow-existing-root")
 
         KiwiAppPrepare(command, repos=self._repos).run()
