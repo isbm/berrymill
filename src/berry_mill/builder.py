@@ -1,6 +1,6 @@
 from __future__ import annotations
 import argparse
-import logging
+import kiwi.logger
 
 from typing import List
 from typing_extensions import Unpack
@@ -19,7 +19,7 @@ from berry_mill.kiwrap import KiwiParent
 
 from berry_mill.params import KiwiBuildParams, KiwiParams
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 class KiwiBuilder(KiwiParent):
     """
@@ -33,14 +33,14 @@ class KiwiBuilder(KiwiParent):
         
         self._params:Dict[KiwiBuildParams] = kw
 
-        if "target_dir" in self._params:
+        if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
 
         self._boxrootdir:str = os.path.join(self._appliance_path, "boxroot")
         log.debug(f"Using box root at {self._boxrootdir}")
         self._fcleanbox:bool = False
         # tmp boxroot dir only needed when build mode is not local
-        if "local" not in self._params:
+        if not self._params.get("local"):
             if not os.path.exists(self._boxrootdir):
                 # flag for cleanup to remember to also delete boxroot dir if
                 # it hasnt existed before already
@@ -75,7 +75,7 @@ class KiwiBuilder(KiwiParent):
                 shutil.copy(parsed_url.path, self._boxtmpkeydir)
                 repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
             except Exception as exc:
-                log.critical(f"Failure while trying to copying the keyfile at {parsed_url.path}\n{exc}")
+                log.warning(f"Failure while trying to copying the keyfile at {parsed_url.path}", exc_info= exc)
                 return
 
     def process(self) -> None:
@@ -88,13 +88,13 @@ class KiwiBuilder(KiwiParent):
         # options, solely accepted by box-build plugin
         box_options:List[str] = ["--box","ubuntu"]
 
-        if "debug" in self._kiwiparams:
+        if self._kiwiparams.get("debug"):
             box_options.append("--box-debug")
 
-        if "cpu" in self._params:
+        if self._params.get("cpu"):
             box_options = ["--cpu", self._params.get("cpu")] + box_options
 
-        if "box_memory" in self._params:
+        if self._params.get("box_memory"):
             box_options += ["--box-memory", self._params.get("box_memory")]
 
         if machine() == "aarch64":
@@ -102,46 +102,47 @@ class KiwiBuilder(KiwiParent):
 
         allow_no_accel:bool = True
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        if "cross" in self._params and machine() == "x86_64":
+        print(self._params)
+        if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
             allow_no_accel = False
 
-        if "no_accel" in self._params and allow_no_accel:
+        if self._params.get("no_accel") and allow_no_accel:
             box_options.append("--no-accel")
 
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
-            log.critical(f"Failure {err} while parsing appliance description")
+            log.warning(f"Failure while parsing appliance description", exc_info= err)
             return
 
         try:
             image_name:list = config_tree.xpath("//image/@name")
         except Exception as err:
-            log.critical(f"Failure {err} while trying to extract image name")
+            log.warning(f"Failure while trying to extract image name", exc_info= err)
             return
 
-        assert self._params.get("target_dir") is not None, log.critical("No Target Directory for built image files specified")
+        assert self._params.get("target_dir") is not None, log.warning("No Target Directory for built image files specified")
 
         target_dir = os.path.join(self._params.get("target_dir"), image_name[0])
         
-        if "profile" in self._kiwiparams:
+        if self._kiwiparams.get("profile"):
             target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
         
-        if "clean" in self._params:
+        if self._params.get("clean"):
             shutil.rmtree(target_dir, ignore_errors=True)
 
-        if "local" in self._params:
+        if self._params.get("local"):
             command = ["kiwi-ng"] + kiwi_options\
                     + ["system", "build", "--description", "."]\
                     + ["--target-dir", target_dir] 
-
+            log.info(command)
             try:
-                print("Starting Kiwi for local build")                
+                log.info("Starting Kiwi for local build")            
                 KiwiAppLocal(command, repos=self._repos).run()
             except KiwiError as kiwierr:
-                log.critical(f"KiwiError:, {type(kiwierr).__name__}\n{kiwierr}")
+                log.warning(f"KiwiError:, {type(kiwierr).__name__}", exc_info= kiwierr)
                 return
         else:
             self._write_repokeys_box(self._repos)
@@ -150,10 +151,10 @@ class KiwiBuilder(KiwiParent):
                     + ["--", "--description", '.'] + ["--target-dir", target_dir]\
 
             try:
-                print("Starting Kiwi Box")
+                log.info("Starting Kiwi Box")
                 KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
             except KiwiError as kiwierr:
-                log.critical(f"KiwiError:, {type(kiwierr).__name__}\n{kiwierr}")
+                log.warning(f"KiwiError:, {type(kiwierr).__name__}", exc_info= kiwierr)
                 return
 
     def cleanup(self) -> None:
@@ -165,13 +166,13 @@ class KiwiBuilder(KiwiParent):
             log.info("Cleanup finished")
             return
         try:
-            if "local" not in self._params:
+            if not self._params.get("local"):
                 shutil.rmtree(self._boxtmpkeydir, ignore_errors=True)
                 shutil.rmtree(self._boxtmpargdir, ignore_errors=True)
                 if self._fcleanbox:
                     # if Flag fcleanbox is true an empty boxroot is guranteed to exist
                     shutil.rmtree(self._boxrootdir, ignore_errors=True)
         except Exception as e:
-            log.warning(f"Error: Cleanup Failed : {e}")
+            log.warning(f"Error: Cleanup Failed", exc_info= e)
 
         log.info("Cleanup finished")

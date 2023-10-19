@@ -1,8 +1,8 @@
-import logging
+import kiwi.logger
 from pytest import CaptureFixture, LogCaptureFixture
 from berry_mill.preparer import KiwiPreparer
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 class TestCollectionKiwiPreparer:
 
@@ -26,7 +26,7 @@ class TestCollectionKiwiPreparer:
         Expected: SystemExit
         """
         try:
-            with caplog.at_level(logging.CRITICAL):
+            with caplog.at_level(kiwi.logging.WARNING):
                 KiwiPreparer_instance:KiwiPreparer = KiwiPreparer("test.txt", root="/tmp")
                 KiwiPreparer_instance.process()
         except SystemExit as e:

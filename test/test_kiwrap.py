@@ -1,5 +1,5 @@
 
-import logging
+import kiwi.logger
 from _pytest.capture import CaptureFixture
 import unittest.mock
 
@@ -9,7 +9,7 @@ from berry_mill.kiwrap import KiwiParent
 import requests
 import pytest
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 class TestCollectionKiwiParent:
     """
@@ -144,7 +144,7 @@ class TestCollectionKiwiParent:
         repodata: dict = {"name": "test", "url": "http://test", "key": ""}
 
         try:
-            with caplog.at_level(logging.CRITICAL):
+            with caplog.at_level(kiwi.logging.WARNING):
                 KiwiParent_instance._check_repokey(repodata, reponame)
         except AssertionError:
             assert "Path to the key is not defined" in caplog.text
@@ -162,7 +162,7 @@ class TestCollectionKiwiParent:
             reponame: str = "test"
             repodata: dict = {"name": "test", "url": "http://test", "key": "file://"}
             mock_key_selection.return_value = ""
-            with caplog.at_level(logging.WARNING):
+            with caplog.at_level(kiwi.logging.WARNING):
                 KiwiParent_instance._check_repokey(repodata, reponame)
             assert "Berrymill was not able to retrieve a fitting gpg key" in caplog.text
 
@@ -194,7 +194,7 @@ class TestCollectionKiwiParent:
         Expected: exit 1 and error Expected: failed to load external entity
         """
         try:
-            with caplog.at_level(logging.CRITICAL):
+            with caplog.at_level(kiwi.logging.WARNING):
                 KiwiParent_instance:KiwiParent = KiwiParent("test.txt")
                 KiwiParent_instance.process()
         except SystemExit as e:

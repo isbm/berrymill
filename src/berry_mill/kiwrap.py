@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
-import logging
+import kiwi.logger
 from typing import List
 from typing_extensions import Unpack
 import os
@@ -15,8 +15,7 @@ from typing import Dict
 
 from berry_mill.params import KiwiParams
 
-log = logging.getLogger('kiwi')
-
+log = kiwi.logging.getLogger('kiwi')
 class KiwiParent:
     """
     Base Class for Kiwi Tasks, such as build and prepare
@@ -33,32 +32,31 @@ class KiwiParent:
         self._kiwi_options:List[str] = []
         self._initialized:bool = False
 
-        if "debug" in self._kiwiparams:
+        if self._kiwiparams.get("debug"):
             self._kiwi_options.append("--debug")
-
+            
         log.info("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
-
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
-            log.critical("Failure {} while parsing appliance description".format(err))
+            log.warning("Failure while parsing appliance description", exc_info= err)
             self.cleanup()
             sys.exit(1)
 
         try:
             profiles = config_tree.xpath("//profile/@name")
         except Exception as err:
-            log.critical("Failure {} while trying to extract profile names", err)
+            log.warning("Failure while trying to extract profile names", exc_info= err)
             self.cleanup()
             sys.exit(1)
 
-        if "profile" not in self._kiwiparams and profiles is not None:
+        if self._kiwiparams.get("profile") is None and profiles is not None:
             log.error("No Profile selected.")
-            log.info(f"Please select one of the available following profiles using --profile:\n{profiles}")
+            log.warning(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
             sys.exit(1)
 
-        if "profile" in self._kiwiparams:
+        if self._kiwiparams.get("profile"):
             profile = self._kiwiparams.get("profile")
             if profile in profiles:
                 self._kiwi_options += ["--profile", profile]
@@ -113,7 +111,7 @@ class KiwiParent:
         
     def _check_repokey(self, repodata:Dict[str, str], reponame) -> None:
         
-        assert len(repodata.get("key", "")) > 0, log.critical("Path to the key is not defined")
+        assert len(repodata.get("key", "")) > 0, log.warning("Path to the key is not defined")
         
         parsed_url = urlparse(repodata.get("key"))
         if not parsed_url.path:
@@ -156,7 +154,7 @@ class KiwiParent:
         try:
             shutil.rmtree(self._tmpdir)
         except Exception as e:
-            log.warning(f"Cleanup Failed: {e}")
+            log.warning(f"Cleanup Failed", exc_info= e)
 
     @abstractmethod
     def process(self) -> None:

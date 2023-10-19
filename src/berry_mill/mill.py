@@ -1,8 +1,9 @@
 import argparse
-import logging
+import kiwi.logger
 import sys
 import os
 import yaml
+from kiwi.exceptions import KiwiPrivilegesError
 
 from berry_mill.cfgh import ConfigHandler, Autodict
 from berry_mill.localrepos import DebianRepofind
@@ -10,8 +11,7 @@ from berry_mill.sysinfo import get_local_arch
 from berry_mill.preparer import KiwiPreparer
 from berry_mill.builder import KiwiBuilder
 
-log = logging.getLogger('kiwi')
-
+log = kiwi.logging.getLogger('kiwi')
 
 class ImageMill:
     """
@@ -147,8 +147,10 @@ class ImageMill:
 
         try:
             kiwip.process()
+        except KiwiPrivilegesError:
+            log.warning("Operation requires root permissions")
         except Exception as err:
-            log.critical(err)
+            log.warning("ERROR {}",err)
         finally:
             kiwip.cleanup()
 

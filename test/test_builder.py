@@ -1,9 +1,9 @@
-import logging
+import kiwi.logger
 from pytest import CaptureFixture, LogCaptureFixture
 from berry_mill.builder import KiwiBuilder
 import pytest
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 class TestCollectionKiwiBuilder:
     def test_builder_get_relative_file_uri(self):
@@ -89,7 +89,7 @@ class TestCollectionKiwiBuilder:
         KiwiBuilder_instance._tmpdir: str = ""
         
         # Capture the error message printed on stdout
-        with caplog.at_level(logging.WARNING):
+        with caplog.at_level(kiwi.logging.WARNING):
             KiwiBuilder_instance.cleanup()
         # Assert that the error message contains the expected error message
         assert "Cleanup Failed" in caplog.text
@@ -107,7 +107,7 @@ class TestCollectionKiwiBuilder:
         KiwiBuilder_instance._boxtmpkeydir: str = "worng/path"
         
         # Capture the error message printed on stdout
-        with caplog.at_level(logging.WARNING):
+        with caplog.at_level(kiwi.logging.WARNING):
             KiwiBuilder_instance.cleanup()
         # Assert that the error message contains the expected error message
         assert "Cleanup Failed" in caplog.text
@@ -118,7 +118,7 @@ class TestCollectionKiwiBuilder:
         Expected: exit 1 and error Expected: failed to load external entity
         """
         try:
-            with caplog.at_level(logging.CRITICAL):
+            with caplog.at_level(kiwi.logging.WARNING):
                 Kiwibuilder_instance:KiwiBuilder = KiwiBuilder("test.txt")
                 Kiwibuilder_instance.process()
         except SystemExit as e:

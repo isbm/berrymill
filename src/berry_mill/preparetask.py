@@ -1,8 +1,8 @@
 from typing import Dict
 from kiwi.tasks.system_prepare import SystemPrepareTask
-import logging
+import kiwi.logger
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 class PrepareTask(SystemPrepareTask):
     """

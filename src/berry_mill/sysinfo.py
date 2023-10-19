@@ -1,6 +1,6 @@
 import platform
 import os
-import logging
+import kiwi.logger
 from typing import Dict
 
 archfix:Dict[str,str] = {
@@ -8,7 +8,7 @@ archfix:Dict[str,str] = {
     "aarch64": "arm64",
 }
 
-log = logging.getLogger("kiwi")
+log = kiwi.logging.getLogger("kiwi")
 
 
 def get_local_arch() -> str:

@@ -3,7 +3,9 @@ from typing_extensions import Unpack
 from berry_mill.kiwiapp import KiwiAppPrepare
 from berry_mill.kiwrap import KiwiParent
 from berry_mill.params import KiwiPrepParams
+import kiwi.logger
 
+log = kiwi.logging.getLogger('kiwi')
 
 class KiwiPreparer(KiwiParent):
     """
@@ -28,7 +30,7 @@ class KiwiPreparer(KiwiParent):
         command += ["--description", self._appliance_path]
         command += ["--root", root]
 
-        if "allow_existing_root" in self._params:
+        if self._params.get("allow_existing_root"):
             command.append("--allow-existing-root")
 
         KiwiAppPrepare(command, repos=self._repos).run()
@@ -36,7 +38,6 @@ class KiwiPreparer(KiwiParent):
     def cleanup(self) -> None:
         # Nothing to clean up
         super().cleanup()
-
-        if not self._initialized:
-            print("Cleanup finished")
+        if self._initialized:
+            log.info("Cleanup finished")
             return
