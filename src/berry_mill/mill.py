@@ -5,13 +5,26 @@ import os
 import yaml
 from kiwi.exceptions import KiwiPrivilegesError
 
-from berry_mill.cfgh import ConfigHandler, Autodict
-from berry_mill.localrepos import DebianRepofind
-from berry_mill.sysinfo import get_local_arch
-from berry_mill.preparer import KiwiPreparer
-from berry_mill.builder import KiwiBuilder
+from .cfgh import ConfigHandler, Autodict
+from .localrepos import DebianRepofind
+from .sysinfo import get_local_arch
+from .preparer import KiwiPreparer
+from .builder import KiwiBuilder
+from .sysinfo import has_virtualization
 
 log = kiwi.logging.getLogger('kiwi')
+
+no_nested_warning: str = str(
+"""
+Nested virtualization is NOT enabled. This can cause the build to fail
+as a virtual enviroment using qemu is utilized to build the image.
+
+You can either: 
+
+Enable nested virtualization, build locally, or, use --ignore-nested when you are
+sure that you are not running berrymill inside a virtual machine
+"""
+)
 
 class ImageMill:
     """
@@ -50,13 +63,16 @@ class ImageMill:
         build_p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
 
         # --cross sets a cpu -> dont allow user to choose cpu when cross is enabled
-        cpu_group = build_p.add_mutually_exclusive_group()
-        cpu_group.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
-        cpu_group.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+        build_fashion = build_p.add_mutually_exclusive_group()
+        build_fashion.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
+        build_fashion.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+        build_fashion.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
+
 
         build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
-        build_p.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
         build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
+        build_p.add_argument("--ignore-nested", action="store_true", help="ignore no nested virtualization enabled warning")
+
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -119,7 +135,14 @@ class ImageMill:
         if self.args.subparser_name == "build":
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
-                self.args.arch = "arm64"              
+                self.args.arch = "arm64"
+
+            if not self.args.local and not self.args.ignore_nested:
+                if has_virtualization():
+                    log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
+                    log.warning(no_nested_warning)
+                    return
+
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
                             profile= self.args.profile, 
@@ -147,8 +170,6 @@ class ImageMill:
 
         try:
             kiwip.process()
-        except KiwiPrivilegesError:
-            log.warning("Operation requires root permissions")
         except Exception as err:
             log.warning("ERROR {}",err)
         finally:
