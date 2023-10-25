@@ -30,7 +30,6 @@ class PrepareTask(SystemPrepareTask):
             if components:
                 components = components.replace(",", " ")
             distro = repodata.get("name", None)
-            print(repodata.get("key"))
             self.xml_state.add_repository(
                 repo_source=repodata.get("url"),
                 repo_type=repodata.get("type"),
