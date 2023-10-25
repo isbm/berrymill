@@ -13,11 +13,11 @@ import tempfile
 from urllib.parse import urlparse, quote
 from typing import Dict
 from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
-from kiwi.kiwi import KiwiError
+from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
 from platform import machine
-from berry_mill.kiwrap import KiwiParent
+from .kiwrap import KiwiParent
 
-from berry_mill.params import KiwiBuildParams, KiwiParams
+from .params import KiwiBuildParams
 
 log = kiwi.logging.getLogger('kiwi')
 
@@ -61,10 +61,12 @@ class KiwiBuilder(KiwiParent):
         return "file:///" + quote(os.path.join(os.path.basename(self._boxtmpkeydir), os.path.basename(repo_key_path)))
 
 
-    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> None:
+    def _write_repokeys_box(self, repos:Dict[str, Dict[str, str]]) -> bool:
         """
         Write repo keys from the self._tmp dir to the boxroot, so kiwi box can access the keys
         It expects a file:// uri to be present in repos[reponame][key]
+
+        Returns True on success
         """
         assert bool(self._boxtmpkeydir), "Boxroot directory is not defined"
 
@@ -76,8 +78,9 @@ class KiwiBuilder(KiwiParent):
                 repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
             except Exception as exc:
                 log.warning(f"Failure while trying to copying the keyfile at {parsed_url.path}", exc_info= exc)
-                return
-
+                return False
+        return True
+    
     def process(self) -> None:
         """
         Run builder. It supposed to be already within that directory (os.chdir).
@@ -102,7 +105,6 @@ class KiwiBuilder(KiwiParent):
 
         allow_no_accel:bool = True
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        print(self._params)
         if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
@@ -137,15 +139,19 @@ class KiwiBuilder(KiwiParent):
             command = ["kiwi-ng"] + kiwi_options\
                     + ["system", "build", "--description", "."]\
                     + ["--target-dir", target_dir] 
-            log.info(command)
             try:
                 log.info("Starting Kiwi for local build")            
                 KiwiAppLocal(command, repos=self._repos).run()
+            except KiwiPrivilegesError:
+                log.error("Operation requires root privileges")
+            except KiwiRootDirExists as exc:
+                log.error(exc.message)
             except KiwiError as kiwierr:
-                log.warning(f"KiwiError:, {type(kiwierr).__name__}", exc_info= kiwierr)
+                log.warning(f"KiwiError: {type(kiwierr).__name__} [{kiwierr.message}]")
                 return
         else:
-            self._write_repokeys_box(self._repos)
+            if not self._write_repokeys_box(self._repos):
+                return
             command = ["kiwi-ng"]+ kiwi_options\
                     + ["system", "boxbuild"] + box_options\
                     + ["--", "--description", '.'] + ["--target-dir", target_dir]\
