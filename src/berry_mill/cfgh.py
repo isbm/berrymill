@@ -2,7 +2,7 @@ import copy
 import yaml
 import os
 import sys
-from typing import Any
+from typing import Any, List
 import kiwi.logger
 
 log = kiwi.logging.getLogger('kiwi')
@@ -31,7 +31,7 @@ class ConfigHandler:
             # Load default /etc/berrymill.conf
             # or in the current directory "berrymill.conf"
 
-            default_conf:str = "/etc/berrymill.conf"
+            default_conf:str = "/etc/berrymill/berrymill.conf"
             if os.path.exists(default_conf):
                 self._cfg.append(default_conf)
             elif os.path.exists(os.path.basename(default_conf)):
