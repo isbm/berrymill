@@ -1,9 +1,10 @@
 from typing import Dict, List, Union
 from typing_extensions import Unpack
-from berry_mill.kiwiapp import KiwiAppPrepare
-from berry_mill.kiwrap import KiwiParent
-from berry_mill.params import KiwiPrepParams
+from .kiwiapp import KiwiAppPrepare
+from .kiwrap import KiwiParent
+from .params import KiwiPrepParams
 import kiwi.logger
+from kiwi.exceptions import KiwiPrivilegesError
 
 log = kiwi.logging.getLogger('kiwi')
 
@@ -33,7 +34,12 @@ class KiwiPreparer(KiwiParent):
         if self._params.get("allow_existing_root"):
             command.append("--allow-existing-root")
 
-        KiwiAppPrepare(command, repos=self._repos).run()
+        try:
+            KiwiAppPrepare(command, repos=self._repos).run()
+        except KiwiPrivilegesError:
+            log.error("Operation requires root privileges")
+            return
+
 
     def cleanup(self) -> None:
         # Nothing to clean up
