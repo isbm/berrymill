@@ -138,7 +138,7 @@ class ImageMill:
                 self.args.arch = "arm64"
 
             if not self.args.local and not self.args.ignore_nested:
-                if has_virtualization():
+                if not has_virtualization():
                     log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
                     log.warning(no_nested_warning)
                     return
