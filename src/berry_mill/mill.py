@@ -176,8 +176,6 @@ class ImageMill:
 
         try:
             kiwip.process()
-        except Exception as err:
-            log.warning("ERROR {}",err)
         finally:
             kiwip.cleanup()
 
