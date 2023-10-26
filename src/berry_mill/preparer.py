@@ -4,7 +4,7 @@ from .kiwiapp import KiwiAppPrepare
 from .kiwrap import KiwiParent
 from .params import KiwiPrepParams
 import kiwi.logger
-from kiwi.exceptions import KiwiPrivilegesError
+from kiwi.exceptions import KiwiPrivilegesError, KiwiRootDirExists
 
 log = kiwi.logging.getLogger('kiwi')
 
@@ -39,6 +39,10 @@ class KiwiPreparer(KiwiParent):
         except KiwiPrivilegesError:
             log.error("Operation requires root privileges")
             return
+        except KiwiRootDirExists as exc:
+            log.error(f"Root directory exists {exc.message}")
+            return
+
 
 
     def cleanup(self) -> None:
