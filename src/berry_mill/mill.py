@@ -142,6 +142,12 @@ class ImageMill:
                     log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
                     log.warning(no_nested_warning)
                     return
+                
+            boxed_conf: str|None = self.cfg.raw_unsafe_config().get("boxed_plugin_conf")
+            if boxed_conf is not None: 
+                os.environ["KIWI_BOXED_PLUGIN_CFG"] = boxed_conf
+            else:
+                os.environ["KIWI_BOXED_PLUGIN_CFG"] = "/etc/berrymill/kiwi_boxed_plugin.yml"
 
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
