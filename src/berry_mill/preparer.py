@@ -40,7 +40,7 @@ class KiwiPreparer(KiwiParent):
             log.error("Operation requires root privileges")
             return
         except KiwiRootDirExists as exc:
-            log.error(f"Root directory exists {exc.message}")
+            log.error(exc.message)
             return
 
 
