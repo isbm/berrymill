@@ -168,7 +168,7 @@ class ImageMill:
                             allow_existing_root=self.args.allow_existing_root
                             )
         else:
-            raise argparse.ArgumentError(message="No Action defined (build, prepare)")
+            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
          
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
