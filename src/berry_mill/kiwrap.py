@@ -45,12 +45,13 @@ class KiwiParent:
 
         try:
             profiles = config_tree.xpath("//profile/@name")
+            print(profiles)
         except Exception as err:
             log.warning("Failure while trying to extract profile names", exc_info= err)
             self.cleanup()
             sys.exit(1)
 
-        if self._kiwiparams.get("profile") is None and profiles is not None:
+        if self._kiwiparams.get("profile") is None and profiles:
             log.error("No Profile selected.")
             log.warning(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
