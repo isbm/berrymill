@@ -83,7 +83,11 @@ class ImageMill:
 
         # if target_dir exists with no --clean option, fail early.
         if not self.args.clean and os.path.isdir(self.args.target_dir):
-            raise Exception("Target directory already exists. Missed --clean ?")
+            raise Exception("Target directory already exists. Hint: use --clean option.")
+
+        # parent directory should be writable
+        if not os.access(os.path.dirname(self.args.target_dir), os.W_OK):
+            raise Exception("Target directory's parent is not writable, please use writable directory")
 
         # self._init_local_repos()
 
