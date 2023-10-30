@@ -81,6 +81,10 @@ class ImageMill:
         Build an image
         """
 
+        # if target_dir exists with no --clean option, fail early.
+        if not self.args.clean and os.path.isdir(self.args.target_dir):
+            raise Exception("Target directory already exists. Missed --clean ?")
+
         # self._init_local_repos()
 
         if self.args.show_config:
