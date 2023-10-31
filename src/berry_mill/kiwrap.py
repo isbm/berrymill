@@ -311,9 +311,6 @@ class KiwiBuilder:
                 self._cleanup()
                 sys.exit(1)
 
-        # run kiwi here with "appliance_init" which is a ".kiwi" file
-        os.system("ls -lah")
-
         print(self._repos)
 
         self._cleanup()
