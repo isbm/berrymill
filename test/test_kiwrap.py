@@ -306,7 +306,7 @@ class TestCollectionKiwiBuilder:
         """
         try:
             # Create KiwiBuilder instance with existant appliance
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
             # Remove profile
             KiwiBuilder_instance._params["profile"] = ""
             # Trigger the build
@@ -322,7 +322,7 @@ class TestCollectionKiwiBuilder:
         Test config  profie is
         Expected: message "Starting Kiwi Box"
         """
-        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
         # Set profile
         KiwiBuilder_instance._params["profile"] = "Live"
         KiwiBuilder_instance.build()
@@ -335,7 +335,7 @@ class TestCollectionKiwiBuilder:
         Expected: message "Starting Kiwi for local build"
         """
         try:
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/test_appliance.xml")
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
             # Set profile
             KiwiBuilder_instance._params["profile"] = "Live"
             # Set local build
