@@ -311,6 +311,4 @@ class KiwiBuilder:
                 self._cleanup()
                 sys.exit(1)
 
-        print(self._repos)
-
         self._cleanup()
