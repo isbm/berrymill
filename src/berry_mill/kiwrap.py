@@ -215,6 +215,30 @@ class KiwiBuilder:
         Run builder. It supposed to be already within that directory (os.chdir).
         Directory is changed by the parent caller of the KiwiBuilder class.
         """
+        try:
+            config_tree = etree.parse(f"{self._appliance_descr}")
+        except Exception as err:
+            print("ERROR: Failure {} while parsing appliance description".format(err))
+            sys.exit(1)
+
+        try:
+            image_name:list = config_tree.xpath("//image/@name")
+        except Exception as err:
+            print("ERROR: Failure {} while trying to extract image name", err)
+            sys.exit(1)
+
+        target_dir = os.path.join(
+            self._params.get("target_dir","/tmp"),\
+            f"{image_name[0]}.{self._params.get('profile', '')}")
+
+        # if target_dir exists with no --clean option, fail early.
+        if not self._params.get("clean", False) and os.path.isdir(target_dir):
+            raise Exception("Target directory already exists. Hint: use --clean option.")
+
+        # parent directory should be writable
+        if not os.access(os.path.dirname(target_dir), os.W_OK):
+            raise Exception("Target directory's parent is not writable, please use writable directory")
+
         print("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
         # options that are solely accepted by kiwi-ng
         kiwi_options = []
@@ -238,23 +262,6 @@ class KiwiBuilder:
         if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]
-
-
-        try:
-            config_tree = etree.parse(f"{self._appliance_descr}")
-        except Exception as err:
-            print("ERROR: Failure {} while parsing appliance description".format(err))
-            sys.exit(1)
-
-        try:
-            image_name:list = config_tree.xpath("//image/@name")
-        except Exception as err:
-            print("ERROR: Failure {} while trying to extract image name", err)
-            sys.exit(1)
-
-        target_dir = os.path.join(
-            self._params.get("target_dir","/tmp"),\
-            f"{image_name[0]}.{self._params.get('profile', '')}")
 
         profiles = config_tree.xpath("//profile/@name")
 
