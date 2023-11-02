@@ -1,13 +1,17 @@
 import argparse
+import kiwi.logger
 import sys
 import os
 import yaml
-from platform import machine
+from kiwi.exceptions import KiwiPrivilegesError
 
 from berry_mill.cfgh import ConfigHandler, Autodict
-from berry_mill.kiwrap import KiwiBuilder
 from berry_mill.localrepos import DebianRepofind
 from berry_mill.sysinfo import get_local_arch
+from berry_mill.preparer import KiwiPreparer
+from berry_mill.builder import KiwiBuilder
+
+log = kiwi.logging.getLogger('kiwi')
 
 class ImageMill:
     """
@@ -22,21 +26,37 @@ class ImageMill:
         if len(sys.argv) == 1:
             sys.argv.append("--help")
 
-        p:argparse.ArgumentParser = argparse.ArgumentParser(prog="imagemill",
-                                                            description="imagemill is a root filesystem generator for embedded devices",
+        p:argparse.ArgumentParser = argparse.ArgumentParser(prog="berrymill",
+                                                            description="berrymill is a root filesystem generator for embedded devices",
                                                             epilog="Have a lot of fun!")
-        p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
+        
         p.add_argument("-s", "--show-config", action="store_true", help="shows the building configuration")
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
         p.add_argument("-a", "--arch", help="specify target arch")
-        p.add_argument("-i", "--image", help="path to the image appliance, if it is not found in the current directory")
-        p.add_argument("-l", "--local", action="store_true", help="build the appliance directly on the current hardware")
+        p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
+        p.add_argument("-i", "--image", required=True, help="path to the image appliance, if it is not found in the current directory")
         p.add_argument("-p", "--profile", help="select profile for images that makes use of it")
-        p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
         p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
-        p.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
-        p.add_argument("--target-dir", type=str, default="/tmp", help="store image results in given dirpath")
-        p.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+
+        sub_p = p.add_subparsers(help="Course of action for berrymill",dest="subparser_name")
+        
+        # prepare specific arguments
+        prepare_p:argparse.ArgumentParser= sub_p.add_parser("prepare", help="prepare sysroot")
+        prepare_p.add_argument("--root", required=True, help="directory of output sysroot")
+        prepare_p.add_argument("--allow-existing-root", action="store_true", help="allow existing root")
+
+        # build specific arguments
+        build_p:argparse.ArgumentParser = sub_p.add_parser("build", help="build image")
+        build_p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
+
+        # --cross sets a cpu -> dont allow user to choose cpu when cross is enabled
+        cpu_group = build_p.add_mutually_exclusive_group()
+        cpu_group.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
+        cpu_group.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+
+        build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
+        build_p.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
+        build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -63,6 +83,9 @@ class ImageMill:
         """
         Initialise local repositories, those are already configured on the local machine.
         """
+        if not self.cfg.raw_unsafe_config().get("use-global-repos", False): 
+            return
+
         if self.cfg.raw_unsafe_config()["repos"].get("local") is not None:
             return
         else:
@@ -81,7 +104,7 @@ class ImageMill:
         Build an image
         """
 
-        # self._init_local_repos()
+        self._init_local_repos()
 
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
@@ -93,19 +116,42 @@ class ImageMill:
         if self._appliance_path:
             os.chdir(self._appliance_path)
 
-
-        b = KiwiBuilder(self._appliance_descr, 
-                        box_memory= self.args.box_memory, 
-                        profile= self.args.profile, 
-                        debug=self.args.debug, 
-                        clean= self.args.clean,
-                        cross= self.args.cross,
-                        cpu= self.args.cpu,
-                        local= self.args.local,
-                        target_dir= self.args.target_dir
-                        )
+        if self.args.subparser_name == "build":
+            # parameter "cross" implies a amd64 host and an arm64 target-arch
+            if self.args.cross:
+                self.args.arch = "arm64"              
+            kiwip = KiwiBuilder(self._appliance_descr, 
+                            box_memory= self.args.box_memory, 
+                            profile= self.args.profile, 
+                            debug=self.args.debug, 
+                            clean= self.args.clean,
+                            cross= self.args.cross,
+                            cpu= self.args.cpu,
+                            local= self.args.local,
+                            target_dir= self.args.target_dir,
+                            no_accel= self.args.no_accel                          
+                            )
+        elif self.args.subparser_name == "prepare":           
+            kiwip = KiwiPreparer(self._appliance_descr,
+                            root=self.args.root,
+                            debug=self.args.debug,
+                            profile=self.args.profile,
+                            allow_existing_root=self.args.allow_existing_root
+                            )
+        else:
+            raise argparse.ArgumentError(message="No Action defined (build, prepare)")
+         
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
-                b.add_repo(rname, repo)
+                kiwip.add_repo(rname, repo)
 
-        b.build()
+        try:
+            kiwip.process()
+        except KiwiPrivilegesError:
+            log.warning("Operation requires root permissions")
+        except Exception as err:
+            log.warning("ERROR {}",err)
+        finally:
+            kiwip.cleanup()
+
+

@@ -1,6 +1,3 @@
-# OBS API server. Default is http://api.opensuse.org
-obs-api: https://ebs.ebgroup.elektrobit.com
-
 # Global repositories will not be added, if set to "false"
 use-global-repos: false
 
@@ -11,7 +8,6 @@ repos:
   release:
     # Architecture
     # Conforms to Debian standard: https://wiki.debian.org/SupportedArchitectures
-
     amd64:
      # Just an alias of the repo, free form
       Ubuntu-Jammy:
@@ -19,18 +15,25 @@ repos:
         url: http://ftp.halifax.rwth-aachen.de/ubuntu/
         type: apt-deb
         key: file:///usr/lib/example/gnupg/keys/build_key_ubuntu_jammy.gpg
+        # Example key file
+        # key: file:///example/directory/with/key/build_key_ubuntu_jammy.gpg
 
         # Distro name
         name: jammy
         components: main,universe,multiverse,restricted
       Your-Repo-Alias:
         url: http://foo.com/bar/repo
+      Corbos-Linux:
+        url: http://linux.elektrobit.com/corbos
         type: apt-deb
+        key: file:///usr/share/keyrings/repo_eb_gm.pub.gpg
+
+        name: corbos
+        components: testing
 
         # no "key" defined -> berrymill will try and look for key
         # Currently automatic lookup online only works if your Repo is a flat repo and does not have components
         # Otherwise berrymill will prompt you with a selection of your trusted keys in (/etc/apt/trusted.gpg.d)
-
         # no "name" defined, therefore repo format is flat
         # no "compoments" defined, therefore repo format is flat
 
@@ -39,6 +42,21 @@ repos:
       Your-Arm-Repo-Alias:
         # no "compoments" defined, therefore repo format is flat
         url: http://foo-arm.com/bar-arm/repo
+      Ubuntu-Jammy:
+        url: http://ports.ubuntu.com/
         type: apt-deb
         key: file:///usr/lib/nautilos/gnupg/keys/build_key_nautilos_2.0_devel.asc
         trusted: true
+        # Example key file
+        # key: file:///example/directory/with/key/build_key_ubuntu_ports_jammy.gpg
+
+        name: jammy
+        components: main,universe,multiverse,restricted
+
+      Corbos-Linux:
+        url: http://linux.elektrobit.com/corbos
+        type: apt-deb
+        key: file:///usr/share/keyrings/repo_eb_gm.pub.gpg
+
+        name: corbos
+        components: testing

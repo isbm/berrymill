@@ -1,12 +1,12 @@
 from kiwi_boxed_plugin.tasks.system_boxbuild import SystemBoxbuildTask
-import logging
+import kiwi.logger
 import os
 from docopt import docopt
 from typing import List
 import kiwi.tasks.system_build
 
 
-log = logging.getLogger('kiwi')
+log = kiwi.logging.getLogger('kiwi')
 
 
 class BoxBuildTask(SystemBoxbuildTask):

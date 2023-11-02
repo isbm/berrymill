@@ -1,10 +1,10 @@
 from typing import Dict
-from kiwi.tasks.system_build import SystemBuildTask
+from kiwi.tasks.system_prepare import SystemPrepareTask
 import kiwi.logger
 
 log = kiwi.logging.getLogger('kiwi')
 
-class LocalBuildTask(SystemBuildTask):
+class PrepareTask(SystemPrepareTask):
     """
     Wrapper Class
     Overloads load_xml_description(...).
@@ -19,7 +19,7 @@ class LocalBuildTask(SystemBuildTask):
     
     def load_xml_description(self, description_directory: str, kiwi_file: str = '') -> None:
         super().load_xml_description(description_directory, kiwi_file)
-
+        
         self.xml_state.delete_repository_sections()
         for reponame in self.repos:
 
