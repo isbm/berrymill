@@ -1,10 +1,11 @@
 from _pytest.capture import CaptureFixture
+from pytest import LogCaptureFixture
 import yaml
 import os
 import tempfile
 from berry_mill.cfgh import ConfigHandler, Autodict
 import pytest
-
+import kiwi.logger
 
 """
 Test class for Autodict
@@ -79,15 +80,15 @@ class TestCollectionConfigHandler:
         """ Check that file path was added """
         assert temp_file_path in config_handler._cfg
 
-    def test_add_config_that_not_exists(self, capsys: CaptureFixture, config_handler: ConfigHandler):
+    def test_add_config_that_not_exists(self, caplog: LogCaptureFixture, config_handler: ConfigHandler):
         """ Set non existent path """
         non_existent_config_path: str = "/path/to/non/existent/config.cfg"
         """ add non existent path """
-        config_handler.add_config(non_existent_config_path)
+        with caplog.at_level(kiwi.logging.WARNING):
+            config_handler.add_config(non_existent_config_path)
         """ capture standard output """
-        output_msg: str = capsys.readouterr()
         """ check warning message """
-        assert "WARNING: no config found at" in output_msg.out
+        assert "no config found at" in caplog.text
 
     @pytest.fixture
     def valid_config(self):

@@ -166,7 +166,7 @@ class TestCollectionKiwiParent:
                 KiwiParent_instance._check_repokey(repodata, reponame)
             assert "Berrymill was not able to retrieve a fitting gpg key" in caplog.text
 
-    def test_kiwrap_check_repokey_no_trusted_key_and_no_key_path(self, capsys: CaptureFixture):
+    def test_kiwrap_check_repokey_no_trusted_key_and_no_key_path(self, caplog: LogCaptureFixture):
         """
         Test: _check_repokey with no key defined and no trusted key under /etc/apt/trusted.gpg.d"
         Expected: Trusted key not foud on system
@@ -182,11 +182,11 @@ class TestCollectionKiwiParent:
             mock_key_selection.return_value = ""
             # Redirect for non existent dir
             KiwiParent_instance._trusted_gpg_d = "/wrong/path"
-            KiwiParent_instance._check_repokey(repodata, reponame)
+            with caplog.at_level(kiwi.logging.WARNING):
+                KiwiParent_instance._check_repokey(repodata, reponame)
             # Capture the error message printed on stdout
-            captured: tuple = capsys.readouterr()
             # Assert that the error message contains the expected error message
-            assert "Trusted key not foud on system" in captured.out
+            assert "Trusted key not foud on system" in caplog.text
     
     def test_kiwrap_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
