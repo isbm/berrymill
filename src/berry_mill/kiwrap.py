@@ -156,8 +156,10 @@ class KiwiParent:
         except Exception as e:
             log.warning(f"Cleanup Failed", exc_info= e)
 
+
     @abstractmethod
     def process(self) -> None:
         raise NotImplementedError()
+
 
 

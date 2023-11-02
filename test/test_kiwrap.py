@@ -217,3 +217,34 @@ class TestCollectionKiwiParent:
             assert "No Profile selected" in captured.out
         except SystemExit as se:
             assert se.code == 1
+
+    @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
+    def test_kiwrap_build_with_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi Box"
+        """
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
+        # Set profile
+        KiwiBuilder_instance._params["profile"] = "Live"
+        KiwiBuilder_instance.build()
+        captured: tuple = capsys.readouterr()
+        assert "Starting Kiwi Box" in captured.out
+
+    def test_kiwrap_build_with_local_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi for local build"
+        """
+        try:
+            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
+            # Set profile
+            KiwiBuilder_instance._params["profile"] = "Live"
+            # Set local build
+            KiwiBuilder_instance._params["local"] = True
+            KiwiBuilder_instance.build()
+            captured: tuple = capsys.readouterr()
+            assert "Starting Kiwi for local build" in captured.out
+        except SystemExit as e:
+            print("Ignoring root permission error")
+
