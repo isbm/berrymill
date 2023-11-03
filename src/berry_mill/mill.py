@@ -1,9 +1,12 @@
 import argparse
+import shutil
+from tempfile import mkdtemp
 import kiwi.logger
 import sys
 import os
 import yaml
-from kiwi.exceptions import KiwiPrivilegesError
+
+from berry_mill.imgdescr.loader import Loader
 
 from .cfgh import ConfigHandler, Autodict
 from .localrepos import DebianRepofind
@@ -94,6 +97,24 @@ class ImageMill:
                 if pth.split('.')[-1] in ["kiwi", "xml"]:
                     self._appliance_descr = pth
                     break
+        
+        if not self._appliance_descr:
+            raise Exception("Appliance description was not found.")
+        
+        if self._appliance_path:
+            os.chdir(self._appliance_path)
+        else:
+            raise Exception("Appliance Path not found")
+
+        self._tmp_appliance_dir: str = mkdtemp(prefix="berrymill-tmp", dir="/tmp")
+        self._appliance_abs_path: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._appliance_tmp_pth: str = os.path.join(self._tmp_appliance_dir, self._appliance_descr)
+
+        try:
+            self._construct_final_appliance()
+        except Exception as e:
+            self.cleanup()
+            raise e
 
     def _init_local_repos(self) -> None:
         """
@@ -115,6 +136,21 @@ class ImageMill:
                 self.cfg.raw_unsafe_config()["repos"]["local"][arch].update(jr[arch])
         return
 
+    def _construct_final_appliance(self) -> None:
+        """
+        Constructs final kiwi appliance which is used by kiwi
+
+        1. moves the appliance description to a tmp dir, so kiwi wont use this "wrong" one
+
+        2. Constructs the right appliance and safes it named as the one passed to berrymill orginially
+        """
+        final_rendered_xml_string = Loader().load(self._appliance_abs_path)
+        
+        shutil.move(self._appliance_abs_path, self._appliance_tmp_pth)
+
+        with open(self._appliance_abs_path, "w") as ma:
+            ma.write(final_rendered_xml_string)
+
     def run(self) -> None:
         """
         Build an image
@@ -125,12 +161,6 @@ class ImageMill:
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
             return
-
-        if not self._appliance_descr:
-            raise Exception("Appliance description was not found.")
-
-        if self._appliance_path:
-            os.chdir(self._appliance_path)
 
         if self.args.subparser_name == "build":
             # parameter "cross" implies a amd64 host and an arm64 target-arch
@@ -177,6 +207,14 @@ class ImageMill:
         try:
             kiwip.process()
         finally:
+            self.cleanup()
             kiwip.cleanup()
 
+    def cleanup(self):
+        """
+        Cleanup Temporary directories and files
+        """
+        if(os.path.exists(self._appliance_tmp_pth)):
+            shutil.move(self._appliance_tmp_pth, self._appliance_abs_path)
+        shutil.rmtree(self._tmp_appliance_dir, ignore_errors=True)
 

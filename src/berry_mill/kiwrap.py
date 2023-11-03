@@ -4,7 +4,6 @@ import kiwi.logger
 from typing import List
 from typing_extensions import Unpack
 import os
-import sys
 import shutil
 import tempfile
 import requests
@@ -16,9 +15,10 @@ from typing import Dict
 from berry_mill.params import KiwiParams
 
 log = kiwi.logging.getLogger('kiwi')
+
 class KiwiParent:
     """
-    Base Class for Kiwi Tasks, such as build and prepare
+    Base Class for Kiwi Tasks, such as build and prepare.
     Implements shared functionality needed for all children
     such as repository and global kiwi params handling
     """
@@ -41,21 +41,20 @@ class KiwiParent:
         except Exception as err:
             log.warning("Failure while parsing appliance description", exc_info= err)
             self.cleanup()
-            sys.exit(1)
+            raise SystemExit()
 
         try:
             profiles = config_tree.xpath("//profile/@name")
-            print(profiles)
         except Exception as err:
             log.warning("Failure while trying to extract profile names", exc_info= err)
             self.cleanup()
-            sys.exit(1)
+            raise SystemExit()
 
         if self._kiwiparams.get("profile") is None and profiles:
             log.error("No Profile selected.")
             log.warning(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
-            sys.exit(1)
+            raise SystemExit()
 
         if self._kiwiparams.get("profile"):
             profile = self._kiwiparams.get("profile")
@@ -64,7 +63,7 @@ class KiwiParent:
             else:
                 self.cleanup()
                 log.error(f"\'{profile}\' is not a valid profile. Available: {profiles}")
-                sys.exit(1)
+                raise SystemExit()
 
         self._initialized = True
     
@@ -79,7 +78,7 @@ class KiwiParent:
         else:
             log.error("Repository name not defined")
             self.cleanup()
-            sys.exit(1)
+            raise SystemExit()
 
         return self
 

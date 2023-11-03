@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List
 from typing_extensions import Unpack
 from .kiwiapp import KiwiAppPrepare
 from .kiwrap import KiwiParent
