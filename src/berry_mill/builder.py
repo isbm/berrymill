@@ -85,32 +85,6 @@ class KiwiBuilder(KiwiParent):
         """
         # options that are solely accepted by kiwi-ng
         kiwi_options = self._kiwi_options
-        # options, solely accepted by box-build plugin
-        box_options:List[str] = ["--box","ubuntu"]
-
-        if self._kiwiparams.get("debug"):
-            box_options.append("--box-debug")
-
-        if self._params.get("cpu"):
-            box_options = ["--cpu", self._params.get("cpu")] + box_options
-
-        if self._params.get("box_memory"):
-            box_options += ["--box-memory", self._params.get("box_memory")]
-
-        if machine() == "aarch64":
-            box_options += ["--machine", "virt"]
-
-        allow_no_accel:bool = True
-        # TODO: When using cross, e.g. cpu param needs to be disabled
-        print(self._params)
-        if self._params.get("cross") and machine() == "x86_64":
-            box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
-            kiwi_options += ["--target-arch", "aarch64"]
-            allow_no_accel = False
-
-        if self._params.get("no_accel") and allow_no_accel:
-            box_options.append("--no-accel")
-
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
@@ -129,7 +103,41 @@ class KiwiBuilder(KiwiParent):
         
         if self._kiwiparams.get("profile"):
             target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
+
+        # if target_dir exists with no --clean option, fail early.
+        if not self._params.get("clean", False) and os.path.isdir(target_dir):
+            raise Exception("Target directory already exists. Hint: use --clean option.")
+
+        # parent directory should be writable
+        if not os.access(os.path.dirname(target_dir), os.W_OK):
+            raise Exception("Target directory's parent is not writable, please use writable directory")
         
+        # options, solely accepted by box-build plugin
+        box_options:List[str] = ["--box","ubuntu"]
+
+        if self._kiwiparams.get("debug"):
+            box_options.append("--box-debug")
+
+        if self._params.get("cpu"):
+            box_options = ["--cpu", self._params.get("cpu")] + box_options
+
+        if self._params.get("box_memory"):
+            box_options += ["--box-memory", self._params.get("box_memory")]
+
+        if machine() == "aarch64":
+            box_options += ["--machine", "virt"]
+
+        allow_no_accel:bool = True
+        # TODO: When using cross, e.g. cpu param needs to be disabled
+        log.info(self._params)
+        if self._params.get("cross") and machine() == "x86_64":
+            box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
+            kiwi_options += ["--target-arch", "aarch64"]
+            allow_no_accel = False
+
+        if self._params.get("no_accel") and allow_no_accel:
+            box_options.append("--no-accel")
+
         if self._params.get("clean"):
             shutil.rmtree(target_dir, ignore_errors=True)
 
