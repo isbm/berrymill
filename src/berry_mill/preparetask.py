@@ -29,7 +29,7 @@ class PrepareTask(SystemPrepareTask):
             components = components if components != '/' else None
             if components:
                 components = components.replace(",", " ")
-            distro = repodata.get("name", None)
+            distro = repodata.get("name")
             self.xml_state.add_repository(
                 repo_source=repodata.get("url"),
                 repo_type=repodata.get("type"),

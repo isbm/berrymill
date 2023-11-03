@@ -9,17 +9,14 @@ if __name__ == "__main__":
     try:
         mill = ImageMill()
     except Exception as exc:
-        mill.cleanup()
         print("General error:", exc)
         sys.exit(1)
 
     try:
         mill.run()
     except Exception as exc:
-        mill.cleanup()
         print("Error:", exc)
         if mill.args.debug:
             raise
-    except SystemExit as e:
+    finally:
         mill.cleanup()
-        raise e

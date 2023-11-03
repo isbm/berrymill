@@ -38,10 +38,8 @@ class KiwiPreparer(KiwiParent):
             KiwiAppPrepare(command, repos=self._repos).run()
         except KiwiPrivilegesError:
             log.error("Operation requires root privileges")
-            return
         except KiwiRootDirExists as exc:
             log.error(exc.message)
-            return
 
 
 

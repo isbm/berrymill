@@ -107,15 +107,14 @@ class ImageMill:
         else:
             raise Exception("Appliance Path not found")
 
-        self._tmp_appliance_dir: str = mkdtemp(prefix="berrymill-tmp", dir="/tmp")
-        self._appliance_abs_path: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._appliance_tmp_pth: str = os.path.join(self._tmp_appliance_dir, self._appliance_descr)
+        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
 
         try:
             self._construct_final_appliance()
-        except Exception as e:
+        finally:
             self.cleanup()
-            raise e
 
     def _init_local_repos(self) -> None:
         """
@@ -140,16 +139,14 @@ class ImageMill:
     def _construct_final_appliance(self) -> None:
         """
         Constructs final kiwi appliance which is used by kiwi
-
         1. moves the appliance description to a tmp dir, so kiwi wont use this "wrong" one
-
         2. Constructs the right appliance and safes it named as the one passed to berrymill orginially
         """
-        final_rendered_xml_string = Loader().load(self._appliance_abs_path)
+        final_rendered_xml_string = Loader().load(self._appliance_abspath)
         
-        shutil.move(self._appliance_abs_path, self._appliance_tmp_pth)
+        shutil.move(self._appliance_abspath, self._bac_appliance_abspth)
 
-        with open(self._appliance_abs_path, "w") as ma:
+        with open(self._appliance_abspath, "w") as ma:
             ma.write(final_rendered_xml_string)
 
     def run(self) -> None:
@@ -168,18 +165,15 @@ class ImageMill:
             if self.args.cross:
                 self.args.arch = "arm64"
 
-            if not self.args.local and not self.args.ignore_nested:
-                if not has_virtualization():
-                    log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
-                    log.warning(no_nested_warning)
-                    return
+            if not (self.args.local or self.args.ignore_nested or has_virtualization()):
+                log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
+                log.warning(no_nested_warning)
+                raise SystemExit()
                 
-            boxed_conf: str|None = self.cfg.raw_unsafe_config().get("boxed_plugin_conf")
-            if boxed_conf is not None: 
-                os.environ["KIWI_BOXED_PLUGIN_CFG"] = boxed_conf
-            else:
-                os.environ["KIWI_BOXED_PLUGIN_CFG"] = "/etc/berrymill/kiwi_boxed_plugin.yml"
-
+            os.environ["KIWI_BOXED_PLUGIN_CFG"] = \
+                self.cfg.raw_unsafe_config().get("boxed_plugin_conf", 
+                                                "/etc/berrymill/kiwi_boxed_plugin.yml")
+            
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
                             profile= self.args.profile, 
@@ -215,7 +209,7 @@ class ImageMill:
         """
         Cleanup Temporary directories and files
         """
-        if(os.path.exists(self._appliance_tmp_pth)):
-            shutil.move(self._appliance_tmp_pth, self._appliance_abs_path)
-        shutil.rmtree(self._tmp_appliance_dir, ignore_errors=True)
+        if(os.path.exists(self._bac_appliance_abspth)):
+            shutil.move(self._bac_appliance_abspth, self._appliance_abspath)
+        shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
 
