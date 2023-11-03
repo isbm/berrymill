@@ -227,7 +227,7 @@ class TestCollectionKiwiParent:
         KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
         # Set profile
         KiwiBuilder_instance._params["profile"] = "Live"
-        KiwiBuilder_instance.build()
+        KiwiBuilder_instance.process()
         captured: tuple = capsys.readouterr()
         assert "Starting Kiwi Box" in captured.out
 
@@ -242,7 +242,7 @@ class TestCollectionKiwiParent:
             KiwiBuilder_instance._params["profile"] = "Live"
             # Set local build
             KiwiBuilder_instance._params["local"] = True
-            KiwiBuilder_instance.build()
+            KiwiBuilder_instance.process()
             captured: tuple = capsys.readouterr()
             assert "Starting Kiwi for local build" in captured.out
         except SystemExit as e:
