@@ -107,7 +107,7 @@ class ImageMill:
         self._init_local_repos()
 
         if self.args.show_config:
-            print(yaml.dump(self.cfg.config))
+            log.info(yaml.dump(self.cfg.config))
             return
 
         if not self._appliance_descr:

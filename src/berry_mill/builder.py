@@ -102,7 +102,7 @@ class KiwiBuilder(KiwiParent):
 
         allow_no_accel:bool = True
         # TODO: When using cross, e.g. cpu param needs to be disabled
-        print(self._params)
+        log.debug(self._params)
         if self._params.get("cross") and machine() == "x86_64":
             box_options += ["--aarch64", "--cpu", "cortex-a57", "--machine", "virt", "--no-accel"]
             kiwi_options += ["--target-arch", "aarch64"]

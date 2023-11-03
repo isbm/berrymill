@@ -76,7 +76,7 @@ class KiwiParent:
             self._check_repokey(repodata, reponame)
             self._repos[reponame] = repodata
         else:
-            print("Repository name not defined")
+            log.error("Repository name not defined")
             self.cleanup()
             sys.exit(1)
 
@@ -127,7 +127,7 @@ class KiwiParent:
                     self._check_repokey(repodata, reponame)
                     return
             else:
-                print("Trusted key not foud on system")
+                log.warning("Trusted key not foud on system")
         if not os.path.exists(parsed_url.path):
             Exception(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
 
@@ -142,7 +142,7 @@ class KiwiParent:
                   ),
         ]
         answer = inquirer.prompt(question)
-        print("You selected:", answer["choice"])
+        log.info("You selected:", answer["choice"])
 
         return answer["choice"] != none_of_above and answer["choice"] or None
     

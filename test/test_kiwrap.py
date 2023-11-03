@@ -246,5 +246,5 @@ class TestCollectionKiwiParent:
             captured: tuple = capsys.readouterr()
             assert "Starting Kiwi for local build" in captured.out
         except SystemExit as e:
-            print("Ignoring root permission error")
+            log.info("Ignoring root permission error")
 
