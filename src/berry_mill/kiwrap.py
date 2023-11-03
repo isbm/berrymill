@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import abstractmethod
+import sys
 import kiwi.logger
 from typing import List
 from typing_extensions import Unpack
@@ -41,20 +42,20 @@ class KiwiParent:
         except Exception as err:
             log.warning("Failure while parsing appliance description", exc_info= err)
             self.cleanup()
-            raise SystemExit()
+            sys.exit(1)
 
         try:
             profiles = config_tree.xpath("//profile/@name")
         except Exception as err:
             log.warning("Failure while trying to extract profile names", exc_info= err)
             self.cleanup()
-            raise SystemExit()
+            sys.exit(1)
 
         if self._kiwiparams.get("profile") is None and profiles:
             log.error("No Profile selected.")
             log.warning(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
-            raise SystemExit()
+            sys.exit(1)
 
         if self._kiwiparams.get("profile"):
             profile = self._kiwiparams.get("profile")
@@ -63,7 +64,7 @@ class KiwiParent:
             else:
                 self.cleanup()
                 log.error(f"\'{profile}\' is not a valid profile. Available: {profiles}")
-                raise SystemExit()
+                sys.exit(1)
 
         self._initialized = True
     
@@ -78,7 +79,7 @@ class KiwiParent:
         else:
             log.error("Repository name not defined")
             self.cleanup()
-            raise SystemExit()
+            sys.exit(1)
 
         return self
 
