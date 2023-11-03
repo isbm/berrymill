@@ -16,6 +16,7 @@ from .builder import KiwiBuilder
 from .sysinfo import has_virtualization
 
 log = kiwi.logging.getLogger('kiwi')
+log.set_color_format()
 
 no_nested_warning: str = str(
 """
