@@ -19,7 +19,7 @@ Ubuntu/Debian distributions, allowing building images locally.
 
 ### Build an Image Locally
 
-That can also KIWI do. Except if your image build is also should to
+That can also KIWI do. Except if your image build also should
 equally run on [OBS](https://openbuildservice.org) **and** locally
 without image description changes.
 
@@ -32,7 +32,7 @@ all around the place, but you want to have _derived images_.
 
 ### Configuration Management
 
-Unline plain KIWI, which keeps configuration in a straight-forward
+Unlike plain KIWI, which keeps configuration in a straight-forward
 fashion, Berrymill is also handling the Configuration Management in a
 framework style.
 
