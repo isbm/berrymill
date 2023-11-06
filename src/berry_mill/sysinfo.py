@@ -60,3 +60,19 @@ def has_virtualization() -> bool:
             return False
 
     return True
+
+
+def is_vm() -> bool:
+    """
+    Detect if the current machine is a VM
+    """
+    # Crude test on vendors
+    vendors:list[str] = filter(None, map(lambda l:l.startswith("vendor:")
+                                         and l.split(":")[-1].strip().lower()
+                                         or "", [x.strip() for x in
+                                                 os.popen("/usr/bin/lshw 2> /dev/null").readlines()]))
+    for v in ["qemu", "virtualbox", "vmware"]:
+        if v in vendors:
+            return True
+
+    return False
