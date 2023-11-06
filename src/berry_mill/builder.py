@@ -85,6 +85,33 @@ class KiwiBuilder(KiwiParent):
         Run builder. It supposed to be already within that directory (os.chdir).
         Directory is changed by the parent caller of the KiwiBuilder class.
         """
+        try:
+            config_tree = etree.parse(f"{self._appliance_descr}")
+        except Exception as err:
+            log.error(f"Failure while parsing appliance description", exc_info= err)
+            return
+
+        try:
+            image_name:list = config_tree.xpath("//image/@name")
+        except Exception as err:
+            log.error(f"Failure while trying to extract image name", exc_info= err)
+            return
+
+        assert self._params.get("target_dir") is not None, log.warning("No Target Directory for built image files specified")
+
+        target_dir = os.path.join(self._params.get("target_dir"), image_name[0])
+
+        if self._kiwiparams.get("profile"):
+            target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
+
+        # if target_dir exists with no --clean option, fail early.
+        if not self._params.get("clean", False) and os.path.isdir(target_dir):
+            raise Exception("Target directory already exists. Hint: use --clean option.")
+
+        # parent directory should be writable
+        if not os.access(os.path.dirname(target_dir), os.W_OK):
+            raise Exception("Target directory's parent is not writable, please use writable directory")
+
         # options that are solely accepted by kiwi-ng
         kiwi_options = self._kiwi_options
         # options, solely accepted by box-build plugin
@@ -112,25 +139,6 @@ class KiwiBuilder(KiwiParent):
         if self._params.get("no_accel") and allow_no_accel:
             box_options.append("--no-accel")
 
-        try:
-            config_tree = etree.parse(f"{self._appliance_descr}")
-        except Exception as err:
-            log.warning(f"Failure while parsing appliance description", exc_info= err)
-            return
-
-        try:
-            image_name:list = config_tree.xpath("//image/@name")
-        except Exception as err:
-            log.warning(f"Failure while trying to extract image name", exc_info= err)
-            return
-
-        assert self._params.get("target_dir") is not None, log.warning("No Target Directory for built image files specified")
-
-        target_dir = os.path.join(self._params.get("target_dir"), image_name[0])
-        
-        if self._kiwiparams.get("profile"):
-            target_dir = os.path.join(target_dir, self._kiwiparams.get("profile"))
-        
         if self._params.get("clean"):
             shutil.rmtree(target_dir, ignore_errors=True)
 
