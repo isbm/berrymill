@@ -1,10 +1,10 @@
 from __future__ import annotations
 from abc import abstractmethod
+import sys
 import kiwi.logger
 from typing import List
 from typing_extensions import Unpack
 import os
-import sys
 import shutil
 import tempfile
 import requests
@@ -16,9 +16,10 @@ from typing import Dict
 from berry_mill.params import KiwiParams
 
 log = kiwi.logging.getLogger('kiwi')
+
 class KiwiParent:
     """
-    Base Class for Kiwi Tasks, such as build and prepare
+    Base Class for Kiwi Tasks, such as build and prepare.
     Implements shared functionality needed for all children
     such as repository and global kiwi params handling
     """
@@ -50,7 +51,7 @@ class KiwiParent:
             self.cleanup()
             sys.exit(1)
 
-        if self._kiwiparams.get("profile") is None and profiles is not None:
+        if self._kiwiparams.get("profile") is None and profiles:
             log.error("No Profile selected.")
             log.warning(f"Please select one of the available following profiles using --profile:\n{profiles}")
             self.cleanup()
@@ -76,7 +77,7 @@ class KiwiParent:
             self._check_repokey(repodata, reponame)
             self._repos[reponame] = repodata
         else:
-            print("Repository name not defined")
+            log.error("Repository name not defined")
             self.cleanup()
             sys.exit(1)
 
@@ -127,7 +128,7 @@ class KiwiParent:
                     self._check_repokey(repodata, reponame)
                     return
             else:
-                print("Trusted key not foud on system")
+                log.warning("Trusted key not foud on system")
         if not os.path.exists(parsed_url.path):
             Exception(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
 

@@ -1,17 +1,34 @@
 import argparse
+import shutil
+from tempfile import mkdtemp
 import kiwi.logger
 import sys
 import os
 import yaml
-from kiwi.exceptions import KiwiPrivilegesError
 
-from berry_mill.cfgh import ConfigHandler, Autodict
-from berry_mill.localrepos import DebianRepofind
-from berry_mill.sysinfo import get_local_arch
-from berry_mill.preparer import KiwiPreparer
-from berry_mill.builder import KiwiBuilder
+from berry_mill.imgdescr.loader import Loader
+
+from .cfgh import ConfigHandler, Autodict
+from .localrepos import DebianRepofind
+from .sysinfo import get_local_arch
+from .preparer import KiwiPreparer
+from .builder import KiwiBuilder
+from .sysinfo import has_virtualization
 
 log = kiwi.logging.getLogger('kiwi')
+log.set_color_format()
+
+no_nested_warning: str = str(
+"""
+Nested virtualization is NOT enabled. This can cause the build to fail
+as a virtual enviroment using qemu is utilized to build the image.
+
+You can either: 
+
+Enable nested virtualization, build locally, or, use --ignore-nested when you are
+sure that you are not running berrymill inside a virtual machine
+"""
+)
 
 class ImageMill:
     """
@@ -50,34 +67,56 @@ class ImageMill:
         build_p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
 
         # --cross sets a cpu -> dont allow user to choose cpu when cross is enabled
-        cpu_group = build_p.add_mutually_exclusive_group()
-        cpu_group.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
-        cpu_group.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+        build_fashion = build_p.add_mutually_exclusive_group()
+        build_fashion.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
+        build_fashion.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
+        build_fashion.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
 
         build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
-        build_p.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
         build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
+        build_p.add_argument("--ignore-nested", action="store_true", help="ignore no nested virtualization enabled warning")
+
 
         self.args:argparse.Namespace = p.parse_args()
 
         self.cfg:ConfigHandler = ConfigHandler()
+
         if self.args.config:
             self.cfg.add_config(self.args.config)
-        self.cfg.load()
 
+        self.cfg.load()
         # Set appliance paths
         self._appliance_path: str = os.path.dirname(self.args.image or ".")
+        
         if self._appliance_path == ".":
             self._appliance_path = ""
 
         self._appliance_descr: str = os.path.basename(self.args.image or ".")
+        
         if self._appliance_descr == ".":
             self._appliance_descr = ""
+
         if not self._appliance_descr:
             for pth in os.listdir(self._appliance_path or "."):
                 if pth.split('.')[-1] in ["kiwi", "xml"]:
                     self._appliance_descr = pth
                     break
+        
+        if not self._appliance_descr:
+            raise Exception("Appliance description was not found.")
+        
+        if not self._appliance_path:
+            raise Exception("Appliance Path not found")
+        
+        os.chdir(self._appliance_path)
+        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+
+        try:
+            self._construct_final_appliance()
+        finally:
+            self.cleanup()
 
     def _init_local_repos(self) -> None:
         """
@@ -99,27 +138,39 @@ class ImageMill:
                 self.cfg.raw_unsafe_config()["repos"]["local"][arch].update(jr[arch])
         return
 
+    def _construct_final_appliance(self) -> None:
+        """
+        Constructs final kiwi appliance which is used by kiwi
+        1. moves the appliance description to a tmp dir, so kiwi wont use this "wrong" one
+        2. Constructs the right appliance and safes it named as the one passed to berrymill orginially
+        """
+        final_rendered_xml_string = Loader().load(self._appliance_abspath) 
+        shutil.move(self._appliance_abspath, self._bac_appliance_abspth)
+        with open(self._appliance_abspath, "w") as ma:
+            ma.write(final_rendered_xml_string)
+
     def run(self) -> None:
         """
         Build an image
         """
-
         self._init_local_repos()
-
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
             return
 
-        if not self._appliance_descr:
-            raise Exception("Appliance description was not found.")
-
-        if self._appliance_path:
-            os.chdir(self._appliance_path)
-
         if self.args.subparser_name == "build":
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
-                self.args.arch = "arm64"              
+                self.args.arch = "arm64"
+
+            if not (self.args.local or self.args.ignore_nested or has_virtualization()):
+                log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
+                log.warning(no_nested_warning)
+                raise SystemExit()
+                
+            os.environ["KIWI_BOXED_PLUGIN_CFG"] = \
+                self.cfg.raw_unsafe_config().get("boxed_plugin_conf", 
+                                                "/etc/berrymill/kiwi_boxed_plugin.yml")         
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
                             profile= self.args.profile, 
@@ -139,7 +190,7 @@ class ImageMill:
                             allow_existing_root=self.args.allow_existing_root
                             )
         else:
-            raise argparse.ArgumentError(message="No Action defined (build, prepare)")
+            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
          
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
@@ -147,11 +198,15 @@ class ImageMill:
 
         try:
             kiwip.process()
-        except KiwiPrivilegesError:
-            log.warning("Operation requires root permissions")
-        except Exception as err:
-            log.warning("ERROR {}",err)
         finally:
+            self.cleanup()
             kiwip.cleanup()
 
+    def cleanup(self):
+        """
+        Cleanup Temporary directories and files
+        """
+        if(os.path.exists(self._bac_appliance_abspth)):
+            shutil.move(self._bac_appliance_abspth, self._appliance_abspath)
+        shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
 

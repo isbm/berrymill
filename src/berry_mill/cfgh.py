@@ -2,8 +2,11 @@ import copy
 import yaml
 import os
 import sys
-
 from typing import Any, List
+import kiwi.logger
+
+log = kiwi.logging.getLogger('kiwi')
+
 
 class Autodict(dict):
     def __getitem__(self, __key: Any) -> Any:
@@ -28,13 +31,13 @@ class ConfigHandler:
             # Load default /etc/berrymill.conf
             # or in the current directory "berrymill.conf"
 
-            default_conf:str = "/etc/berrymill.conf"
+            default_conf:str = "/etc/berrymill/berrymill.conf"
             if os.path.exists(default_conf):
                 self._cfg.append(default_conf)
             elif os.path.exists(os.path.basename(default_conf)):
                 self._cfg.append(os.path.basename(default_conf))
             else:
-                print("WARNING: no default config found at {}".format(default_conf))
+                log.warning("no default config found at {}".format(default_conf))
 
     def add_config(self, cf_path: str):
         """
@@ -43,7 +46,7 @@ class ConfigHandler:
         if os.path.exists(cf_path):
             self._cfg.append(cf_path)
         else:
-            print("WARNING: no config found at {}".format(cf_path))
+            log.warning("no config found at {}".format(cf_path))
 
     def _parse_config(self, cf_path:str) -> None:
         """
@@ -52,7 +55,7 @@ class ConfigHandler:
         try:
             data:Any = yaml.load(open(cf_path), Loader=yaml.SafeLoader)
         except Exception as exc:
-            print("ERROR: unable to load configuration at {}: {}".format(cf_path, exc))
+            log.error("unable to load configuration at {}: {}".format(cf_path, exc))
             sys.exit(1)
 
         self.__conf.update(data)
@@ -62,7 +65,7 @@ class ConfigHandler:
         Load all the configs
         """
         if not self._cfg:
-            print("ERROR: no configuration found")
+            log.error("no configuration found")
             sys.exit(1)
 
         for cfgpath in self._cfg:

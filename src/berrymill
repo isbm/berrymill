@@ -18,3 +18,5 @@ if __name__ == "__main__":
         print("Error:", exc)
         if mill.args.debug:
             raise
+    finally:
+        mill.cleanup()
