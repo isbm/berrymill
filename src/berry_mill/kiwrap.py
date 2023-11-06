@@ -132,7 +132,7 @@ class KiwiParent:
             else:
                 log.warning("Trusted key not foud on system")
         if not os.path.exists(parsed_url.path):
-            raise Exception(f"key file path not specified for {reponame}")
+            raise SystemExit(f"key file path not specified for {reponame}")
 
     def _key_selection(self, reponame: str, options: List[str]) -> str | None:
         none_of_above = "none of the above"
