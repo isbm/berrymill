@@ -13,6 +13,7 @@ class KiwiParams(TypedDict):
     profile: str
     debug: bool
 
+
 class KiwiBuildParams(KiwiParams):
     """
     Dictionary for Build specifc Kiwi Parameters
@@ -34,6 +35,7 @@ class KiwiBuildParams(KiwiParams):
     target_dir: str
     no_accel: bool
 
+
 class KiwiPrepParams(KiwiParams):
     """
     Dictionary for Prepare specific Kiwi Parameters
@@ -44,4 +46,3 @@ class KiwiPrepParams(KiwiParams):
     """
     root: str
     allow_existing_root: bool
-

@@ -1,9 +1,9 @@
+import sys
+import os
 import argparse
 import shutil
 from tempfile import mkdtemp
 import kiwi.logger
-import sys
-import os
 import yaml
 
 from berry_mill.imgdescr.loader import Loader

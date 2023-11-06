@@ -1,21 +1,18 @@
-from __future__ import annotations
-import kiwi.logger
-
-from typing import List
-from typing_extensions import Unpack
-from lxml import etree
+"""
+Module for building steps
+"""
 import os
-import sys
 import shutil
 import tempfile
-
 from urllib.parse import urlparse, quote
-from typing import Dict
-from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
-from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
+from typing import Dict, List
 from platform import machine
+import kiwi.logger
+from typing_extensions import Unpack
+from lxml import etree
+from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
+from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
 from .kiwrap import KiwiParent
-
 from .params import KiwiBuildParams
 
 log = kiwi.logging.getLogger('kiwi')
@@ -24,7 +21,7 @@ class KiwiBuilder(KiwiParent):
     """
     Main Class for Berrymill to prepare the kiwi-ng system (box)build calls
     """
-    # TODO handle TypeError
+
     def __init__(self, descr:str, **kw: Unpack[KiwiBuildParams]):
         super().__init__(descr=descr,
                         profile=kw.get("profile", ""),
