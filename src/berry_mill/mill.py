@@ -72,7 +72,6 @@ class ImageMill:
         build_fashion.add_argument("--cross", action="store_true", help="cross image build on x86_64 to aarch64 target")
         build_fashion.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
 
-
         build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
         build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
         build_p.add_argument("--ignore-nested", action="store_true", help="ignore no nested virtualization enabled warning")
@@ -81,18 +80,22 @@ class ImageMill:
         self.args:argparse.Namespace = p.parse_args()
 
         self.cfg:ConfigHandler = ConfigHandler()
+
         if self.args.config:
             self.cfg.add_config(self.args.config)
-        self.cfg.load()
 
+        self.cfg.load()
         # Set appliance paths
         self._appliance_path: str = os.path.dirname(self.args.image or ".")
+        
         if self._appliance_path == ".":
             self._appliance_path = ""
 
         self._appliance_descr: str = os.path.basename(self.args.image or ".")
+        
         if self._appliance_descr == ".":
             self._appliance_descr = ""
+
         if not self._appliance_descr:
             for pth in os.listdir(self._appliance_path or "."):
                 if pth.split('.')[-1] in ["kiwi", "xml"]:
@@ -102,11 +105,10 @@ class ImageMill:
         if not self._appliance_descr:
             raise Exception("Appliance description was not found.")
         
-        if self._appliance_path:
-            os.chdir(self._appliance_path)
-        else:
+        if not self._appliance_path:
             raise Exception("Appliance Path not found")
-
+        
+        os.chdir(self._appliance_path)
         self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
         self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
         self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
@@ -142,10 +144,8 @@ class ImageMill:
         1. moves the appliance description to a tmp dir, so kiwi wont use this "wrong" one
         2. Constructs the right appliance and safes it named as the one passed to berrymill orginially
         """
-        final_rendered_xml_string = Loader().load(self._appliance_abspath)
-        
+        final_rendered_xml_string = Loader().load(self._appliance_abspath) 
         shutil.move(self._appliance_abspath, self._bac_appliance_abspth)
-
         with open(self._appliance_abspath, "w") as ma:
             ma.write(final_rendered_xml_string)
 
@@ -153,9 +153,7 @@ class ImageMill:
         """
         Build an image
         """
-
         self._init_local_repos()
-
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
             return
@@ -172,8 +170,7 @@ class ImageMill:
                 
             os.environ["KIWI_BOXED_PLUGIN_CFG"] = \
                 self.cfg.raw_unsafe_config().get("boxed_plugin_conf", 
-                                                "/etc/berrymill/kiwi_boxed_plugin.yml")
-            
+                                                "/etc/berrymill/kiwi_boxed_plugin.yml")         
             kiwip = KiwiBuilder(self._appliance_descr, 
                             box_memory= self.args.box_memory, 
                             profile= self.args.profile, 
