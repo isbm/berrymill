@@ -5,3 +5,4 @@ pytest
 pytest-cov
 qemu
 typing_extensions
+mock
