@@ -66,11 +66,14 @@ def is_vm() -> bool:
     """
     Detect if the current machine is a VM
     """
+    lshw:str = "/usr/bin/lshw"
+    assert os.path.exists(lshw), f"{lshw} utility is missing"
+
     # Crude test on vendors
     vendors:list[str] = filter(None, map(lambda l:l.startswith("vendor:")
                                          and l.split(":")[-1].strip().lower()
                                          or "", [x.strip() for x in
-                                                 os.popen("/usr/bin/lshw 2> /dev/null").readlines()]))
+                                                 os.popen(f"{lshw} 2> /dev/null").readlines()]))
     for v in ["qemu", "virtualbox", "vmware"]:
         if v in vendors:
             return True
