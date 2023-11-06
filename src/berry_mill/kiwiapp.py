@@ -58,7 +58,7 @@ class KiwiAppBox(KiwiApp):
     """
     Interface between Berrymill and Kiwi-ng boxbuild Wrapper
     """
-    def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]], args_tmp_dir:str = None):
+    def __init__(self, argv:List[str], repos:Dict[str, Dict[str,str]], args_tmp_dir:str):
         super().__init__(argv, repos)
 
         self._tmpd = args_tmp_dir
@@ -94,8 +94,8 @@ class KiwiAppBox(KiwiApp):
         repo_build_options:List[str] = ["--ignore-repos"]
 
         for repo_name in repos:
-            repo_content = repos.get(repo_name)
-            components = repo_content.get("components", "/").split(',')
+            repo_content = repos.get(repo_name, dict())
+            components:List[str] = repo_content.get("components", "/").split(',')
             for component in components:
                 repo_build_options.append("--add-repo")
                 # syntax of --add-repo value:

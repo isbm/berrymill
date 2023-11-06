@@ -2,7 +2,7 @@ from __future__ import annotations
 from abc import abstractmethod
 import sys
 import kiwi.logger
-from typing import List
+from typing import Any, List
 from typing_extensions import Unpack
 import os
 import shutil
@@ -29,7 +29,7 @@ class KiwiParent:
         self._appliance_descr:str = descr
         self._trusted_gpg_d:str = "/etc/apt/trusted.gpg.d"
         self._tmpdir:str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
-        self._kiwiparams:Dict[KiwiParams] = pkw
+        self._kiwiparams:KiwiParams = pkw
         self._kiwi_options:List[str] = []
         self._initialized:bool = False
 
@@ -58,7 +58,7 @@ class KiwiParent:
             sys.exit(1)
 
         if self._kiwiparams.get("profile"):
-            profile = self._kiwiparams.get("profile")
+            profile = self._kiwiparams.get("profile", "")
             if profile in profiles:
                 self._kiwi_options += ["--profile", profile]
             else:
@@ -96,14 +96,14 @@ class KiwiParent:
 
         url: ParseResult = urlparse(repodata["url"])
         g_path:str = os.path.join(self._tmpdir, f"{reponame}_release.key")
-
+        s_url: str = ""
         if repodata.get("components", "/") != "/":
-            s_url: str = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
+            s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
             # TODO: grab standard keys
             g_path = ""
             return g_path
         else:
-            s_url: str = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
+            s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
             response = requests.get(s_url, allow_redirects=True)
             with open(g_path, 'xb') as f_rel:
                 f_rel.write(response.content)
@@ -123,14 +123,14 @@ class KiwiParent:
                 if selected:
                     repodata["key"] = ParseResult(scheme="file",
                                                 path=os.path.join(self._trusted_gpg_d, selected),
-                                                params=None, query=None, fragment=None,
-                                                netloc=None).geturl()
+                                                params="", query="", fragment="",
+                                                netloc="").geturl()
                     self._check_repokey(repodata, reponame)
                     return
             else:
                 log.warning("Trusted key not foud on system")
         if not os.path.exists(parsed_url.path):
-            Exception(parsed_url.path + " does not exist" if parsed_url.path else f"key file path not specified for {reponame}")
+            raise Exception(f"key file path not specified for {reponame}")
 
     def _key_selection(self, reponame:str, options:List[str]) -> str | None:
         none_of_above = "none of the above"

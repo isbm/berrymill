@@ -14,10 +14,10 @@ class KiwiPreparer(KiwiParent):
     """
     def __init__(self, descr:str, **kw: Unpack[KiwiPrepParams]):
         super().__init__(descr=descr,
-                        profile=kw.get("profile"),
-                        debug=kw.get("debug"))
+                        profile=kw.get("profile", ""),
+                        debug=kw.get("debug", False))
         
-        self._params:Dict[KiwiPrepParams] = kw
+        self._params:KiwiPrepParams = kw
     
     def process(self) -> None:
         """
