@@ -1,4 +1,4 @@
-name: pep8
+name: Check PEP8 exit-zero treats
 run-name: Check PEP8 formatting
 on:
   push:
@@ -24,10 +24,6 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: PEP8 syntax errors or undefined names
-        run: |
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: PEP8 exit-zero treats all errors as warnings.
         run: |
