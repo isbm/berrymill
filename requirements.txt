@@ -6,3 +6,4 @@ pytest-cov
 qemu
 typing_extensions
 flake8
+pylint
