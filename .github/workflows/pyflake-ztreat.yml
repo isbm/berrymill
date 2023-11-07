@@ -1,0 +1,30 @@
+name: Check PEP8 exit-zero treats
+run-name: Check PEP8 formatting
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the importance environment variable
+        run: |
+          echo "GITHUB_ACTIONS_IMPORTANCE=true" >> $GITHUB_ENV
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Display curent dir
+        run : ls -la $GITHUB_WORKSPACE
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: PEP8 exit-zero treats all errors as warnings.
+        run: |
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=130 --statistics

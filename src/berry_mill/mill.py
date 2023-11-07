@@ -1,12 +1,13 @@
+import sys
+import os
 import argparse
 import shutil
 from tempfile import mkdtemp
 import kiwi.logger
-import sys
-import os
 import yaml
 
 from berry_mill.imgdescr.loader import Loader
+from berry_mill.kiwrap import KiwiParent
 
 from .cfgh import ConfigHandler, Autodict
 from .localrepos import DebianRepofind
@@ -157,7 +158,8 @@ class ImageMill:
         if self.args.show_config:
             print(yaml.dump(self.cfg.config))
             return
-
+        
+        kiwip: KiwiParent | None = None
         if self.args.subparser_name == "build":
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:

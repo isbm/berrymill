@@ -1,21 +1,18 @@
-from __future__ import annotations
-import kiwi.logger
-
-from typing import List
-from typing_extensions import Unpack
-from lxml import etree
+"""
+Module for building steps
+"""
 import os
-import sys
 import shutil
 import tempfile
-
 from urllib.parse import urlparse, quote
-from typing import Dict
-from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
-from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
+from typing import Dict, List
 from platform import machine
+import kiwi.logger
+from typing_extensions import Unpack
+from lxml import etree
+from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
+from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
 from .kiwrap import KiwiParent
-
 from .params import KiwiBuildParams
 
 log = kiwi.logging.getLogger('kiwi')
@@ -24,13 +21,13 @@ class KiwiBuilder(KiwiParent):
     """
     Main Class for Berrymill to prepare the kiwi-ng system (box)build calls
     """
-    # TODO handle TypeError
+
     def __init__(self, descr:str, **kw: Unpack[KiwiBuildParams]):
         super().__init__(descr=descr,
-                        profile=kw.get("profile"),
-                        debug=kw.get("debug"))
+                        profile=kw.get("profile", ""),
+                        debug=kw.get("debug", False))
         
-        self._params:Dict[KiwiBuildParams] = kw
+        self._params:KiwiBuildParams = kw
 
         if self._params.get("target_dir"):
             self._params["target_dir"] = self._params["target_dir"].rstrip("/")
@@ -73,7 +70,7 @@ class KiwiBuilder(KiwiParent):
             k = repos.get(reponame, {}).get("key")
             parsed_url = urlparse(k)
             try:
-                shutil.copy(parsed_url.path, self._boxtmpkeydir)
+                shutil.copy(str(parsed_url.path), self._boxtmpkeydir)
                 repos.get(reponame, {})["key"] = self._get_relative_file_uri(parsed_url.path)
             except Exception as exc:
                 log.warning(f"Failure while trying to copying the keyfile at {parsed_url.path}", exc_info= exc)
@@ -121,10 +118,10 @@ class KiwiBuilder(KiwiParent):
             box_options.append("--box-debug")
 
         if self._params.get("cpu"):
-            box_options = ["--cpu", self._params.get("cpu")] + box_options
+            box_options = ["--cpu", self._params.get("cpu","")] + box_options
 
         if self._params.get("box_memory"):
-            box_options += ["--box-memory", self._params.get("box_memory")]
+            box_options += ["--box-memory", self._params.get("box_memory", "8G")]
 
         if machine() == "aarch64":
             box_options += ["--machine", "virt"]

@@ -1,0 +1,22 @@
+name: PyLint
+run-name: Check sources with PyLint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pylint
+        run: pylint $(git ls-files '*.py')

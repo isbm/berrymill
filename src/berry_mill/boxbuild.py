@@ -1,13 +1,14 @@
+"""
+Interface Module to kiwi's boxbuidtaks
+"""
+
+from typing import List
 from kiwi_boxed_plugin.tasks.system_boxbuild import SystemBoxbuildTask
 import kiwi.logger
-import os
-from docopt import docopt
-from typing import List
 import kiwi.tasks.system_build
 
 
 log = kiwi.logging.getLogger('kiwi')
-
 
 class BoxBuildTask(SystemBoxbuildTask):
     """
