@@ -22,7 +22,22 @@ image description.
 
 Also it implements the concept of _derived images_ to extend kiwi image
 descriptions with small derivations like adding or removing packages, changing
-the size or the type of a file system.
+the size or the type of a file system. To do so simply create a xml file
+that inherits the original image description (or an already derived one) and
+add wanted content.
+
+```
+
+<?xml version="1.0" encoding="utf-8"?>
+<image schemaversion="6.8" name="Testname">
+    <inherit path="config.xml"/>
+
+    ....
+</image>
+
+```
+
+See a more complex example under EXAMPLES.
 
 OPTIONS
 =======
@@ -172,6 +187,74 @@ sudo berrymill -d -i <image_descr> build -l --target-dir ./result
 
 ```
 berrymill -d -i <image_descr> build --target-dir ./result
+```
+
+3. Derived configuration
+
+```
+<?xml version="1.0" encoding="utf-8"?>
+<image schemaversion="6.8" name="test">
+    <inherit path="config.xml"/>
+
+    <!--
+        Remove specific data. Anything inside of the "remove"
+        tag should precisely match by attributes.
+    -->
+    <remove>
+        <!--
+            Remove a specific package, as only
+            the last element is removed, while parents are
+            just "qualifiers" to set the proper matching.
+        -->
+        <packages type="oem">
+            <package name="dracut-kiwi-oem-dump"/>
+        </packages>
+
+        <!-- Remove the entire aggregate -->
+        <packages type="iso" />
+    </remove>
+
+    <!--
+        Remove any data. Anything inside of the "remove_any"
+        tag should at least match by attributes. The less
+        specific attributes, the higher is glob matcher.
+    -->
+    <remove_any>
+        <!-- This will remove any "repository" tag that has these attributes -->
+        <repository components="main multiverse restricted universe"/>
+    </remove_any>
+
+    <!-- Add specific data -->
+    <add>
+        <packages type="image">
+            <package name="package"/>
+        </packages>
+    </add>
+
+    <!--
+        Replace and merge works only on aggregates.
+        For individual tags e.g. "<repository/>", it should be first
+        removed, then added back.
+    -->
+    <merge>
+        <description type="system">
+            <author>Herr Starr</author>
+            <license>GLWTS</license>
+        </description>
+    </merge>
+
+    <!-- This replaces the end-tag without XPath -->
+    <replace>
+        <packages type="oem">
+            <package name="some-package"/>
+        </packages>
+    </replace>
+
+    <set xpath="//user[@name='root' and @groups='root']">
+        pwdformat: plain
+        password: linux
+    </set>
+</image>
 ```
 
 BUGS
