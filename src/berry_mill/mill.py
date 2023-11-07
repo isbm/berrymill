@@ -77,7 +77,7 @@ class ImageMill:
         finally:
             self.cleanup()
 
-    def _add_default_args(self, p: argparse.ArgumentParser):
+    def _add_default_args(self, p: argparse.ArgumentParser) -> None:
         """ Add Defautl Arguments to parser accepted after berrymill"""
         p.add_argument("-s", "--show-config", action="store_true", help="shows the configuration of repositories")
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
@@ -87,12 +87,12 @@ class ImageMill:
         p.add_argument("-p", "--profile", help="select profile for images that makes use of it")
         p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
 
-    def _add_prepare_args(self, p: argparse.ArgumentParser):
+    def _add_prepare_args(self, p: argparse.ArgumentParser) -> None:
         """ Add Prepare Specific Arguments to parser accepted after berrymill [default args] prepare"""
         p.add_argument("--root", required=True, help="directory of output sysroot")
         p.add_argument("--allow-existing-root", action="store_true", help="allow existing root")
 
-    def _add_build_args(self, p: argparse.ArgumentParser):
+    def _add_build_args(self, p: argparse.ArgumentParser) -> None:
         """ Add Build Specific Arguments to parser accepted after berrymill [default args] build"""
         # --cross sets a cpu -> dont allow user to choose cpu when cross is enabled
         build_fashion = p.add_mutually_exclusive_group()
@@ -213,7 +213,7 @@ class ImageMill:
             self.cleanup()
             kiwip.cleanup()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Cleanup Temporary directories and files
         """
