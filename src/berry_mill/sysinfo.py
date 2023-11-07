@@ -1,9 +1,9 @@
 import platform
 import os
-import kiwi.logger
 from typing import Dict
+import kiwi.logger
 
-archfix:Dict[str,str] = {
+archfix: Dict[str, str] = {
     "x86_64": "amd64",
     "aarch64": "arm64",
 }
@@ -25,7 +25,7 @@ def has_virtualization() -> bool:
     """
 
     # Intels/AMDs only
-    if platform.processor() != "x86_64": # also AMD
+    if platform.processor() != "x86_64":  # also AMD
         log.error("Only x86_64 architecture is supported at the moment")
         return False
 
@@ -37,7 +37,7 @@ def has_virtualization() -> bool:
 
     # KVM module loaded?
     mods = [x.split(" ")[0] for x in os.popen("lsmod").readlines()[1:]]
-    if not "kvm_intel" in mods and not "kvm_amd" in mods:
+    if "kvm_intel" not in mods and "kvm_amd" not in mods:
         log.error("No KVM kernel module loaded")
         return False
 
@@ -52,7 +52,7 @@ def has_virtualization() -> bool:
         return False
 
     # Nested virtualisation enabled system-wide
-    kvm_np:str = "/sys/module/kvm_{}/parameters/nested"
+    kvm_np: str = "/sys/module/kvm_{}/parameters/nested"
     kvm_np = kvm_np.format("intel") if os.path.exists(kvm_np.format("intel")) else kvm_np.format("amd")
     with open(kvm_np) as fr:
         if fr.read().strip() not in ["y", "Y", "1"]:
@@ -60,7 +60,6 @@ def has_virtualization() -> bool:
             return False
 
     return True
-
 
 def is_vm() -> bool:
     """

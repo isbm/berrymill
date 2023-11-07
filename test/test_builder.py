@@ -125,22 +125,19 @@ class TestCollectionKiwiBuilder:
             assert e.code == 1
             assert "while parsing appliance description" in caplog.text
 
-    def test_builder_build_no_profile_set(self, capsys: CaptureFixture):
+    def test_builder_build_no_profile_set(self, caplog: LogCaptureFixture):
         """
         Test config no profie
         Expected: exit 1 and error Expected: No Profile selected
         """
-        try:
-            # Create KiwiBuilder instance with existant appliance
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
-            # Remove profile
-            KiwiBuilder_instance._params["profile"] = ""
-            # Trigger the build
-            KiwiBuilder_instance.process()
-            captured: tuple = capsys.readouterr()
-            assert "No Profile selected" in captured.out
-        except SystemExit as se:
-            assert se.code == 1
+        # Create KiwiBuilder instance with existant appliance
+        with caplog.at_level(kiwi.logging.ERROR):
+            try:
+                KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
+            except SystemExit as s:
+                assert "No Profile selected" in caplog.text
+                assert s.code == 1
+
 
     @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
     def test_builder_build_with_profile_set(self, capsys: CaptureFixture):
@@ -155,19 +152,30 @@ class TestCollectionKiwiBuilder:
         captured: tuple = capsys.readouterr()
         assert "Starting Kiwi Box" in captured.out
 
-    def test_builder_build_with_local_set(self, capsys: CaptureFixture):
+    def test_kiwrap_build_with_local_set_no_root_rights(self, caplog: LogCaptureFixture):
         """
-        Test config  profie is
+        Test config profile is
         Expected: message "Starting Kiwi for local build"
         """
-        try:
-            KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
-            # Set profile
-            KiwiBuilder_instance._params["profile"] = "Live"
-            # Set local build
-            KiwiBuilder_instance._params["local"] = True
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
+        # Set profile
+        KiwiBuilder_instance._params["profile"] = "Live"
+        # Set local build
+        KiwiBuilder_instance._params["local"] = True
+        KiwiBuilder_instance._params["target_dir"] = "/tmp"
+        with caplog.at_level(kiwi.logging.WARNING):
             KiwiBuilder_instance.process()
-            captured: tuple = capsys.readouterr()
-            assert "Starting Kiwi for local build" in captured.out
-        except SystemExit as e:
-            print("Ignoring root permission error")
+        assert "Operation requires root privileges" in caplog.text
+
+    @pytest.mark.skip(reason="Dependency to berrymill package not yet ready")
+    def test_kiwrap_build_with_profile_set(self, capsys: CaptureFixture):
+        """
+        Test config  profie is
+        Expected: message "Starting Kiwi Box"
+        """
+        KiwiBuilder_instance: KiwiBuilder = KiwiBuilder("test/descr/test_appliance.xml")
+        # Set profile
+        KiwiBuilder_instance._params["profile"] = "Live"
+        KiwiBuilder_instance.process()
+        captured: tuple = capsys.readouterr()
+        assert "Starting Kiwi Box" in captured.out

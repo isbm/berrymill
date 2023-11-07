@@ -23,9 +23,9 @@ class LocalBuildTask(SystemBuildTask):
         self.xml_state.delete_repository_sections()
         for reponame in self.repos:
 
-            repodata:Dict[str,str] = self.repos.get(reponame)
+            repodata:Dict[str,str] = self.repos.get(reponame, dict())
 
-            components = repodata.get("components", "/")
+            components: str | None = repodata.get("components", "/")
             components = components if components != '/' else None
             if components:
                 components = components.replace(",", " ")

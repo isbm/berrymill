@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 class Repodata:
     def __init__(self) -> None:
         self.type: str = ""
-        self.components: Tuple[str] = tuple()  # Not mandatory
+        self.components: Tuple[str, ...] | None # Not mandatory
         self.url: str = ""
         self.trusted: bool = False
         self.name: str = ""
