@@ -14,7 +14,7 @@ from .localrepos import DebianRepofind
 from .sysinfo import get_local_arch
 from .preparer import KiwiPreparer
 from .builder import KiwiBuilder
-from .sysinfo import has_virtualization
+from .sysinfo import has_virtualization, is_vm
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -26,8 +26,7 @@ as a virtual enviroment using qemu is utilized to build the image.
 
 You can either: 
 
-Enable nested virtualization, build locally, or, use --ignore-nested when you are
-sure that you are not running berrymill inside a virtual machine
+Enable nested virtualization or build locally
 """
 )
 
@@ -48,7 +47,7 @@ class ImageMill:
                                                             description="berrymill is a root filesystem generator for embedded devices",
                                                             epilog="Have a lot of fun!")
         
-        p.add_argument("-s", "--show-config", action="store_true", help="shows the building configuration")
+        p.add_argument("-s", "--show-config", action="store_true", help="shows the repository configuration")
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
         p.add_argument("-a", "--arch", help="specify target arch")
         p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
@@ -75,8 +74,6 @@ class ImageMill:
 
         build_p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
         build_p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
-        build_p.add_argument("--ignore-nested", action="store_true", help="ignore no nested virtualization enabled warning")
-
 
         self.args:argparse.Namespace = p.parse_args()
 
@@ -165,8 +162,7 @@ class ImageMill:
             if self.args.cross:
                 self.args.arch = "arm64"
 
-            if not (self.args.local or self.args.ignore_nested or has_virtualization()):
-                log.info("Berrymill currently cannot detect wether you run it in a virtual environment or on a bare metal")
+            if not self.args.local and is_vm() and not has_virtualization():
                 log.warning(no_nested_warning)
                 raise SystemExit()
                 
