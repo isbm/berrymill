@@ -185,7 +185,7 @@ class TestCollectionKiwiParent:
             try:
                 KiwiParent_instance._check_repokey(repodata, reponame)
             except SystemExit as s:
-                assert s.args == ("key file path not specified for test",)
+                assert s.args == ("key file path wrong for repository test",)
     
     def test_kiwrap_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
