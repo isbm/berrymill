@@ -7,7 +7,8 @@ setup(name='Berrymill',
       author_email='bo@maryniuk.net',
       url='https://github.com/isbm/berrymill',
       packages=find_packages(
-          where='src/berry_mill'
+          where='src',
+          include=['berry_mill', 'berry_mill.imgdescr']
       ),
       zip_safe=False,
      )
