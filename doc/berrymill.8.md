@@ -10,7 +10,7 @@ SYNOPSIS
 
 | **berrymill** \[-h|\--help]
 | **berrymill** \[global options] action \<command\> \[\<args>]
-| **berrymill** \[-h] \[-s] \[-d] \[-a ARCH] \[-c CONFIG] -i IMAGE \[-p PROFILE] \[\--clean] \{prepare, build}  
+| **berrymill** \[-h] \[-s] \[-d] \[-a ARCH] \[-c CONFIG] -i IMAGE \[-p PROFILE] \[\--clean] \{prepare, build}
 
 DESCRIPTION
 ===========
@@ -24,7 +24,7 @@ Also **berrymill** implements the concept of _derived images_ to extend kiwi
 image descriptions with small derivations like adding or removing packages,
 changing the size or the type of a file system. To do so simply create a xml file
 that inherits the original image description (or an already derived one) and
-adds wanted content. 
+adds wanted content.
 
 ```
 
@@ -91,12 +91,10 @@ For more information on kiwi consult **kiwi**(8).
 in the image description and this parameter is not provided the build will
 fail.
 
-
 \--clean
 
 : When \--clean is passed **berrymill** will cleanup previous build results like
 the target directory.
-
 
 When **berrymill** is executed with the option *prepare*  to prepare the sysroot
 the following options are additionally available.
@@ -109,8 +107,7 @@ to **kiwi::system::prepare**(8). This parameter is required for *prepare*.
 \--allow-existing-root
 
 : Allow to re-use an existing image root directory. This parameter is passed
-along to **kiwi::system::prepare**(8).  
-
+along to **kiwi::system::prepare**(8).
 
 When **berrymill** is executed with the option *build*  to build the image the
 following options are additionally available.
@@ -152,7 +149,6 @@ installation of the KIWI tool chain.
 
 : Ignore warning that nested virtualization is not enabled.
 
-
 Exit status
 -----------
 
@@ -161,16 +157,16 @@ Exit status
 FILES
 =====
 
-*/etc/berrymill/berrymill.conf*
+* */etc/berrymill/berrymill.conf*
 
 This file defines the repositories that **berrymill** uses to build the image.
 An example structure is given in the following.
 
 ```
-obs-api: <api_url> 
+obs-api: <api_url>
 
 use-global-repos: false
-boxed_plugin_conf: <path_to_boxplugin_conf> 
+boxed_plugin_conf: <path_to_boxplugin_conf>
 repos:
   release:
     <architecture_1>
@@ -183,9 +179,9 @@ repos:
       ...
     <architecture_2>
 ...
-```        
+```
 
-*/etc/berrymill/kiwi_boxed_plugin.yml*
+* */etc/berrymill/kiwi_boxed_plugin.yml*
 
 Contains further configuration for the boxes to be used for the boxbuild.
 See also **kiwi::system::boxbuild**(8)
@@ -193,19 +189,19 @@ See also **kiwi::system::boxbuild**(8)
 EXAMPLES
 ========
 
-1. Run a build on current architecture
+* Run a build on current architecture
 
 ```
 sudo berrymill -d -i <image_descr> build -l --target-dir ./result
 ```
 
-2. Run a cross build for aarch64
+* Run a cross build for aarch64
 
 ```
 berrymill -d -i <image_descr> build --target-dir ./result
 ```
 
-3. Derived configuration
+* Derived configuration
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -280,4 +276,5 @@ See GitHub Issues: <https://github.com/isbm/berrymill/issues>
 
 SEE ALSO
 ========
+
 **kiwi**(8)
