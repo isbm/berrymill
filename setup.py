@@ -1,6 +1,4 @@
-#!/usr/bin/python3
-
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='Berrymill',
       version='0.1',
@@ -8,6 +6,8 @@ setup(name='Berrymill',
       author='Bo Maryniuk',
       author_email='bo@maryniuk.net',
       url='https://github.com/isbm/berrymill',
-      packages=['src/berry_mill'],
+      packages=find_packages(
+          where='src'
+      ),
       zip_safe=False,
      )
