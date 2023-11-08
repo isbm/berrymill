@@ -20,11 +20,11 @@ It is a wrapper around **kiwi**(8) and allows to build images equally on
 [OBS](https://openbuildservice.org) **and** locally without changes to the
 image description.
 
-Also it implements the concept of _derived images_ to extend kiwi image
-descriptions with small derivations like adding or removing packages, changing
-the size or the type of a file system. To do so simply create a xml file
+Also **berrymill** implements the concept of _derived images_ to extend kiwi
+image descriptions with small derivations like adding or removing packages,
+changing the size or the type of a file system. To do so simply create a xml file
 that inherits the original image description (or an already derived one) and
-add wanted content.
+adds wanted content. 
 
 ```
 
@@ -36,6 +36,16 @@ add wanted content.
 </image>
 
 ```
+
+Important xml tags for derived images are:
+
+* "add": Add specific data to the derived image like a package
+* "remove": Remove parts of the original image in the derived image, could be
+  e.g., packages, aggregates...
+* "merge" and "replace": Merge and replace only work on aggregates.
+* "remove\_any": Remove any element from description that matches by attributes
+  at least.
+* "set": Set attributes on an element in the derived image.
 
 See a more complex example under EXAMPLES.
 
@@ -142,6 +152,12 @@ installation of the KIWI tool chain.
 
 : Ignore warning that nested virtualization is not enabled.
 
+
+Exit status
+-----------
+
+**berrymill** returns 0 on success else 1.
+
 FILES
 =====
 
@@ -151,7 +167,7 @@ This file defines the repositories that **berrymill** uses to build the image.
 An example structure is given in the following.
 
 ```
-ops-api: <api_url> 
+obs-api: <api_url> 
 
 use-global-repos: false
 boxed_plugin_conf: <path_to_boxplugin_conf> 
