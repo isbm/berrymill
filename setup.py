@@ -6,6 +6,6 @@ setup(name='Berrymill',
       author='Bo Maryniuk',
       author_email='bo@maryniuk.net',
       url='https://github.com/isbm/berrymill',
-      packages=find_packages(),
+      packages=['src/berry_mill', 'src/berry_mill/imgdescr'],
       zip_safe=False,
      )
