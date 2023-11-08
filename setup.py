@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from setuptools import setup
 
 setup(name='Berrymill',
@@ -8,6 +6,6 @@ setup(name='Berrymill',
       author='Bo Maryniuk',
       author_email='bo@maryniuk.net',
       url='https://github.com/isbm/berrymill',
-      packages=['src/berry_mill'],
+      packages=['src/berry_mill', 'src/berry_mill/imgdescr'],
       zip_safe=False,
      )

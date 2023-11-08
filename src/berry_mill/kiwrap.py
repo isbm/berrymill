@@ -130,9 +130,9 @@ class KiwiParent:
                     self._check_repokey(repodata, reponame)
                     return
             else:
-                log.warning("Trusted key not foud on system")
+                log.warning("Trusted key not found on system")
         if not os.path.exists(parsed_url.path):
-            raise SystemExit(f"key file path not specified for {reponame}")
+            raise SystemExit(f"key file path wrong for repository {reponame}")
 
     def _key_selection(self, reponame: str, options: List[str]) -> str | None:
         none_of_above = "none of the above"

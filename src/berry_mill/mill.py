@@ -114,10 +114,11 @@ class ImageMill:
         if appliance_descr == ".":
             appliance_descr = ""
 
-        if not appliance_descr:
+        if not appliance_path:
             for pth in os.listdir(appliance_path or "."):
                 if pth.split('.')[-1] in ["kiwi", "xml"]:
                     appliance_descr = pth
+                    appliance_path = os.getcwd()
                     break
 
         if not appliance_descr:
