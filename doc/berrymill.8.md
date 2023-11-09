@@ -24,7 +24,7 @@ Also **berrymill** implements the concept of _derived images_ to extend kiwi
 image descriptions with small derivations like adding or removing packages,
 changing the size or the type of a file system. To do so simply create a xml file
 that inherits the original image description (or an already derived one) and
-adds wanted content.
+add wanted content.
 
 ```
 
@@ -52,8 +52,8 @@ See a more complex example under EXAMPLES.
 OPTIONS
 =======
 
-For **berrymill** the following options are available, irrespective if *prepare*
-or *build* is chosen:
+For **berrymill** the following options are available, irrespective wether
+*prepare* or *build* is chosen:
 
 -h, --help
 
@@ -68,7 +68,8 @@ loaded with **-c**. See below as well.
 -d, \--debug
 
 : Turns on verbose debugging mode for **berrymill.** It will also pass
-**\--box-debug** to the boxbuild.
+**\--box-debug** to the boxbuild. This will cause the box not to shut
+down after the build finished.
 
 -a ARCH, \--arch ARCH
 
@@ -96,7 +97,7 @@ fail.
 : When \--clean is passed **berrymill** will cleanup previous build results like
 the target directory.
 
-When **berrymill** is executed with the option *prepare*  to prepare the sysroot
+When **berrymill** is executed with the option *prepare* to prepare the sysroot
 the following options are additionally available.
 
 \--root ROOT
@@ -109,7 +110,7 @@ to **kiwi::system::prepare**(8). This parameter is required for *prepare*.
 : Allow to re-use an existing image root directory. This parameter is passed
 along to **kiwi::system::prepare**(8).
 
-When **berrymill** is executed with the option *build*  to build the image the
+When **berrymill** is executed with the option *build* to build the image the
 following options are additionally available.
 
 \--box-memory BOX\_MEMORY
@@ -145,10 +146,6 @@ installation of the KIWI tool chain.
 
 : Disables the KVM acceleration for boxbuild.
 
-\--ignore-nested
-
-: Ignore warning that nested virtualization is not enabled.
-
 Exit status
 -----------
 
@@ -163,16 +160,15 @@ This file defines the repositories that **berrymill** uses to build the image.
 An example structure is given in the following.
 
 ```
-obs-api: <api_url>
-
 use-global-repos: false
 boxed_plugin_conf: <path_to_boxplugin_conf>
 repos:
   release:
-    <architecture_1>
-      Ubuntu-Jammy:
+    <target_architecture_1>
+      <repo_alias>:
         url:  <repo_url>
         type: <repo_type>
+        key: <key_file>
         name: <name>
         components: main,universe,...
 
@@ -180,6 +176,10 @@ repos:
     <architecture_2>
 ...
 ```
+
+If no key is defined **berrymill** will try to find one, but this only works
+for flat repos without components at the moment. If no key is found,
+**berrymill** will ask the user which key to use based on their trusted keys.
 
 * */etc/berrymill/kiwi_boxed_plugin.yml*
 
@@ -198,7 +198,7 @@ sudo berrymill -d -i <image_descr> build -l --target-dir ./result
 * Run a cross build for aarch64
 
 ```
-berrymill -d -i <image_descr> build --target-dir ./result
+berrymill -d -i <image_descr> build --cross --target-dir ./result
 ```
 
 * Derived configuration
