@@ -12,7 +12,7 @@ if __name__ == "__main__":
     try:
         mill = ImageMill()
     except Exception as exc:
-        log.error("Instantiation error:", exc)
+        log.error("General error:", exc)
         sys.exit(1)
 
     try:

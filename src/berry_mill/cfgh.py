@@ -28,7 +28,7 @@ class ConfigHandler:
         self.__conf:Autodict = Autodict()
 
         if not cf_path:
-            # Load default /etc/berrymill.conf
+            # Load default /etc/berrymill/berrymill.conf
             # or in the current directory "berrymill.conf"
 
             default_conf:str = "/etc/berrymill/berrymill.conf"

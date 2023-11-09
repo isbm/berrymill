@@ -155,7 +155,7 @@ class ImageMill:
         """
         self._init_local_repos()
         if self.args.show_config:
-            log.info(yaml.dump(self.cfg.config))
+            print(yaml.dump(self.cfg.config))
             return
 
         if self.args.subparser_name == "build":
