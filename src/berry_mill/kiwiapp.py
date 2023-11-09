@@ -22,6 +22,12 @@ class KiwiApp(ABC):
         self._repos = repos
         sys.argv = argv
 
+    def _check_gnupg_dir(self) -> None:
+        """
+        creates $HOME/.gnupg directory for gpg key import check
+        """
+        pathlib.Path().home().joinpath(".gnupg").mkdir(exist_ok=True)
+
     @abstractmethod
     def run(self) -> None:
         """
@@ -34,6 +40,10 @@ class KiwiAppPrepare(KiwiApp):
     Interface between Berrymill and Kiwi-ng Prepare Wrapper
     """
     def run(self) -> None:
+        """
+        create $HOME/.gnupg if needed and run prepare task
+        """
+        self._check_gnupg_dir()
         PrepareTask(self._repos).process()
 
 
@@ -42,14 +52,10 @@ class KiwiAppLocal(KiwiApp):
     Interface between Berrymill and Kiwi-ng build Wrapper
     """
     def run(self) -> None:
-        """Summary or Description of the Function
-        creates $HOME/.gnupg directory for gpg key import check,
-        and invokes kiwi local build task process
         """
-        try:
-            pathlib.Path().home().joinpath(".gnupg").mkdir()
-        except FileExistsError:
-            pass
+        create $HOME/.gnupg if needed and run local build task process
+        """
+        self._check_gnupg_dir()
         LocalBuildTask(self._repos).process()
 
 
