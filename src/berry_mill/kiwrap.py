@@ -145,7 +145,8 @@ class KiwiParent:
                           ),
         ]
         answer = inquirer.prompt(question)
-        log.info("You selected:", answer["choice"])
+        # Logging wont work here 
+        print("You selected:", answer["choice"])
 
         return answer["choice"] != none_of_above and answer["choice"] or None
 
