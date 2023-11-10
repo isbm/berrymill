@@ -103,11 +103,8 @@ class KiwiBuilder(KiwiParent):
 
         # if target_dir exists with no --clean option, fail early.
         if not self._params.get("clean", False) and os.path.isdir(target_dir):
-            raise Exception("Target directory already exists. Hint: use --clean option.")
-
-        # parent directory should be writable
-        if not os.access(os.path.dirname(target_dir), os.W_OK):
-            raise Exception("Target directory's parent is not writable, please use writable directory")
+            log.error("Target directory already exists. Hint: use --clean option.")
+            return
 
         # options that are solely accepted by kiwi-ng
         kiwi_options = self._kiwi_options
@@ -151,7 +148,7 @@ class KiwiBuilder(KiwiParent):
             except KiwiRootDirExists as exc:
                 log.error(exc.message)
             except KiwiError as kiwierr:
-                log.warning(f"KiwiError: {type(kiwierr).__name__} [{kiwierr.message}]")
+                log.error(f"KiwiError: {type(kiwierr).__name__} [{kiwierr.message}]")
                 return
         else:
             if not self._write_repokeys_box(self._repos):
@@ -164,7 +161,10 @@ class KiwiBuilder(KiwiParent):
                 log.info("Starting Kiwi Box")
                 KiwiAppBox(command, repos=self._repos, args_tmp_dir=self._boxtmpargdir).run()
             except KiwiError as kiwierr:
-                log.warning(f"KiwiError:, {type(kiwierr).__name__}", exc_info= kiwierr)
+                if "mkdir" in kiwierr.message and "Permission denied" in kiwierr.message:
+                    log.error(kiwierr.message)
+                    return
+                log.error(f"KiwiError: {type(kiwierr).__name__} [{kiwierr.message}]")
                 return
 
     def cleanup(self) -> None:
