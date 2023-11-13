@@ -34,6 +34,7 @@ class KiwiParent:
         self._kiwiparams: KiwiParams = pkw
         self._kiwi_options: List[str] = []
         self._initialized: bool = False
+        self._valid_components = ["main", "universe", "multiverse", "restricted"]
 
         if self._kiwiparams.get("debug"):
             self._kiwi_options.append("--debug")
@@ -85,6 +86,19 @@ class KiwiParent:
 
         return self
 
+    def _check_standard_component(self, components: str, reponame: str):
+        if components :
+            component_list: list = components.split(",")
+            for component in component_list:
+                if component not in self._valid_components:
+                    log.warning(f"Non standard component {component} used for repo {reponame}")
+                    return False
+            
+            return True
+        else:
+            raise SystemExit(f"Undefined component for repo {reponame}")
+                
+    
     def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str:
         """
         Download repository keys to a temporary directory
@@ -98,17 +112,21 @@ class KiwiParent:
 
         url: ParseResult = urlparse(repodata["url"])
         g_path: str = os.path.join(self._tmpdir, f"{reponame}_release.key")
-        s_url: str = ""
-        if repodata.get("components", "/") != "/":
+        s_url: str = ""       
+        if self._check_standard_component(repodata.get("components"), reponame):
             s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
             # TODO: grab standard keys
             g_path = ""
             return g_path
         else:
-            s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
+            s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release", "")
             response = requests.get(s_url, allow_redirects=True)
-            with open(g_path, 'xb') as f_rel:
-                f_rel.write(response.content)
+            # check reponse OK
+            if response.status_code == 200:
+                with open(g_path, 'xb') as f_rel:
+                    f_rel.write(response.content)
+            else:
+                raise SystemExit(f"Wrong url defined for repo {reponame}")
             response.close()
             return g_path
 
