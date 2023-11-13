@@ -94,7 +94,7 @@ class TestCollectionKiwiParent:
             KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
             # Define some test data
             reponame: str = "test_repo"
-            repodata: dict = {"name": "test", "url": "no_schema"}
+            repodata: dict = {"name": "test", "url": "no_schema", "components": "test"}
             KiwiParent_instance._get_repokeys(reponame, repodata)
         except requests.exceptions.InvalidSchema as e:
             assert "No connection adapters were found" in str(e)
@@ -216,4 +216,15 @@ class TestCollectionKiwiParent:
             assert "No Profile selected" in captured.out
         except SystemExit as se:
             assert se.code == 1
+
+    def test_kiwrap_check_standard_component_no_components(self):
+        """"
+        Test check with no components
+        """
+        try:
+            # Create KiwiParent instance with existant appliance
+            KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
+            KiwiParent_instance._check_standard_component("", "test")
+        except SystemExit as se:
+            assert "Undefined component for repo" in str(se)
 
