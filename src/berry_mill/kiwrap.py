@@ -9,6 +9,8 @@ import shutil
 import tempfile
 import requests
 import inquirer
+import subprocess
+from http import HTTPStatus
 from lxml import etree
 from urllib.parse import ParseResult, urljoin, urlparse
 from typing import Dict
@@ -85,6 +87,17 @@ class KiwiParent:
 
         return self
 
+    def _verify_gpg_key(self, key_path) -> bool:
+        """
+        Verify wether the downloaded file is a GPG key
+        """
+        try:
+            return bool(subprocess.run(['gpg', '--dearmor', key_path], capture_output=True, text=True).returncode == os.EX_OK)
+
+        except Exception as e:
+            log.warning(f"An error occurred: {e}")
+            return False
+
     def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str:
         """
         Download repository keys to a temporary directory
@@ -107,9 +120,17 @@ class KiwiParent:
         else:
             s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
             response = requests.get(s_url, allow_redirects=True)
-            with open(g_path, 'xb') as f_rel:
-                f_rel.write(response.content)
+            # check reponse OK
+            if response.status_code == HTTPStatus.OK:
+                with open(g_path, 'xb') as f_rel:
+                    f_rel.write(response.content)
+            else:
+                log.warning(f"Wrong url defined for repo {reponame}")
             response.close()
+            if not self._verify_gpg_key(g_path):
+                log.warning(f"GPG key check failed for repo {reponame}")
+                os.remove(g_path)
+                g_path = ""
             return g_path
 
     def _check_repokey(self, repodata: Dict[str, str], reponame) -> None:
