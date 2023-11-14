@@ -1,5 +1,7 @@
 from berry_mill.mill import ImageMill
 
+version = "0.2"
+
 def main():
     from berry_mill import ImageMill
     from typing import Any
