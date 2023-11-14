@@ -1,0 +1,42 @@
+[build-system]
+requires      = ["setuptools>=59.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Berrymill"
+version = "0.2"
+description = "Kiwi-based Appliance Builder"
+readme = "README.md"
+authors = [{ name = "Bo Maryniuk", email = "bo@maryniuk.net" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["appliance", "builder", "kiwi"]
+dependencies = [
+    "inquirer", "kiwi", "kiwi-boxed-plugin", "typing_extensions", "qemu"
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["pytest", "bumpver", "pytest-cov", "flake8", "pylint"]
+
+[project.urls]
+Homepage = "https://github.com/isbm/berrymill"
+
+[project.scripts]
+berrymill = "berry_mill:main"
+
+[tool.bumpver]
+current_version = "0.2"
+version_pattern = "MAJOR.MINOR"
+commit_message  = "Bump version {old_version} -> {new_version}"
+commit          = true
+tag             = true
+push            = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
+"src/berry_mill/__init__.py" = ["{version}"]
