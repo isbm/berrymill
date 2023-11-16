@@ -99,6 +99,18 @@ class TestCollectionKiwiParent:
         except requests.exceptions.InvalidSchema as e:
             assert "No connection adapters were found" in str(e)
 
+    def test_kiwrap_get_repokeys_flat_wrong_url(self):
+        """
+        Test: get_repokeys() with wrong url defined for flat repo
+        Expected: _get_repokeys should return None
+        """
+
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
+        # Define some test data
+        reponame: str = "test_repo"
+        repodata: dict = {"name": "test", "url": "http://testing.com", "components": "/"}
+        assert KiwiParent_instance._get_repokeys(reponame, repodata) == None
+
     def test_kiwrap_get_repokeys_no_reponame(self):
         """
         Test: get_repokeys without repo name defined
@@ -217,3 +229,24 @@ class TestCollectionKiwiParent:
         except SystemExit as se:
             assert se.code == 1
 
+    def test_kiwrap_verify_gpg_key_wrong_key_path(self):
+        """
+        Test config wrong key path
+        Expected: return False
+        """
+        # Create KiwiParent instance with existant appliance
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )
+        # Verify gpg key with wrong key path
+        status: bool= KiwiParent_instance._verify_gpg_key("wrong/path")
+        assert status == False
+
+    def test_kiwrap_verify_gpg_key_undefined_key_path(self):
+        """
+        Test config None path
+        Expected: return False
+        """
+        # Create KiwiParent instance with existant appliance
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )
+        # Verify gpg key with None key path
+        status: bool= KiwiParent_instance._verify_gpg_key(None)
+        assert status == False
