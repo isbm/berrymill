@@ -229,24 +229,12 @@ class TestCollectionKiwiParent:
         except SystemExit as se:
             assert se.code == 1
 
-    def test_kiwrap_verify_gpg_key_wrong_key_path(self):
+    def test_kiwrap_verify_gpg_key_undefined_wrong_key_path(self):
         """
-        Test config wrong key path
+        Test config None/wrong path
         Expected: return False
         """
         # Create KiwiParent instance with existant appliance
-        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )
-        # Verify gpg key with wrong key path
-        status: bool= KiwiParent_instance._verify_gpg_key("wrong/path")
-        assert status == False
-
-    def test_kiwrap_verify_gpg_key_undefined_key_path(self):
-        """
-        Test config None path
-        Expected: return False
-        """
-        # Create KiwiParent instance with existant appliance
-        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )
-        # Verify gpg key with None key path
-        status: bool= KiwiParent_instance._verify_gpg_key(None)
-        assert status == False
+        key_test_paths: list = ["wrong/path", None]
+        for key in key_test_paths:
+            assert not KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )._verify_gpg_key(key), "Result should be false"
