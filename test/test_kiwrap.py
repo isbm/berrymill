@@ -1,7 +1,7 @@
 import kiwi.logger
 from _pytest.capture import CaptureFixture
 import unittest.mock
-
+import pytest
 from pytest import LogCaptureFixture
 from berry_mill.kiwrap import KiwiParent
 import requests
@@ -99,6 +99,18 @@ class TestCollectionKiwiParent:
         except requests.exceptions.InvalidSchema as e:
             assert "No connection adapters were found" in str(e)
 
+    def test_kiwrap_get_repokeys_flat_wrong_url(self):
+        """
+        Test: get_repokeys() with wrong url defined for flat repo
+        Expected: _get_repokeys should return None
+        """
+
+        KiwiParent_instance: KiwiParent = KiwiParent("test/descr/test_appliance.xml", profile="Virtual")
+        # Define some test data
+        reponame: str = "test_repo"
+        repodata: dict = {"name": "test", "url": "http://testing.com", "components": "/"}
+        assert KiwiParent_instance._get_repokeys(reponame, repodata) == None
+
     def test_kiwrap_get_repokeys_no_reponame(self):
         """
         Test: get_repokeys without repo name defined
@@ -182,10 +194,8 @@ class TestCollectionKiwiParent:
             mock_key_selection.return_value = ""
             # Redirect for non existent dir
             KiwiParent_instance._trusted_gpg_d = "/wrong/path"
-            try:
+            with pytest.raises(SystemExit):
                 KiwiParent_instance._check_repokey(repodata, reponame)
-            except SystemExit as s:
-                assert s.args == ("key file path wrong for repository test",)
     
     def test_kiwrap_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
@@ -217,3 +227,12 @@ class TestCollectionKiwiParent:
         except SystemExit as se:
             assert se.code == 1
 
+    def test_kiwrap_verify_gpg_key_undefined_wrong_key_path(self):
+        """
+        Test config None/wrong path
+        Expected: return False
+        """
+        # Create KiwiParent instance with existant appliance
+        key_test_paths: list = ["wrong/path", None]
+        for key in key_test_paths:
+            assert not KiwiParent("test/descr/test_appliance.xml", profile="Virtual" )._verify_gpg_key(key), "Result should be false"
