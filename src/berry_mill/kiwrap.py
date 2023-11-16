@@ -77,9 +77,13 @@ class KiwiParent:
         Add a repository for the builder
         """
         if reponame:
-            repodata.setdefault("key", "file://" + self._get_repokeys(reponame, repodata))
-            self._check_repokey(repodata, reponame)
-            self._repos[reponame] = repodata
+            key_path: str = self._get_repokeys(reponame, repodata)
+            if key_path is not None:
+                repodata.setdefault("key", "file://" + key_path)
+                self._check_repokey(repodata, reponame)
+                self._repos[reponame] = repodata
+            else:
+                log.error(f"Unable to get GPG key for repo {reponame}")
         else:
             log.error("Repository name not defined")
             self.cleanup()
@@ -98,7 +102,7 @@ class KiwiParent:
             log.warning(f"An error occurred: {e}")
             return False
 
-    def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str:
+    def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str|None:
         """
         Download repository keys to a temporary directory
         """
@@ -110,7 +114,7 @@ class KiwiParent:
                 raise Exception(excep_iter)
 
         url: ParseResult = urlparse(repodata["url"])
-        g_path: str = os.path.join(self._tmpdir, f"{reponame}_release.key")
+        g_path: str|None = os.path.join(self._tmpdir, f"{reponame}_release.key")
         s_url: str = ""
         if repodata.get("components", "/") != "/":
             s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
@@ -126,12 +130,10 @@ class KiwiParent:
                     f_rel.write(response.content)
             else:
                 log.warning(f"Wrong url defined for repo {reponame}")
-            response.close()
-            if not self._verify_gpg_key(g_path):
-                log.warning(f"GPG key check failed for repo {reponame}")
-                os.remove(g_path)
-                g_path = ""
-            return g_path
+                response.close()
+                return None
+        response.close()
+        return None if not self._verify_gpg_key(g_path) else g_path
 
     def _check_repokey(self, repodata: Dict[str, str], reponame) -> None:
 
@@ -153,7 +155,7 @@ class KiwiParent:
             else:
                 log.warning("Trusted key not found on system")
         if not os.path.exists(parsed_url.path):
-            raise SystemExit(f"key file path wrong for repository {reponame}")
+            raise SystemExit(f"Wrong key file path for repository {reponame}")
 
     def _key_selection(self, reponame: str, options: List[str]) -> str | None:
         none_of_above = "none of the above"
