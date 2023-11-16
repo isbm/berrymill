@@ -1,7 +1,7 @@
 import kiwi.logger
 from _pytest.capture import CaptureFixture
 import unittest.mock
-
+import pytest
 from pytest import LogCaptureFixture
 from berry_mill.kiwrap import KiwiParent
 import requests
@@ -194,10 +194,8 @@ class TestCollectionKiwiParent:
             mock_key_selection.return_value = ""
             # Redirect for non existent dir
             KiwiParent_instance._trusted_gpg_d = "/wrong/path"
-            try:
+            with pytest.raises(SystemExit):
                 KiwiParent_instance._check_repokey(repodata, reponame)
-            except SystemExit as s:
-                assert s.args == ("Wrong key file path for repository test",)
     
     def test_kiwrap_build_wrong_appliance(self, caplog: LogCaptureFixture):
         """
