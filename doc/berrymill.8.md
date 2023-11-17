@@ -1,4 +1,4 @@
-% BERRYMILL(8) Version 1.0 | Berrymill Documentation
+%BERRYMILL(8) Version 1.0 | Berrymill Documentation
 
 NAME
 ====
@@ -27,7 +27,6 @@ that inherits the original image description (or an already derived one) and
 add wanted content.
 
 ```
-
 <?xml version="1.0" encoding="utf-8"?>
 <image schemaversion="6.8" name="Testname">
     <inherit path="config.xml"/>
@@ -39,20 +38,65 @@ add wanted content.
 
 Important xml tags for derived images are:
 
-* "add": Add specific data to the derived image like a package
+* "add": Add specific data to the derived image like a package, or
+  other elements. Example:
+
+```
+<add>
+   <packages type="iso">
+         <package name="dracut-kiwi-live"/>
+   </packages>
+</add>
+```
+
 * "remove": Remove parts of the original image in the derived image, could be
-  e.g., packages, aggregates...
-* "merge" and "replace": Merge and replace only work on aggregates.
+  e.g., packages, aggregates... Example:
+
+```
+<remove>
+   <packages type="image">
+         <package name="iptables"/>
+   </packages>
+</remove>
+```
+
+* "merge" and "replace": Merge and replace only work on aggregates. One could
+  for example, merge an additional `type` element to the `preferences`:
+
+```
+<merge>
+    <preferences>
+        <type image="typename" primary="true"/>
+    </preferences>
+</merge>
+```
+
 * "remove\_any": Remove any element from description that matches by attributes
-  at least.
-* "set": Set attributes on an element in the derived image.
+   at least. In contrast to remove it does not need precise tag description and
+   is considering attributes to narrow down what tags to remove from the
+   description. Example to remove all users with plain password format:
+
+```
+<remove_any>
+  <user  pwdformat="plain"/>
+</remove_any>
+```
+
+* "set": Set attributes on an element in the derived image to add or update
+   attributes on a specific tag. Example:
+
+```
+<set xpath="//packages[@type='image']">
+     profiles: some_profile
+</set>
+```
 
 See a more complex example under EXAMPLES.
 
 OPTIONS
 =======
 
-For **berrymill** the following options are available, irrespective wether
+For **berrymill** the following options are available, irrespective whether
 *prepare* or *build* is chosen:
 
 -h, --help
@@ -77,7 +121,7 @@ down after the build finished.
 
 -c CONFIG, \--config CONFIG
 
-: Specify a configuration file other than default one. Expects a configuration
+: Specify a configuration file other than the default one. Expects a configuration
 file as argument. Read more about the structure of configuration files in
 section [FILES](#files).
 
@@ -138,7 +182,7 @@ installation of the KIWI tool chain.
 
 \--target-dir TARGET\_DIR
 
-: Specifiy the directory where the results of the build shall be placed by
+: Specify the directory where the results of the build shall be placed by
 **berrymill**. This parameter is required and gets passed along to
 **kiwi**(8).
 
