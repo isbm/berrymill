@@ -72,9 +72,10 @@ Important xml tags for derived images are:
 ```
 
 * "remove\_any": Remove any element from description that matches by attributes
-   at least. In contrast to remove it does not need precise tag description and
-   is considering attributes to narrow down what tags to remove from the
-   description. Example to remove all users with plain password format:
+   at least. In contrast to `remove`, this does not need precise tag description.
+   Instead it is considering attributes to narrow down what tags to remove from
+   the description. For example, it is possible to use it to remove all users
+   configured with plain password format:
 
 ```
 <remove_any>
