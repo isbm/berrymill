@@ -72,10 +72,7 @@ class ImageMill:
         self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
         self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
         self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
-        try:
-            self._construct_final_appliance()
-        finally:
-            self.cleanup()
+        self._construct_final_appliance()
 
     def _add_default_args(self, p: argparse.ArgumentParser) -> None:
         """ Add Defautl Arguments to parser accepted after berrymill"""
