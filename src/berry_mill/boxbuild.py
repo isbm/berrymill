@@ -22,10 +22,11 @@ class BoxBuildTask(SystemBoxbuildTask):
     The Box will parse this, read the .txt file
     and call kiwi accordingly
     """
-    def __init__(self, arg_file_pth: str) -> None:
+    def __init__(self, repostring: str) -> None:
         super().__init__()
-        self._arg = arg_file_pth
+        self._repo_conf = repostring.split(' ')
 
     def _validate_kiwi_build_command(self) -> List[str]:
         # construct build command from given command line
-        return super()._validate_kiwi_build_command() + [f"$(cat /tmp/img/boxroot{self._arg})"]
+        return super()._validate_kiwi_build_command() + self._repo_conf
+
