@@ -28,4 +28,4 @@ class BoxBuildTask(SystemBoxbuildTask):
 
     def _validate_kiwi_build_command(self) -> List[str]:
         # construct build command from given command line
-        return super()._validate_kiwi_build_command()
+        return super()._validate_kiwi_build_command() + [f"$(cat /tmp/img/boxroot{self._arg})"]
