@@ -72,9 +72,8 @@ class KiwiAppBox(KiwiApp):
         self._arg_file_path: str = os.path.join(self._tmpd, self._arg_file_name)
 
     def run(self) -> None:
-
         repostring: str = self._generate_repo_string(self._repos)
-
+        
         BoxBuildTask(repostring).process()
 
     def _get_relative_path(self) -> str:

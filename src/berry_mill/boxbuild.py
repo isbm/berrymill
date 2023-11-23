@@ -28,5 +28,11 @@ class BoxBuildTask(SystemBoxbuildTask):
 
     def _validate_kiwi_build_command(self) -> List[str]:
         # construct build command from given command line
-        return super()._validate_kiwi_build_command() + self._repo_conf
+        # forward appliance file name
+        params = ['--kiwi-file', self.global_args['--kiwi-file']] 
+        # add box build parameters
+        params += super()._validate_kiwi_build_command()
+        # add repository configuration
+        params += self._repo_conf
 
+        return params
