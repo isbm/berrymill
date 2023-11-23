@@ -34,7 +34,7 @@ class KiwiParent:
         self._trusted_gpg_d: str = "/etc/apt/trusted.gpg.d"
         self._tmpdir: str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         self._kiwiparams: KiwiParams = pkw
-        self._kiwi_options: List[str] = []
+        self._kiwi_options: List[str] = [f'--kiwi-file={descr}']
         self._initialized: bool = False
 
         if self._kiwiparams.get("debug"):
