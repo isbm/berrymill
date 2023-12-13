@@ -6,9 +6,10 @@ MANPAGES    ?= manpages
 
 .ONESHELL:
 .SILENT:
-.PHONY: help
+.PHONY: default
+default: help
 
-%: all man
+all: man docs
 
 help:
 	cat << EOF
@@ -23,3 +24,4 @@ man:
 
 docs:
 	@echo "Generating documentation..."
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
