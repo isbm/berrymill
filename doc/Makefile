@@ -1,10 +1,25 @@
-PANDOC ?= pandoc
+SPHINXOPTS  ?=
+SPHINXBUILD ?= sphinx-build
+SOURCEDIR   = .
+BUILDDIR    = _build
+MANPAGES    ?= manpages
 
-MANSECTION ?= 8
+.ONESHELL:
+.SILENT:
+.PHONY: help
 
-MANPAGE.md = $(PANDOC) --standalone $(PANDOCFLAGS) --to man
+%: all man
 
-%.$(MANSECTION): %.$(MANSECTION).md
-	$(MANPAGE.md) $< -o $@
+help:
+	cat << EOF
+	docs	Generate documentation (Sphinx)
+	man	Generate manpages
+	all	Run everything
+	EOF
 
-all: berrymill.8
+man:
+	@echo "Generating manpages..."
+	pandoc --standalone $(PANDOCFLAGS) --to man $(MANPAGES)/berrymill.8.md -o $(MANPAGES)/berrymill.8
+
+docs:
+	@echo "Generating documentation..."
