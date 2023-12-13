@@ -1,27 +1,33 @@
-SPHINXOPTS  ?=
-SPHINXBUILD ?= sphinx-build
-SOURCEDIR   = .
-BUILDDIR    = _build
-MANPAGES    ?= manpages
+SPHINXOPTS    ?=
+SPHINXBUILD   ?= sphinx-build
+SOURCEDIR     = source
+BUILDDIR      = build
+MANPAGES      ?= manpages
 
 .ONESHELL:
 .SILENT:
-.PHONY: default
-default: help
 
-all: man docs
+.PHONY: help Makefile
 
 help:
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 	cat << EOF
-	docs	Generate documentation (Sphinx)
-	man	Generate manpages
-	all	Run everything
+	Additionally, use these commands:
+	docs  		Generate documentation (Sphinx)
+	man-ext		Generate extra manpage
+	all 		Run documentation
 	EOF
 
-man:
-	@echo "Generating manpages..."
-	pandoc --standalone $(PANDOCFLAGS) --to man $(MANPAGES)/berrymill.8.md -o $(MANPAGES)/berrymill.8
+# Catch-all target: route all unknown targets to Sphinx using the new
+# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+%: Makefile
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 docs:
-	@echo "Generating documentation..."
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@echo "Generating HTML documentation"
+	@$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+man-ext:
+	@echo "Generating extra manpages..."
+	pandoc --standalone $(PANDOCFLAGS) --to man $(MANPAGES)/berrymill.8.md -o $(MANPAGES)/berrymill.8
+	@echo "Extra manpages in 'manpages' subdirectory"
