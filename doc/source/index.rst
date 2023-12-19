@@ -3,8 +3,10 @@
 Welcome to Berrymill documentation!
 ===================================
 
-.. note::
-   This documentation focuses on Berrymill |version|, a tool designed to produce multiple images. Project Berrymill serves as **an extension** of `Kiwi NG <http://osinside.github.io/kiwi/>`_.
+.. warning::
+   This documentation focuses on Berrymill |version|, a tool designed to produce multiple images. Project Berrymill serves as **an extension** of `Kiwi NG <http://osinside.github.io/kiwi/>`_, therefore this documentation is also only an extension.
+
+   ⚠️ Reader of this documentation is **required** to be familiar with the `Kiwi NG features <http://osinside.github.io/kiwi/>`_!
 
 .. toctree::
    :maxdepth: 1
