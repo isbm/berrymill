@@ -12,6 +12,7 @@ Welcome to Berrymill documentation!
    :maxdepth: 1
 
    overview
+   installation
 
 Concept
 -------
