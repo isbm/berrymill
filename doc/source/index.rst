@@ -14,6 +14,8 @@ Welcome to Berrymill documentation!
    overview
    installation
    quickstart
+   configuration
+   detailedbuild
 
 Concept
 -------

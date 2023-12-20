@@ -23,7 +23,7 @@ Setup
 
 Initial setup is necessary for Berrymill. Unlike Kiwi, Berrymill permits reuse of the same Image, which is constructible both on OBS (Open Build Service) and locally. This flexibility involves substituting or replacing defined repositories. When utilizing an image with OBS, repositories will be specified with the ``obs://`` scheme. OBS prohibits external internal connections, hence the repositories must be pre-existing within the OBS system. However, for users not employing OBS for image builds yet desiring to construct the same image locally, manual configuration is required to override these repositories.
 
-More information about Berrymill setup is found in the `full configuration chapter <configuration.rst>`__.
+More information about Berrymill setup is found in the `full configuration chapter <configuration.html>`__.
 
 Build Image
 -----------
@@ -38,7 +38,7 @@ Depending on the setup and initial configuration, if the command above finished 
 
 But you might need to specify your own repository configuration with ``--config`` option (or setup the default one at ``/etc/berrymill/berrymill.conf``).
 
-Please refer to the `building section <detailedbuild.rst>`__ for comprehensive details on creating images for various architectures and under different conditions.
+Please refer to the `building section <detailedbuild.html>`__ for comprehensive details on creating images for various architectures and under different conditions.
 
 Running an Image
 ----------------
