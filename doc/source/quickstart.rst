@@ -18,17 +18,25 @@ Also you need an example content description, so clone the official Kiwi NG imag
 
     $ git clone https://github.com/OSInside/kiwi
 
+Setup
+-----
+
+Initial setup is necessary for Berrymill. Unlike Kiwi, Berrymill permits reuse of the same Image, which is constructible both on OBS (Open Build Service) and locally. This flexibility involves substituting or replacing defined repositories. When utilizing an image with OBS, repositories will be specified with the ``obs://`` scheme. OBS prohibits external internal connections, hence the repositories must be pre-existing within the OBS system. However, for users not employing OBS for image builds yet desiring to construct the same image locally, manual configuration is required to override these repositories.
+
+More information about Berrymill setup is found in the `full configuration chapter <configuration.rst>`__.
+
 Build Image
 -----------
 
 To create your initial image, which serves as a basic system disk image compatible with full virtualization systems such as QEMU, execute the following command:
 
 .. code-block:: shell
-    :caption: Building Image
 
-    $ echo TBD
+    $ berrymill --image relative/path/to/descr.kiwi build --target-dir /tmp/foo
 
-The resulting image will be placed into the folder ``/tmp/tbd`` with the suffix ``.raw``.
+Depending on the setup and initial configuration, if the command above finished successfully, the resulting image will be placed into the folder ``/tmp/foo`` with the suffix ``.raw``.
+
+But you might need to specify your own repository configuration with ``--config`` option (or setup the default one at ``/etc/berrymill/berrymill.conf``).
 
 
 Running an Image
