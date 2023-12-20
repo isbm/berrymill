@@ -38,6 +38,7 @@ Depending on the setup and initial configuration, if the command above finished 
 
 But you might need to specify your own repository configuration with ``--config`` option (or setup the default one at ``/etc/berrymill/berrymill.conf``).
 
+Please refer to the `building section <detailedbuild.rst>`__ for comprehensive details on creating images for various architectures and under different conditions.
 
 Running an Image
 ----------------
