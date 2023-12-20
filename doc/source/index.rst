@@ -15,6 +15,7 @@ Welcome to Berrymill documentation!
    installation
    quickstart
    configuration
+   derivatives
    detailedbuild
 
 Concept
