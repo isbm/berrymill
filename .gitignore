@@ -1,5 +1,7 @@
 *__pycache__/
 /src/berrymill.conf
+doc/build/*
+doc/source/_*/*
 .gitignore
 .vscode/
 .coverage
