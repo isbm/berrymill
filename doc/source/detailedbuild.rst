@@ -18,7 +18,7 @@ To build your image locally, execute the following command:
 
 ``--image`` or ``-i`` is used to specify the image appliance. ``--profile`` or ``-p`` is used to select the profile, e.g. Disk, Live, or Virtual.
 The argument ``-l`` or ``--local`` is used to build image locally (on the current hardware).
-The resulting image will be placed into directory ``/tmp/foo`` with the suffix ``.raw`` or ``qcow2``.
+The resulting image will be placed into directory ``/tmp/foo`` with the suffix ``.raw`` or ``qcow2`` or ``iso``.
 
 Unless you specify a configuration with ``--config`` or ``-c``, default berrymill configuration is used, which is located at ``/etc/berrymill/berrymill.conf``.
 
