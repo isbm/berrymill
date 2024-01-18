@@ -16,8 +16,8 @@ To build your image locally, execute the following command:
 
     $ berrymill -i path/to/descr.kiwi/or/config.xml --profile Disk build -l --target-dir=/tmp/foo
 
-``--image`` or ``-i`` is used to specify the image appliance. ``--profile`` or `-p` is used to select the profile, e.g. Disk, Live, or Virtual.
-The argument -l or --local is used to build image locally (on the current hardware)
+``--image`` or ``-i`` is used to specify the image appliance. ``--profile`` or ``-p`` is used to select the profile, e.g. Disk, Live, or Virtual.
+The argument ``-l`` or ``--local`` is used to build image locally (on the current hardware)
 The resulting image will be placed into directory ``/tmp/foo`` with the suffix ``.raw``.
 
 Default berrymill configuration is used by default, which is located at ``/etc/berrymill/berrymill.conf``, unless you specify your own configuration with 
