@@ -34,6 +34,6 @@ Cross build uses box build (QEMU VM). To cross build you need ``--cross`` argume
 
     $ berrymill -i path/to/descr.kiwi/or/config.xml build --cross --target-dir=/tmp/foo
 
-For both builds, debugging messages can be enabled with ``--debug`` or `-d` argument. In addition, ``--clean`` argument can be used to run a clean build (to remove the target directory before building if it exists).
+For both builds, debugging messages can be enabled with ``--debug`` or ``-d`` argument. In addition, ``--clean`` argument can be used to run a clean build (to remove the target directory before building if it exists).
 
 Berrymill configuration example can be found on ``berrymill/config/berrymill.conf.example``. Image appliances examples can be found on github at ``https://github.com/OSInside/kiwi-descriptions``.
