@@ -1,6 +1,7 @@
 import platform
 import os
 from typing import Dict
+import shutil
 import kiwi.logger
 
 archfix: Dict[str, str] = {
@@ -23,11 +24,6 @@ def has_virtualization() -> bool:
     """
     Returns True if a nested virtualization checks passed.
     """
-
-    # Intels/AMDs only
-    if platform.processor() != "x86_64":  # also AMD
-        log.error("Only x86_64 architecture is supported at the moment")
-        return False
 
     # CPU supports VM
     with open("/proc/cpuinfo") as fr:
@@ -65,14 +61,12 @@ def is_vm() -> bool:
     """
     Detect if the current machine is a VM
     """
-    lshw:str = "/usr/bin/lshw"
-    assert os.path.exists(lshw), f"{lshw} utility is missing"
-
+    assert shutil.which("lshw"), "lshw utility is missing"
     # Crude test on vendors
     vendors:list[str] = set(filter(None, map(lambda l:l.startswith("vendor:")
                                              and l.split(":")[-1].strip()
                                              or "", [x.strip().lower() for x in
-                                                     os.popen(f"{lshw} 2> /dev/null").readlines()])))
+                                                     os.popen("lshw 2> /dev/null").readlines()])))
     for v in ["qemu", "virtualbox", "vmware"]:
         if v in vendors:
             return True
