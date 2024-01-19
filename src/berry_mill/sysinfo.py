@@ -1,7 +1,6 @@
 import platform
 import os
 from typing import Dict
-import shutil
 import kiwi.logger
 
 archfix: Dict[str, str] = {
@@ -61,7 +60,7 @@ def is_vm() -> bool:
     """
     Detect if the current machine is a VM
     """
-    assert shutil.which("lshw"), "lshw utility is missing"
+    assert bool(list(filter(None, [os.path.exists("{}/lshw".format(p)) for p in ["/usr/bin", "/usr/sbin", "/sbin", "/bin"]]))), "lshw utility is missing"
     # Crude test on vendors
     vendors:list[str] = set(filter(None, map(lambda l:l.startswith("vendor:")
                                              and l.split(":")[-1].strip()
