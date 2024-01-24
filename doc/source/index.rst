@@ -17,6 +17,7 @@ Welcome to Berrymill documentation!
    configuration
    derivatives
    detailedbuild
+   berryplugins
 
 Concept
 -------
