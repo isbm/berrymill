@@ -57,8 +57,12 @@ class ImageMill:
         # build specific arguments
         build_p: argparse.ArgumentParser = sub_p.add_parser("build", help="build image")
         self._add_build_args(build_p)
-        self.args: argparse.Namespace = p.parse_args()
 
+        # composer
+        cmp_p: argparse.ArgumentParser = sub_p.add_parser("compose", help="compose an hypervisor image")
+        self._add_composer_args(cmp_p)
+
+        self.args: argparse.Namespace = p.parse_args()
         self.cfg: ConfigHandler = ConfigHandler()
         if self.args.config:
             self.cfg.add_config(self.args.config)
@@ -106,6 +110,14 @@ class ImageMill:
         build_fashion.add_argument("-l", "--local", action="store_true", help="build image on current hardware")
 
         p.add_argument("--target-dir", required=True, type=str, help="store image results in given dirpath")
+        p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
+        p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
+
+    def _add_composer_args(self, p: argparse.ArgumentParser) -> None:
+        """
+        Add Composer args
+        """
+        p.add_argument("--target-dir", required=False, type=str, help="compose a final image from different sub-images", default="build")
         p.add_argument("--no-accel", action="store_true", help="disable KVM acceleration for boxbuild")
         p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
 
@@ -209,6 +221,8 @@ class ImageMill:
                 profile=self.args.profile,
                 allow_existing_root=self.args.allow_existing_root
                 )
+        elif self.args.subparser_name == "compose":
+            print("OK")
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
 
