@@ -67,17 +67,6 @@ class ImageMill:
         if self.args.config:
             self.cfg.add_config(self.args.config)
 
-        self.cfg.load()
-        # Set appliance paths
-        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
-
-        os.chdir(self._appliance_path)
-
-        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
-        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
-        self._construct_final_appliance()
-
     def _add_default_args(self, p: argparse.ArgumentParser) -> None:
         """
         Add Defautl Arguments to parser accepted after berrymill
@@ -153,6 +142,8 @@ class ImageMill:
         """
         Initialise local repositories, those are already configured on the local machine.
         """
+
+        self.cfg.load()
         if not self.cfg.raw_unsafe_config().get("use-global-repos", False):
             return
 
@@ -189,8 +180,18 @@ class ImageMill:
             print(yaml.dump(self.cfg.config))
             return
 
+        # Set appliance paths
+        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
+
+        os.chdir(self._appliance_path)
+
+        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+
         kiwip: KiwiParent | None = None
         if self.args.subparser_name == "build":
+            self._construct_final_appliance()
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
                 self.args.arch = "arm64"
@@ -214,6 +215,7 @@ class ImageMill:
                 no_accel=self.args.no_accel
                 )
         elif self.args.subparser_name == "prepare":
+            self._construct_final_appliance()
             kiwip = KiwiPreparer(
                 self._appliance_descr,
                 root=self.args.root,
@@ -222,7 +224,8 @@ class ImageMill:
                 allow_existing_root=self.args.allow_existing_root
                 )
         elif self.args.subparser_name == "compose":
-            print("OK")
+            print("Composer call")
+            return
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
 
