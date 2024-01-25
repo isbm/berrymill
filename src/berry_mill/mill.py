@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from typing import Tuple
 import kiwi.logger
 import yaml
+from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader
 from berry_mill.kiwrap import KiwiParent
@@ -16,6 +17,7 @@ from .sysinfo import get_local_arch
 from .preparer import KiwiPreparer
 from .builder import KiwiBuilder
 from .sysinfo import has_virtualization, is_vm
+
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -57,25 +59,20 @@ class ImageMill:
         # build specific arguments
         build_p: argparse.ArgumentParser = sub_p.add_parser("build", help="build image")
         self._add_build_args(build_p)
-        self.args: argparse.Namespace = p.parse_args()
 
+        # plugin loader
+        plugin.plugins_loader(sub_p)
+
+        self.args: argparse.Namespace = p.parse_args()
         self.cfg: ConfigHandler = ConfigHandler()
         if self.args.config:
             self.cfg.add_config(self.args.config)
 
-        self.cfg.load()
-        # Set appliance paths
-        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
-
-        os.chdir(self._appliance_path)
-
-        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
-        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
-        self._construct_final_appliance()
-
     def _add_default_args(self, p: argparse.ArgumentParser) -> None:
-        """ Add Defautl Arguments to parser accepted after berrymill"""
+        """
+        Add Defautl Arguments to parser accepted after berrymill
+        """
+
         p.add_argument("-s", "--show-config", action="store_true", help="shows the configuration of repositories")
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
         p.add_argument("-a", "--arch", help="specify target arch")
@@ -85,12 +82,17 @@ class ImageMill:
         p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
 
     def _add_prepare_args(self, p: argparse.ArgumentParser) -> None:
-        """ Add Prepare Specific Arguments to parser accepted after berrymill [default args] prepare"""
+        """
+        Add Prepare Specific Arguments to parser accepted after berrymill [default args] prepare
+        """
+
         p.add_argument("--root", required=True, help="directory of output sysroot")
         p.add_argument("--allow-existing-root", action="store_true", help="allow existing root")
 
     def _add_build_args(self, p: argparse.ArgumentParser) -> None:
-        """ Add Build Specific Arguments to parser accepted after berrymill [default args] build"""
+        """
+        Add Build Specific Arguments to parser accepted after berrymill [default args] build
+        """
         # --cross sets a cpu -> dont allow user to choose cpu when cross is enabled
         build_fashion = p.add_mutually_exclusive_group()
         build_fashion.add_argument("--cpu", help="cpu to use for the QEMU VM (box)")
@@ -102,7 +104,10 @@ class ImageMill:
         p.add_argument("--box-memory", type=str, default="8G", help="specify main memory to use for the QEMU VM (box)")
 
     def _get_appliance_path_info(self, image: str) -> Tuple[str, str]:
-        """ Return Appliance Dirname, Basename"""
+        """
+        Return Appliance Dirname, Basename
+        """
+
         appliance_path: str = os.path.dirname(image or ".")
         if appliance_path == ".":
             appliance_path = ""
@@ -130,6 +135,8 @@ class ImageMill:
         """
         Initialise local repositories, those are already configured on the local machine.
         """
+
+        self.cfg.load()
         if not self.cfg.raw_unsafe_config().get("use-global-repos", False):
             return
 
@@ -166,8 +173,18 @@ class ImageMill:
             print(yaml.dump(self.cfg.config))
             return
 
+        # Set appliance paths
+        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
+
+        os.chdir(self._appliance_path)
+
+        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+
         kiwip: KiwiParent | None = None
         if self.args.subparser_name == "build":
+            self._construct_final_appliance()
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
                 self.args.arch = "arm64"
@@ -191,6 +208,7 @@ class ImageMill:
                 no_accel=self.args.no_accel
                 )
         elif self.args.subparser_name == "prepare":
+            self._construct_final_appliance()
             kiwip = KiwiPreparer(
                 self._appliance_descr,
                 root=self.args.root,
@@ -198,8 +216,12 @@ class ImageMill:
                 profile=self.args.profile,
                 allow_existing_root=self.args.allow_existing_root
                 )
+        elif self.args.subparser_name is not None:
+            log.debug("Calling plugin {}".format(self.args.subparser_name))
+            plugin.registry.call(self.args.subparser_name)
+            return
         else:
-            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
+            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")
 
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():

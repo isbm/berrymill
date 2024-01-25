@@ -58,7 +58,7 @@ class ConfigHandler:
             log.error("unable to load configuration at {}: {}".format(cf_path, exc))
             sys.exit(1)
 
-        self.__conf.update(data)
+        data is not None and self.__conf.update(data)
 
     def load(self) -> None:
         """
