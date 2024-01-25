@@ -33,6 +33,13 @@ class PluginRegistry:
     def __getitem__(self, __name: str) -> PluginRegistry|None:
         return __name in self.__registry and self.__registry[__name] or None
 
+    def call(self, pname:str) -> Any:
+        plugin:Any|None = self.__registry.get(pname)
+        if plugin is None:
+            log.error("Unable to call plugin {}: not loaded".format(pname))
+        else:
+            plugin.run()
+
 
 registry = PluginRegistry()
 
