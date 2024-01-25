@@ -16,6 +16,8 @@ from .sysinfo import get_local_arch
 from .preparer import KiwiPreparer
 from .builder import KiwiBuilder
 from .sysinfo import has_virtualization, is_vm
+from .plugin import plugins_loader
+
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -58,6 +60,8 @@ class ImageMill:
         build_p: argparse.ArgumentParser = sub_p.add_parser("build", help="build image")
         self._add_build_args(build_p)
 
+        # plugin loader
+        plugins_loader(sub_p)
         # composer
         cmp_p: argparse.ArgumentParser = sub_p.add_parser("compose", help="compose an hypervisor image")
         self._add_composer_args(cmp_p)
