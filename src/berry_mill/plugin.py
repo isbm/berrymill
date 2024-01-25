@@ -41,18 +41,16 @@ class PluginIf(ABC):
     """
     Plugin interface
     """
-    title:str = ""
-    name:str = ""
-
-    def __init__(self, title:str = "", name:str = ""):
+    def __init__(self, title:str = "", name:str = "", argmap:list[PluginArgs]|None = None):
         """
         Register plugin
         """
         assert bool(name.strip()), "Cannot register plugin with the unknown title"
         assert bool(name.strip()), "Cannot register plugin with undefined name"
 
-        self.name = name
-        self.title = title
+        self.name:str = name
+        self.title:str = title
+        self.argmap:list[PluginArgs] = argmap or []
 
     @abstractmethod
     def setup(self, *args, **kw):
@@ -80,7 +78,8 @@ class PluginArgs:
         self.args = args
         self.keywords = kw
 
-def plugins_loader(argp: argparse.ArgumentParser):
+
+def plugins_loader(sp: argparse.ArgumentParser):
     """
     Load plugins and construct their CLI interface
     """
@@ -90,6 +89,9 @@ def plugins_loader(argp: argparse.ArgumentParser):
         except Exception as exc:
             log.error("Failure to import plugin \"{}\": {}".format(p, exc))
 
+    # Add to the CLI as a subcommand on --help
     for n in registry.plugins():
         p = registry[n]
-        print(p.name, p.title)
+        argp = sp.add_parser(p.name, help=p.title)
+        for a in p.argmap:
+            argp.add_argument(*a.args, **a.keywords)
