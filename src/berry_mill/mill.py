@@ -216,11 +216,11 @@ class ImageMill:
                 profile=self.args.profile,
                 allow_existing_root=self.args.allow_existing_root
                 )
-        elif self.args.subparser_name == "compose":
-            print("Composer call")
+        elif self.args.subparser_name is not None:
+            log.debug("Calling plugin {}".format(self.args.subparser_name))
             return
         else:
-            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare)")
+            raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")
 
         for r in self.cfg.config["repos"]:
             for rname, repo in (self.cfg.config["repos"][r].get(self.args.arch or get_local_arch()) or {}).items():
