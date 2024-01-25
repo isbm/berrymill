@@ -8,3 +8,4 @@ doc/source/_*/*
 dist/
 build/
 *Berrymill.egg*
+tmp/
