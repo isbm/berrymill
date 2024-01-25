@@ -18,6 +18,7 @@ Welcome to Berrymill documentation!
    derivatives
    detailedbuild
    berryplugins
+   writingplugins
 
 Concept
 -------
