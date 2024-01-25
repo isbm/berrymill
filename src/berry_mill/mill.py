@@ -6,6 +6,7 @@ from tempfile import mkdtemp
 from typing import Tuple
 import kiwi.logger
 import yaml
+from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader
 from berry_mill.kiwrap import KiwiParent
@@ -16,7 +17,6 @@ from .sysinfo import get_local_arch
 from .preparer import KiwiPreparer
 from .builder import KiwiBuilder
 from .sysinfo import has_virtualization, is_vm
-from .plugin import plugins_loader
 
 
 log = kiwi.logging.getLogger('kiwi')
@@ -61,7 +61,7 @@ class ImageMill:
         self._add_build_args(build_p)
 
         # plugin loader
-        plugins_loader(sub_p)
+        plugin.plugins_loader(sub_p)
 
         self.args: argparse.Namespace = p.parse_args()
         self.cfg: ConfigHandler = ConfigHandler()
@@ -218,6 +218,7 @@ class ImageMill:
                 )
         elif self.args.subparser_name is not None:
             log.debug("Calling plugin {}".format(self.args.subparser_name))
+            plugin.registry.call(self.args.subparser_name)
             return
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")
