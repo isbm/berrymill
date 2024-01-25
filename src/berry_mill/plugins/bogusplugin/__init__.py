@@ -11,7 +11,7 @@ class MyPlugin(PluginIf):
         """
         Run plugin
         """
-        print("Running plugin {}".format(self.PLUGIN))
+        print("Running plugin {}".format(self.title))
 
 # Register plugin
 registry(MyPlugin(title="My Bogus Plugin",
