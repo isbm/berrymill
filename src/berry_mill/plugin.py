@@ -72,6 +72,13 @@ class PluginIf(ABC):
         Runs plugin
         """
 
+class PluginArgs:
+    """
+    Namespace for plugin arguments
+    """
+    def __init__(self, *args, **kw) -> None:
+        self.args = args
+        self.keywords = kw
 
 def plugins_loader(argp: argparse.ArgumentParser):
     """
