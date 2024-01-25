@@ -1,4 +1,4 @@
-from berry_mill.plugin import PluginIf, registry
+from berry_mill.plugin import PluginIf, PluginArgs, registry
 
 class MyPlugin(PluginIf):
     """
@@ -14,4 +14,9 @@ class MyPlugin(PluginIf):
         print("Running plugin {}".format(self.PLUGIN))
 
 # Register plugin
-registry(MyPlugin(title="My Bogus Plugin", name="myplug"))
+registry(MyPlugin(title="My Bogus Plugin",
+                  name="myplug",
+                  argmap=[
+                      PluginArgs("-s", "--something", help="no idea"),
+                      PluginArgs("-t", "--test", help="testing something"),
+                    ]))
