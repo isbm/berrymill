@@ -14,9 +14,9 @@ class MyPlugin(PluginIf):
         print("Running plugin {}".format(self.title))
 
 # Register plugin
-registry(MyPlugin(title="My Bogus Plugin",
-                  name="myplug",
+registry(MyPlugin(title="example plugin",
+                  name="example",
                   argmap=[
-                      PluginArgs("-s", "--something", help="no idea"),
-                      PluginArgs("-t", "--test", help="testing something"),
+                      PluginArgs("-a", "--first", help="first argument"),
+                      PluginArgs("-b", "--second", help="some other argument example"),
                     ]))
