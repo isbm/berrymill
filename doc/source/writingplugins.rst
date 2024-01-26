@@ -13,12 +13,6 @@ A plugin should implement ``berry_mill.plugin.PluginIf`` abstract class (interfa
 
 .. code-block:: python
 
-    def autosetup(self):
-
-The ``autosetup`` method is used to automatically setup the plugin, using passed configuration from the Berrymill itself and as well from the plugin alone.
-
-.. code-block:: python
-
     def run(self):
 
 This method is to ``run`` the plugin, assuming all arguments are already passed through.
