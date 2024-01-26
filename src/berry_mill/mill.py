@@ -72,6 +72,8 @@ class ImageMill:
             self.cfg.add_config(self.args.config)
 
         if os.path.exists("project.conf"):
+            self.cfg.add_config("project.conf")
+
     def _add_default_args(self, p: argparse.ArgumentParser) -> None:
         """
         Add Defautl Arguments to parser accepted after berrymill
@@ -179,6 +181,17 @@ class ImageMill:
                 return False
         return True
 
+    def _set_appliance_paths(self):
+        """
+        Set appliance paths
+        """
+        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
+        os.chdir(self._appliance_path)
+
+        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
+        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+
     def run(self) -> None:
         """
         Build an image
@@ -188,21 +201,13 @@ class ImageMill:
             print(yaml.dump(self.cfg.config))
             return
 
-        # Set appliance paths
-        self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
-
-        os.chdir(self._appliance_path)
-
-        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
-        self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
-
         kiwip: KiwiParent | None = None
 
         if not self._check_opts():
             raise SystemExit()
 
         if self.args.subparser_name == "build":
+            self._set_appliance_paths()
             self._construct_final_appliance()
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
@@ -227,6 +232,7 @@ class ImageMill:
                 no_accel=self.args.no_accel
                 )
         elif self.args.subparser_name == "prepare":
+            self._set_appliance_paths()
             self._construct_final_appliance()
             kiwip = KiwiPreparer(
                 self._appliance_descr,
@@ -237,7 +243,7 @@ class ImageMill:
                 )
         elif self.args.subparser_name is not None:
             log.debug("Calling plugin {}".format(self.args.subparser_name))
-            plugin.registry.call(self.args.subparser_name)
+            plugin.registry.call(self.cfg, self.args.subparser_name)
             return
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")
