@@ -41,6 +41,9 @@ class ImageMill:
         """
         Constructor
         """
+        self._bac_appliance_abspth:str = ""
+        self._tmp_backup_dir:str = ""
+
         # Display just help if run alone
         if len(sys.argv) == 1:
             sys.argv.append("--help")
@@ -237,6 +240,7 @@ class ImageMill:
         """
         Cleanup Temporary directories and files
         """
-        if (os.path.exists(self._bac_appliance_abspth)):
+        if self._bac_appliance_abspth and (os.path.exists(self._bac_appliance_abspth)):
             shutil.move(self._bac_appliance_abspth, self._appliance_abspath)
-        shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
+        if self._tmp_backup_dir:
+            shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
