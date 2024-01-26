@@ -80,7 +80,7 @@ class ImageMill:
         p.add_argument("-d", "--debug", action="store_true", help="turns on verbose debugging mode")
         p.add_argument("-a", "--arch", help="specify target arch")
         p.add_argument("-c", "--config", type=str, help="specify configuration other than default")
-        p.add_argument("-i", "--image", required=True, help="path to the image appliance, if it's not in the current directory")
+        p.add_argument("-i", "--image", help="path to the image appliance, if it's not in the current directory")
         p.add_argument("-p", "--profile", help="select profile for images that makes use of it")
         p.add_argument("--clean", action="store_true", help="cleanup previous build results prior build.")
 
@@ -167,6 +167,17 @@ class ImageMill:
         with open(self._appliance_abspath, "w") as ma:
             ma.write(final_rendered_xml_string)
 
+    def _check_opts(self) -> bool:
+        """
+        Check if options are correct.
+        They are not defined required or not by default
+        """
+        if self.args.subparser_name in ["prepare", "build"]:
+            if self.args.image is None:
+                log.error("Image (--image) is not specified")
+                return False
+        return True
+
     def run(self) -> None:
         """
         Build an image
@@ -186,6 +197,10 @@ class ImageMill:
         self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
 
         kiwip: KiwiParent | None = None
+
+        if not self._check_opts():
+            raise SystemExit()
+
         if self.args.subparser_name == "build":
             self._construct_final_appliance()
             # parameter "cross" implies a amd64 host and an arm64 target-arch
