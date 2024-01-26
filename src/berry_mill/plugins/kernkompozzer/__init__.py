@@ -7,10 +7,12 @@ class Kernkompozzer(plugin.PluginIf):
     """
     ID = "kern-hv"
 
-    def setup(self, *args, **kw):
-        return super().setup(*args, **kw)
+    def setup(self, *args, **kw): pass
 
     def run(self, cfg:ConfigHandler):
+        """
+        Called by berrymill during the main exec
+        """
         print(cfg.config[self.ID])
         print("KKZ")
 
