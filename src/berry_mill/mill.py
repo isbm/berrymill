@@ -71,6 +71,7 @@ class ImageMill:
         if self.args.config:
             self.cfg.add_config(self.args.config)
 
+        if os.path.exists("project.conf"):
     def _add_default_args(self, p: argparse.ArgumentParser) -> None:
         """
         Add Defautl Arguments to parser accepted after berrymill

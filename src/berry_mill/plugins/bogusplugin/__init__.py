@@ -1,13 +1,13 @@
 from berry_mill.plugin import PluginIf, PluginArgs, registry
+from berry_mill.cfgh import ConfigHandler
 
 class MyPlugin(PluginIf):
     """
     A bogus plugin
     """
 
-    def autosetup(self): pass
     def setup(self, *a, **kw): pass
-    def run(self):
+    def run(self, cfg:ConfigHandler):
         """
         Run plugin
         """

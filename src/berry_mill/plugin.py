@@ -8,6 +8,7 @@ from typing import Any
 import kiwi.logger
 from types import ModuleType
 from abc import ABC, abstractmethod
+from berry_mill.cfgh import ConfigHandler
 
 
 log = kiwi.logging.getLogger('kiwi')
@@ -33,12 +34,12 @@ class PluginRegistry:
     def __getitem__(self, __name: str) -> PluginRegistry|None:
         return __name in self.__registry and self.__registry[__name] or None
 
-    def call(self, pname:str) -> Any:
+    def call(self, cfg:ConfigHandler, pname:str) -> Any:
         plugin:Any|None = self.__registry.get(pname)
         if plugin is None:
             log.error("Unable to call plugin {}: not loaded".format(pname))
         else:
-            plugin.run()
+            plugin.run(cfg)
 
 
 registry = PluginRegistry()
@@ -66,13 +67,7 @@ class PluginIf(ABC):
         """
 
     @abstractmethod
-    def autosetup(self):
-        """
-        Automatic setup (derive configs etc)
-        """
-
-    @abstractmethod
-    def run(self):
+    def run(self, cfg:ConfigHandler):
         """
         Runs plugin
         """
