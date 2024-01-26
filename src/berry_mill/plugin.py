@@ -28,7 +28,7 @@ class PluginRegistry:
         return self
 
     def plugins(self) -> list[str]:
-        return self.__registry.keys()
+        return sorted(self.__registry.keys())
 
     def __getitem__(self, __name: str) -> PluginRegistry|None:
         return __name in self.__registry and self.__registry[__name] or None
