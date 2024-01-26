@@ -15,4 +15,4 @@ class Kernkompozzer(plugin.PluginIf):
         print("KKZ")
 
 # Register plugin
-plugin.registry(Kernkompozzer(title="compose images with Kernkonzept hypervisor", name=Kernkompozzer.ID))
+plugin.registry(Kernkompozzer(title="compose images with Kernkonzept hypervisor"))

@@ -6,6 +6,8 @@ class MyPlugin(PluginIf):
     A bogus plugin
     """
 
+    ID = "example"
+
     def setup(self, *a, **kw): pass
     def run(self, cfg:ConfigHandler):
         """
@@ -15,7 +17,6 @@ class MyPlugin(PluginIf):
 
 # Register plugin
 registry(MyPlugin(title="example plugin",
-                  name="example",
                   argmap=[
                       PluginArgs("-a", "--first", help="first argument"),
                       PluginArgs("-b", "--second", help="some other argument example"),

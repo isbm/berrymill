@@ -23,7 +23,10 @@ class PluginRegistry:
 
     def __call__(self, __object: Any) -> PluginRegistry:
         if issubclass(__object.__class__, PluginIf):
-            self.__registry[__object.name] = __object
+            if __object.ID == "default" or not __object.ID:
+                log.error("Plugin {} should have unique ID, skipping".format(__object.__class__))
+            else:
+                self.__registry[__object.ID] = __object
         else:
             log.error("Plugin {} does not implements the plugin interface, skipping".format(__object.__class__))
         return self
@@ -49,14 +52,13 @@ class PluginIf(ABC):
     """
     Plugin interface
     """
-    def __init__(self, title:str = "", name:str = "", argmap:list[PluginArgs]|None = None):
+    ID:str = "default"
+    def __init__(self, title:str = "", argmap:list[PluginArgs]|None = None):
         """
         Register plugin
         """
-        assert bool(name.strip()), "Cannot register plugin with the unknown title"
-        assert bool(name.strip()), "Cannot register plugin with undefined name"
+        assert bool(title.strip()), "Cannot register plugin with the unknown title"
 
-        self.name:str = name
         self.title:str = title
         self.argmap:list[PluginArgs] = argmap or []
 
@@ -94,6 +96,6 @@ def plugins_loader(sp: argparse.ArgumentParser):
     # Add to the CLI as a subcommand on --help
     for n in registry.plugins():
         p = registry[n]
-        argp = sp.add_parser(p.name, help=p.title)
+        argp = sp.add_parser(p.ID, help=p.title)
         for a in p.argmap:
             argp.add_argument(*a.args, **a.keywords)
