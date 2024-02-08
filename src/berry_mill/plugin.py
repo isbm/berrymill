@@ -99,3 +99,11 @@ def plugins_loader(sp: argparse.ArgumentParser):
         argp = sp.add_parser(p.ID, help=p.title)
         for a in p.argmap:
             argp.add_argument(*a.args, **a.keywords)
+
+
+def plugins_args(ns:argparse.Namespace):
+    """
+    Pass args namespace to each plugin
+    """
+    for n in registry.plugins():
+        registry[n].args = ns
