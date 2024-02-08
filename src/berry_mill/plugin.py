@@ -89,6 +89,23 @@ class PluginIf(metaclass=PluginIfDeco):
         if self.__args is None:
             self.__args = p
 
+    def get_config(self, cfg:ConfigHandler, optname:str|None = None):
+        """
+        Get default config or override it
+        """
+        wd:dict[str, Any] = cfg.config.get(self.ID, {})
+        optconf = optname or "{}.conf".format(self.ID)
+        if optconf:
+            if os.path.exists(optconf):
+                try:
+                    wd += yaml.load(open(optconf), Loader=yaml.SafeLoader)
+                except Exception as exc:
+                    log.error("Unable to update plugin config from file \"{}\". Please check the syntax and try again.")
+                    raise
+            else:
+                log.warn("Unable to find config file \"{}\" for {}, falling to default".format(optconf, self.ID))
+        return wd
+
     def setup(self, *args, **kw):
         """
         Extra setup, adding extra opts and args to the config
