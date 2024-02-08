@@ -7,11 +7,11 @@ import argparse
 from typing import Any
 import kiwi.logger
 from types import ModuleType
-from abc import ABC, abstractmethod
 from berry_mill.cfgh import ConfigHandler
 
 
 log = kiwi.logging.getLogger('kiwi')
+log.set_color_format()
 
 
 class PluginRegistry:
