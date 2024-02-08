@@ -39,11 +39,12 @@ class PluginRegistry:
     def __getitem__(self, __name: str) -> PluginRegistry|None:
         return __name in self.__registry and self.__registry[__name] or None
 
-    def call(self, cfg:ConfigHandler, pname:str) -> Any:
+    def call(self, cfg:ConfigHandler, pname:str, *args, **kw) -> Any:
         plugin:Any|None = self.__registry.get(pname)
         if plugin is None:
             log.error("Unable to call plugin {}: not loaded".format(pname))
         else:
+            plugin.setup(*args, **kw)
             plugin.run(cfg)
 
 
@@ -75,7 +76,7 @@ class PluginIf(metaclass=PluginIfDeco):
 
         self.title:str = title.lower()
         self.argmap:list[PluginArgs] = argmap or []
-        self.runtime_args:list[str] = []
+        self.runtime_args:tuple[str] = ()
         self.runtime_kw:dict[str, str] = {}
 
         self.__args = None
@@ -103,7 +104,9 @@ class PluginIf(metaclass=PluginIfDeco):
                     log.error("Unable to update plugin config from file \"{}\". Please check the syntax and try again.")
                     raise
             else:
-                log.warn("Unable to find config file \"{}\" for {}, falling to default".format(optconf, self.ID))
+                if not wd:
+                    log.warn("Unable to find config file \"{}\" for {}, default config is not available either".format(optconf, self.ID))
+                    log.warn("Probably nothing happened...")
         return wd
 
     def setup(self, *args, **kw):
@@ -116,10 +119,10 @@ class PluginIf(metaclass=PluginIfDeco):
 
     def teardown(self):
         """
-        Flush args
+        Flush args after running
         """
-        self.runtime_args.clear()
-        self.runtime_kw.clear()
+        self.runtime_args = ()
+        self.runtime_kw = {}
 
     def run(self, cfg:ConfigHandler):
         """
