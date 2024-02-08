@@ -65,8 +65,9 @@ class ImageMill:
 
         # plugin loader
         plugin.plugins_loader(sub_p)
-
         self.args: argparse.Namespace = p.parse_args()
+        plugin.plugins_args(self.args)
+
         self.cfg: ConfigHandler = ConfigHandler()
         if self.args.config:
             self.cfg.add_config(self.args.config)
