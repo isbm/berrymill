@@ -24,9 +24,10 @@ class WorkflowPlugin(PluginIf):
         for plugin_data in workflow_data:
             assert plugin_data, "Plugin data absent"
             assert isinstance(plugin_data, dict), "Plugin configuration mismatch: {}\nNo more details on this error available".format(plugin_data)
-            plugin_id = list(plugin_data.keys())[0]
-            log.debug("{} calls {}".format(self.ID.title(), plugin_id))
-            registry.call(cfg, plugin_id)
+
+            for p_id, p_opts in plugin_data.items():
+                log.debug("{} calls {}".format(self.ID.title(), p_id))
+                registry.call(cfg, p_id, *p_opts.get("options", ()), **p_opts.get("args", {}))
 
 
 # Register plugin
