@@ -4,13 +4,16 @@ from __future__ import annotations
 import os
 import importlib
 import argparse
-from typing import Any
+import yaml
 import kiwi.logger
+
+from typing import Any
 from types import ModuleType
-from abc import ABC, abstractmethod
+from berry_mill.cfgh import ConfigHandler
 
 
 log = kiwi.logging.getLogger('kiwi')
+log.set_color_format()
 
 
 class PluginRegistry:
@@ -22,60 +25,110 @@ class PluginRegistry:
 
     def __call__(self, __object: Any) -> PluginRegistry:
         if issubclass(__object.__class__, PluginIf):
-            self.__registry[__object.name] = __object
+            if __object.ID == PluginIf.ID or not __object.ID:
+                log.error("Plugin {} should have unique ID, skipping".format(__object.__class__))
+            else:
+                self.__registry[__object.ID] = __object
         else:
             log.error("Plugin {} does not implements the plugin interface, skipping".format(__object.__class__))
         return self
 
     def plugins(self) -> list[str]:
-        return self.__registry.keys()
+        return sorted(self.__registry.keys())
 
     def __getitem__(self, __name: str) -> PluginRegistry|None:
         return __name in self.__registry and self.__registry[__name] or None
 
-    def call(self, pname:str) -> Any:
+    def call(self, cfg:ConfigHandler, pname:str, *args, **kw) -> Any:
         plugin:Any|None = self.__registry.get(pname)
         if plugin is None:
             log.error("Unable to call plugin {}: not loaded".format(pname))
         else:
-            plugin.run()
+            plugin.setup(*args, **kw)
+            plugin.run(cfg)
 
 
 registry = PluginRegistry()
 
 
-class PluginIf(ABC):
+class PluginIfDeco(type):
+    def __init__(cls, name, base, clsd):
+        def run(self, cfg:ConfigHandler):
+            log.debug("Running {} plugin".format(cls.ID))
+            try:
+                clsd["run"](self, cfg)
+            except Exception as exc:
+                log.error(exc)
+            cls.teardown(self)
+        setattr(cls, 'run', run)
+
+
+class PluginIf(metaclass=PluginIfDeco):
     """
     Plugin interface
     """
-    def __init__(self, title:str = "", name:str = "", argmap:list[PluginArgs]|None = None):
+    ID:str = "default"
+    def __init__(self, title:str = "", argmap:list[PluginArgs]|None = None):
         """
         Register plugin
         """
-        assert bool(name.strip()), "Cannot register plugin with the unknown title"
-        assert bool(name.strip()), "Cannot register plugin with undefined name"
+        assert bool(title.strip()), "Cannot register plugin with the unknown title"
 
-        self.name:str = name
-        self.title:str = title
+        self.title:str = title.lower()
         self.argmap:list[PluginArgs] = argmap or []
+        self.runtime_args:tuple[str] = ()
+        self.runtime_kw:dict[str, str] = {}
 
-    @abstractmethod
+        self.__args = None
+
+    @property
+    def args(self):
+        return self.__args
+
+    @args.setter
+    def args(self, p):
+        if self.__args is None:
+            self.__args = p
+
+    def get_config(self, cfg:ConfigHandler, optname:str|None = None):
+        """
+        Get default config or override it
+        """
+        wd:dict[str, Any] = cfg.config.get(self.ID, {})
+        optconf = optname or "{}.conf".format(self.ID)
+        if optconf:
+            if os.path.exists(optconf):
+                try:
+                    wd += yaml.load(open(optconf), Loader=yaml.SafeLoader)
+                except Exception as exc:
+                    log.error("Unable to update plugin config from file \"{}\". Please check the syntax and try again.")
+                    raise
+            else:
+                if not wd:
+                    log.warn("Unable to find config file \"{}\" for {}, default config is not available either".format(optconf, self.ID))
+                    log.warn("Probably nothing happened...")
+        return wd
+
     def setup(self, *args, **kw):
         """
         Extra setup, adding extra opts and args to the config
         """
+        assert not self.runtime_args
+        self.runtime_args = args
+        self.runtime_kw = kw
 
-    @abstractmethod
-    def autosetup(self):
+    def teardown(self):
         """
-        Automatic setup (derive configs etc)
+        Flush args after running
         """
+        self.runtime_args = ()
+        self.runtime_kw = {}
 
-    @abstractmethod
-    def run(self):
+    def run(self, cfg:ConfigHandler):
         """
         Runs plugin
         """
+        raise NotImplementedError("Method should be implemented")
 
 class PluginArgs:
     """
@@ -84,6 +137,7 @@ class PluginArgs:
     def __init__(self, *args, **kw) -> None:
         self.args = args
         self.keywords = kw
+        self.keywords["help"] = self.keywords.get("help", "").lower()
 
 
 def plugins_loader(sp: argparse.ArgumentParser):
@@ -99,6 +153,14 @@ def plugins_loader(sp: argparse.ArgumentParser):
     # Add to the CLI as a subcommand on --help
     for n in registry.plugins():
         p = registry[n]
-        argp = sp.add_parser(p.name, help=p.title)
+        argp = sp.add_parser(p.ID, help=p.title)
         for a in p.argmap:
             argp.add_argument(*a.args, **a.keywords)
+
+
+def plugins_args(ns:argparse.Namespace):
+    """
+    Pass args namespace to each plugin
+    """
+    for n in registry.plugins():
+        registry[n].args = ns

@@ -1,4 +1,4 @@
-Kernkompozzer
-=============
+kern-hv
+=======
 
-This plugin is specific to Kernkonzept Hypervisor
+This plugin is specific to Kernkonzept Hypervisor.

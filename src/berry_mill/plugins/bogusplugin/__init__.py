@@ -1,22 +1,23 @@
 from berry_mill.plugin import PluginIf, PluginArgs, registry
+from berry_mill.cfgh import ConfigHandler
 
 class MyPlugin(PluginIf):
     """
     A bogus plugin
     """
 
-    def autosetup(self): pass
+    ID = "example"
+
     def setup(self, *a, **kw): pass
-    def run(self):
+    def run(self, cfg:ConfigHandler):
         """
         Run plugin
         """
         print("Running plugin {}".format(self.title))
 
 # Register plugin
-registry(MyPlugin(title="My Bogus Plugin",
-                  name="myplug",
+registry(MyPlugin(title="example plugin",
                   argmap=[
-                      PluginArgs("-s", "--something", help="no idea"),
-                      PluginArgs("-t", "--test", help="testing something"),
+                      PluginArgs("-a", "--first", help="first argument"),
+                      PluginArgs("-b", "--second", help="some other argument example"),
                     ]))
