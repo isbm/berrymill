@@ -54,7 +54,10 @@ class PluginIfDeco(type):
     def __init__(cls, name, base, clsd):
         def run(self, cfg:ConfigHandler):
             log.debug("Running {} plugin".format(cls.ID))
-            clsd["run"](self, cfg)
+            try:
+                clsd["run"](self, cfg)
+            except Exception as exc:
+                log.error(exc)
             cls.teardown(self)
         setattr(cls, 'run', run)
 
