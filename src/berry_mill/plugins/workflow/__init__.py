@@ -32,4 +32,4 @@ class WorkflowPlugin(PluginIf):
 
 # Register plugin
 registry(WorkflowPlugin(title="Plugin-based workflow batch caller",
-                  argmap=[PluginArgs("-w", "--workflow", help="Override a workflow configuration from a given file")]))
+                  argmap=[PluginArgs("-w", "--workflow", help="Override a workflow configuration from a given file, default \"workflow.conf\"")]))
