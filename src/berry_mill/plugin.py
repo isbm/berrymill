@@ -48,7 +48,16 @@ class PluginRegistry:
 registry = PluginRegistry()
 
 
-class PluginIf(ABC):
+class PluginIfDeco(type):
+    def __init__(cls, name, base, clsd):
+        def run(self, cfg:ConfigHandler):
+            log.debug("Running {} plugin".format(cls.ID))
+            clsd["run"](self, cfg)
+            cls.teardown(self)
+        setattr(cls, 'run', run)
+
+
+class PluginIf(metaclass=PluginIfDeco):
     """
     Plugin interface
     """
@@ -61,18 +70,40 @@ class PluginIf(ABC):
 
         self.title:str = title
         self.argmap:list[PluginArgs] = argmap or []
+        self.runtime_args:list[str] = []
+        self.runtime_kw:dict[str, str] = {}
 
-    @abstractmethod
+        self.__args = None
+
+    @property
+    def args(self):
+        return self.__args
+
+    @args.setter
+    def args(self, p):
+        if self.__args is None:
+            self.__args = p
+
     def setup(self, *args, **kw):
         """
         Extra setup, adding extra opts and args to the config
         """
+        assert not self.runtime_args
+        self.runtime_args = args
+        self.runtime_kw = kw
 
-    @abstractmethod
+    def teardown(self):
+        """
+        Flush args
+        """
+        self.runtime_args.clear()
+        self.runtime_kw.clear()
+
     def run(self, cfg:ConfigHandler):
         """
         Runs plugin
         """
+        raise NotImplementedError("Method should be implemented")
 
 class PluginArgs:
     """
