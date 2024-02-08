@@ -73,7 +73,7 @@ class PluginIf(metaclass=PluginIfDeco):
         """
         assert bool(title.strip()), "Cannot register plugin with the unknown title"
 
-        self.title:str = title
+        self.title:str = title.lower()
         self.argmap:list[PluginArgs] = argmap or []
         self.runtime_args:list[str] = []
         self.runtime_kw:dict[str, str] = {}
@@ -134,6 +134,7 @@ class PluginArgs:
     def __init__(self, *args, **kw) -> None:
         self.args = args
         self.keywords = kw
+        self.keywords["help"] = self.keywords.get("help", "").lower()
 
 
 def plugins_loader(sp: argparse.ArgumentParser):
