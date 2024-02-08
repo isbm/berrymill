@@ -12,7 +12,7 @@ class Kernkompozzer(plugin.PluginIf):
         Called by berrymill during the main exec
         """
         print(cfg.config[self.ID])
-        print("KKZ")
+        print("KKZ with params:", self.runtime_args, self.runtime_kw)
 
 # Register plugin
 plugin.registry(Kernkompozzer(title="compose images with Kernkonzept hypervisor"))
