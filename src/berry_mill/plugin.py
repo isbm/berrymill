@@ -23,7 +23,7 @@ class PluginRegistry:
 
     def __call__(self, __object: Any) -> PluginRegistry:
         if issubclass(__object.__class__, PluginIf):
-            if __object.ID == "default" or not __object.ID:
+            if __object.ID == PluginIf.ID or not __object.ID:
                 log.error("Plugin {} should have unique ID, skipping".format(__object.__class__))
             else:
                 self.__registry[__object.ID] = __object
