@@ -27,7 +27,7 @@ class WorkflowPlugin(PluginIf):
 
             for p_id, p_opts in plugin_data.items():
                 log.debug("{} calls {}".format(self.ID.title(), p_id))
-                registry.call(cfg, p_id, *p_opts.get("options", ()), **p_opts.get("args", {}))
+                registry.call(cfg, p_id, *(p_opts or {}).get("options", ()), **(p_opts or {}).get("args", {}))
 
 
 # Register plugin
