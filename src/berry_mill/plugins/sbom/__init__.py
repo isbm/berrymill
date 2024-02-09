@@ -4,6 +4,10 @@ from berry_mill.cfgh import ConfigHandler
 import kiwi.logger
 import os
 import urllib
+import tempfile
+import json
+import time
+import shutil
 
 
 log = kiwi.logging.getLogger('kiwi')
@@ -60,13 +64,63 @@ class SbomPlugin(PluginIf):
                     out.append(FsImagePtr(upr.scheme, f))
         return out
 
-    def get_fs_sbom(self, fs_p:str):
+    def get_fs_sbom(self, fs_p:str, format:str):
         """
         Generate SBOM data for a given filesystem
         """
+        def wait_mount(umount:bool = False):
+            x = 0
+            while True:
+                x += 1
+                time.sleep(0.1)
+                if x == 0x400:
+                    raise Exception("Unable to mount target filesystem")
+                elif not umount and os.listdir(tdir):
+                    log.debug("System mounted")
+                    break
+                elif umount and not os.listdir(tdir):
+                    log.debug("System unmounted")
+                    break
+
+        tdir = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
+        os.makedirs(tdir)
+
         # mount
-        # generate
+        log.debug("Mounting {} as a loop device to {}".format(fs_p, tdir))
+        os.system("mount -o loop {} {}".format(fs_p, tdir))
+        wait_mount()
+
+        # generate SBOM
+        tfl:str = ""
+        with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
+            tfl = tf.name
+
+        os.system("sh -c 'syft -q {} -o {}' > {}".format(tdir, format, tfl))
+
+        log.debug("SBOM data is written to {}".format(tfl))
+
+        # Prettyformat if JSON
+        if "-json" in format:
+            out = json.dumps(json.load(open(tfl)), indent=2)
+        else:
+            with open(tfl) as fo:
+                out = fo.read()
+
+        os.remove(tfl)
+        log.debug("SBOM tempfile {} was removed".format(tfl))
+
+        spf_p:str = fs_p + "." + format.replace("-", ".")
+        with open(spf_p, "w") as spf:
+            log.debug("Writing SBOM to {}".format(spf_p))
+            spf.write(out)
+
         # umount
+        log.debug("Umounting {}".format(tdir))
+        os.system("umount {}".format(tdir))
+        wait_mount(umount=True)
+        log.debug("Directory {} umounted".format(tdir))
+        shutil.rmtree(tdir)
+
 
     def check_env(self):
         """
@@ -89,7 +143,8 @@ class SbomPlugin(PluginIf):
 
         for img in self.find_images(*sbom_data["images"]):
             if img.scheme == "dir":
-                self.get_fs_sbom(img.path)
+                log.debug("Generating SBOM data for {}".format(img.path))
+                self.get_fs_sbom(img.path, format=sbom_data.get("format", "spdx-json"))
             else:
                 raise Exception("Scheme {} not yet supported".format(img.scheme))
 
