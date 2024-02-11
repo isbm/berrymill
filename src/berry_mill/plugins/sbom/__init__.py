@@ -68,14 +68,7 @@ class SbomPlugin(PluginIf):
         """
         Generate SBOM data for a given filesystem
         """
-
-        tdir = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
-        os.makedirs(tdir)
-
-        # mount
-        log.debug("Mounting {} as a loop device to {}".format(fs_p, tdir))
-        os.system("mount -o loop {} {}".format(fs_p, tdir))
-        MountPoint.wait_mount(tdir)
+        tdir = MountPoint().mount(fs_p)
 
         # generate SBOM
         tfl:str = ""
@@ -101,12 +94,7 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        # umount
-        log.debug("Umounting {}".format(tdir))
-        os.system("umount {}".format(tdir))
-        MountPoint.wait_mount(tdir, umount=True)
-        log.debug("Directory {} umounted".format(tdir))
-        shutil.rmtree(tdir)
+        MountPoint().umount(tdir)
 
 
     def check_env(self):
