@@ -28,8 +28,9 @@ class ImageFinder:
         ImageFinder takes array of locations where images are.
         """
         self._i_pth = loc
+        self._i_imgs:list[ImagePtr] = self._find_images()
 
-    def is_filesystem(self, p) -> bool:
+    def _is_filesystem(self, p) -> bool:
         """
         Return True if a given filename is a mountable filesystem
         """
@@ -39,12 +40,12 @@ class ImageFinder:
 
         return "filesystem" in out.lower()
 
-    def find_images(self, *paths) -> list[ImagePtr]:
+    def _find_images(self) -> list[ImagePtr]:
         """
         Find images with filesystems
         """
         out:list[str] = []
-        for p in paths:
+        for p in self._i_pth:
             log.debug("Looking for images in {}".format(p))
             if not "://" in p:
                 raise Exception("Invalid url: \"{}\"".format(p))
@@ -59,6 +60,12 @@ class ImageFinder:
 
             for f in os.listdir(imgp):
                 f = os.path.join(imgp, f)
-                if self.is_filesystem(f):
+                if self._is_filesystem(f):
                     out.append(ImagePtr(upr.scheme, f))
         return out
+
+    def get_images(self) -> list[ImagePtr]:
+        """
+        Get found images
+        """
+        return tuple(self._i_imgs)
