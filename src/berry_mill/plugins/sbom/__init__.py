@@ -1,12 +1,12 @@
 from typing import Any
 from berry_mill.plugin import PluginIf, PluginArgs, registry
 from berry_mill.cfgh import ConfigHandler
+from berry_mill.mountpoint import MountPoint
 import kiwi.logger
 import os
 import urllib
 import tempfile
 import json
-import time
 import shutil
 
 
@@ -68,19 +68,6 @@ class SbomPlugin(PluginIf):
         """
         Generate SBOM data for a given filesystem
         """
-        def wait_mount(umount:bool = False):
-            x = 0
-            while True:
-                x += 1
-                time.sleep(0.1)
-                if x == 0x400:
-                    raise Exception("Unable to mount target filesystem")
-                elif not umount and os.listdir(tdir):
-                    log.debug("System mounted")
-                    break
-                elif umount and not os.listdir(tdir):
-                    log.debug("System unmounted")
-                    break
 
         tdir = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
         os.makedirs(tdir)
@@ -88,7 +75,7 @@ class SbomPlugin(PluginIf):
         # mount
         log.debug("Mounting {} as a loop device to {}".format(fs_p, tdir))
         os.system("mount -o loop {} {}".format(fs_p, tdir))
-        wait_mount()
+        MountPoint.wait_mount()
 
         # generate SBOM
         tfl:str = ""
@@ -117,7 +104,7 @@ class SbomPlugin(PluginIf):
         # umount
         log.debug("Umounting {}".format(tdir))
         os.system("umount {}".format(tdir))
-        wait_mount(umount=True)
+        MountPoint.wait_mount(umount=True)
         log.debug("Directory {} umounted".format(tdir))
         shutil.rmtree(tdir)
 
