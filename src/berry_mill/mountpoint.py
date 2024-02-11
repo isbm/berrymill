@@ -5,6 +5,7 @@
 #
 # Teardown (unmount) happens at the end of Berrymill cycle.
 
+from __future__ import annotations
 from collections import OrderedDict
 import kiwi.logger
 import time
@@ -16,31 +17,18 @@ log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
 
 
-class _MountPointMeta(type):
-    """
-    Singleton metaclass
-    """
-    def __init__(cls, name, bases, class_dict):
-        super(_MountPointMeta, cls).__init__(name, bases, class_dict)
-
-        o_new = cls.__new__
-
-        def s_new(cls, *a, **kw):
-            if cls._instance == None:
-                cls._instance = o_new(cls,*a,**kw)
-            return cls._instance
-
-        cls._instance = None
-        cls.__new__ = staticmethod(s_new)
-
-
-class MountPoint(metaclass=_MountPointMeta):
+class MountPoint:
     """
     MountPoint in-memory store of all mounted devices.
     Can be imported and instantiated from anywhere
     """
-    def __init__(self) -> None:
-        self._mountstore:OrderedDict[str, str] = OrderedDict()
+    _instance:MountPoint|None = None
+
+    def __new__(cls) -> MountPoint:
+        if cls._instance is None:
+            cls._instance = super(MountPoint, cls).__new__(cls)
+            cls._instance._mountstore = OrderedDict()
+        return cls._instance
 
     @staticmethod
     def wait_mount(dst:str, umount:bool = False):
@@ -102,7 +90,7 @@ class MountPoint(metaclass=_MountPointMeta):
         """
         Return mounted filesystems
         """
-        return self._mountstore.keys()
+        return self._mountstore.values()
 
 
     def get_mountpoint(self, mpt:str) -> str|None:
@@ -116,4 +104,5 @@ class MountPoint(metaclass=_MountPointMeta):
         """
         Flush all mounts entirely.
         """
+        log.debug("Flushing mountpoints")
         [self.umount(pth) for pth in self._mountstore.values()]
