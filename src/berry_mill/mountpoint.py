@@ -72,10 +72,12 @@ class MountPoint(metaclass=_MountPointMeta):
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
         os.system("mount -o loop {} {}".format(pth, dst))
 
-        MountPoint.wait_mount()
+        MountPoint.wait_mount(dst)
         log.debug("Device {} has been mounted successfully".format(pth))
 
         self._mountstore[pth] = dst
+
+        return dst
 
 
     def umount(self, pth:str) -> None:
@@ -86,7 +88,7 @@ class MountPoint(metaclass=_MountPointMeta):
         log.debug("Umounting {}".format(pth))
         os.system("umount {}".format(pth))
 
-        MountPoint.wait_mount(umount=True)
+        MountPoint.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
