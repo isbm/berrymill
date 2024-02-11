@@ -20,19 +20,16 @@ class SbomPlugin(PluginIf):
 
     ID:str = "sbom"
 
-    def get_fs_sbom(self, fs_p:str, format:str):
+    def get_fs_sbom(self, fs_p:str, format:str, verbose=False):
         """
         Generate SBOM data for a given filesystem
         """
-        tdir = MountPoint().mount(fs_p)
-
         # generate SBOM
         tfl:str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
             tfl = tf.name
 
-        os.system("sh -c 'syft -q {} -o {}' > {}".format(tdir, format, tfl))
-
+        os.system("sh -c 'syft {} {}-o {}' > {}".format(fs_p, not verbose and "-q " or "", format, tfl))
         log.debug("SBOM data is written to {}".format(tfl))
 
         # Prettyformat if JSON
@@ -50,9 +47,6 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        MountPoint().umount(tdir)
-
-
     def check_env(self):
         """
         Check the environment
@@ -67,19 +61,13 @@ class SbomPlugin(PluginIf):
         Run SBOM plugin
         """
         self.check_env()
-
         sbom_data:dict[str, Any] = self.get_config(cfg)
-        log.debug("SBOM: {}".format(sbom_data))
-        assert "images" in sbom_data, "{}: No images or image paths has been configured".format(self.ID)
 
-        for img in ImageFinder(*sbom_data["images"]).get_images():
-            if img.scheme == "dir":
-                log.debug("Generating SBOM data for {}".format(img.path))
-                self.get_fs_sbom(img.path, format=sbom_data.get("format", "spdx-json"))
-            else:
-                raise Exception("Scheme {} not yet supported".format(img.scheme))
+        for mp in MountPoint().get_mountpoints():
+            log.debug("Generating SBOM data for {}".format(mp))
+            self.get_fs_sbom(mp, format=sbom_data.get("format", "spdx-json"),
+                             verbose=sbom_data.get("verbose"))
 
-        print(sbom_data)
 
 # Register plugin
 registry(SbomPlugin(title="SBOM generator on various filesystems", argmap=[]))
