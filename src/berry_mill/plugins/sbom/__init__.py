@@ -67,13 +67,12 @@ class SbomPlugin(PluginIf):
         Run SBOM plugin
         """
         self.check_env()
-        imgf = ImageFinder()
 
         sbom_data:dict[str, Any] = self.get_config(cfg)
         log.debug("SBOM: {}".format(sbom_data))
         assert "images" in sbom_data, "{}: No images or image paths has been configured".format(self.ID)
 
-        for img in imgf.find_images(*sbom_data["images"]):
+        for img in ImageFinder(*sbom_data["images"]).get_images():
             if img.scheme == "dir":
                 log.debug("Generating SBOM data for {}".format(img.path))
                 self.get_fs_sbom(img.path, format=sbom_data.get("format", "spdx-json"))
