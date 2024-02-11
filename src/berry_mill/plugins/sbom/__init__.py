@@ -4,22 +4,13 @@ from berry_mill.cfgh import ConfigHandler
 from berry_mill.mountpoint import MountPoint
 import kiwi.logger
 import os
-import urllib
 import tempfile
 import json
-import shutil
+from berry_mill.imagefinder import ImageFinder
 
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
-
-class FsImagePtr:
-    def __init__(self, fs_scheme, fs_path):
-        self.scheme = fs_scheme
-        self.path = fs_path
-
-    def __repr__(self) -> str:
-        return "<{}, type of {} for {} at {}>".format(self.__class__.__name__, self.scheme, self.path, hex(id(self)))
 
 
 class SbomPlugin(PluginIf):
@@ -28,62 +19,17 @@ class SbomPlugin(PluginIf):
     """
 
     ID:str = "sbom"
-    SCHEMES:list[str] = ["dir", "oci"]
 
-    def is_filesystem(self, p) -> bool:
-        """
-        Return True if a given filename is a mountable filesystem
-        """
-        out:str = ""
-        with os.popen("file {}".format(p)) as fp:
-            out = " ".join(list(filter(None, fp.read().split("\n"))))
-
-        return "filesystem" in out.lower()
-
-    def find_images(self, *paths) -> list[FsImagePtr]:
-        """
-        Find images with filesystems
-        """
-        out:list[str] = []
-        for p in paths:
-            log.debug("Looking for images in {}".format(p))
-            if not "://" in p:
-                raise Exception("Invalid url: \"{}\"".format(p))
-            upr:urllib.parse.ParseResult = urllib.parse.urlparse(p)
-            assert upr.scheme in self.SCHEMES, "Unknown scheme in URL: {}".format(p)
-
-            imgp:str = ""
-            if upr.netloc:
-                imgp = "./{}".format(upr.netloc) + upr.path # Relative
-            else:
-                imgp = upr.path # Absolute
-
-            for f in os.listdir(imgp):
-                f = os.path.join(imgp, f)
-                if self.is_filesystem(f):
-                    out.append(FsImagePtr(upr.scheme, f))
-        return out
-
-    def get_fs_sbom(self, fs_p:str, format:str):
+    def get_fs_sbom(self, fs_p:str, format:str, verbose=False):
         """
         Generate SBOM data for a given filesystem
         """
-
-        tdir = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
-        os.makedirs(tdir)
-
-        # mount
-        log.debug("Mounting {} as a loop device to {}".format(fs_p, tdir))
-        os.system("mount -o loop {} {}".format(fs_p, tdir))
-        MountPoint.wait_mount(tdir)
-
         # generate SBOM
         tfl:str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
             tfl = tf.name
 
-        os.system("sh -c 'syft -q {} -o {}' > {}".format(tdir, format, tfl))
-
+        os.system("sh -c 'syft {} {}-o {}' > {}".format(fs_p, not verbose and "-q " or "", format, tfl))
         log.debug("SBOM data is written to {}".format(tfl))
 
         # Prettyformat if JSON
@@ -101,14 +47,6 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        # umount
-        log.debug("Umounting {}".format(tdir))
-        os.system("umount {}".format(tdir))
-        MountPoint.wait_mount(tdir, umount=True)
-        log.debug("Directory {} umounted".format(tdir))
-        shutil.rmtree(tdir)
-
-
     def check_env(self):
         """
         Check the environment
@@ -123,19 +61,13 @@ class SbomPlugin(PluginIf):
         Run SBOM plugin
         """
         self.check_env()
-
         sbom_data:dict[str, Any] = self.get_config(cfg)
-        log.debug("SBOM: {}".format(sbom_data))
-        assert "images" in sbom_data, "{}: No images or image paths has been configured".format(self.ID)
 
-        for img in self.find_images(*sbom_data["images"]):
-            if img.scheme == "dir":
-                log.debug("Generating SBOM data for {}".format(img.path))
-                self.get_fs_sbom(img.path, format=sbom_data.get("format", "spdx-json"))
-            else:
-                raise Exception("Scheme {} not yet supported".format(img.scheme))
+        for mp in MountPoint().get_mountpoints():
+            log.debug("Generating SBOM data for {}".format(mp))
+            self.get_fs_sbom(mp, format=sbom_data.get("format", "spdx-json"),
+                             verbose=sbom_data.get("verbose"))
 
-        print(sbom_data)
 
 # Register plugin
 registry(SbomPlugin(title="SBOM generator on various filesystems", argmap=[]))

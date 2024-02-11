@@ -10,6 +10,8 @@ from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader
 from berry_mill.kiwrap import KiwiParent
+from berry_mill.mountpoint import MountPoint
+from berry_mill.imagefinder import ImageFinder
 
 from .cfgh import ConfigHandler, Autodict
 from .localrepos import DebianRepofind
@@ -243,8 +245,20 @@ class ImageMill:
                 allow_existing_root=self.args.allow_existing_root
                 )
         elif self.args.subparser_name is not None:
+            # Main modular entry point.
+            # TODO: 'build' and 'prepare' should be part of this as well, but just built-ins.
+
+            # mount all defined images in `-general` section. NOTE: section starts with a minus.
+            mpt = MountPoint()
+            for p in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
+                mpt.mount(p.path)
+
+            # Start plugins or their workflow
             log.debug("Calling plugin {}".format(self.args.subparser_name))
             plugin.registry.call(self.cfg, self.args.subparser_name)
+
+            # Cleanup/unmount everything
+            mpt.flush()
             return
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")

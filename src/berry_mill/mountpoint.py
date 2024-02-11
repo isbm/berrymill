@@ -5,6 +5,7 @@
 #
 # Teardown (unmount) happens at the end of Berrymill cycle.
 
+from __future__ import annotations
 from collections import OrderedDict
 import kiwi.logger
 import time
@@ -16,31 +17,18 @@ log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
 
 
-class _MountPointMeta(type):
-    """
-    Singleton metaclass
-    """
-    def __init__(cls, name, bases, class_dict):
-        super(_MountPointMeta, cls).__init__(name, bases, class_dict)
-
-        o_new = cls.__new__
-
-        def s_new(cls, *a, **kw):
-            if cls._instance == None:
-                cls._instance = o_new(cls,*a,**kw)
-            return cls._instance
-
-        cls._instance = None
-        cls.__new__ = staticmethod(s_new)
-
-
-class MountPoint(metaclass=_MountPointMeta):
+class MountPoint:
     """
     MountPoint in-memory store of all mounted devices.
     Can be imported and instantiated from anywhere
     """
-    def __init__(self) -> None:
-        self._mountstore:OrderedDict[str, str] = OrderedDict()
+    _instance:MountPoint|None = None
+
+    def __new__(cls) -> MountPoint:
+        if cls._instance is None:
+            cls._instance = super(MountPoint, cls).__new__(cls)
+            cls._instance._mountstore = OrderedDict()
+        return cls._instance
 
     @staticmethod
     def wait_mount(dst:str, umount:bool = False):
@@ -65,6 +53,10 @@ class MountPoint(metaclass=_MountPointMeta):
 
         If mount fails, exception is raised.
         """
+        mpt = self.get_mountpoint(pth)
+        if mpt:
+            return mpt
+
         if not dst:
             dst = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
         os.makedirs(dst)
@@ -72,10 +64,12 @@ class MountPoint(metaclass=_MountPointMeta):
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
         os.system("mount -o loop {} {}".format(pth, dst))
 
-        MountPoint.wait_mount()
+        MountPoint.wait_mount(dst)
         log.debug("Device {} has been mounted successfully".format(pth))
 
         self._mountstore[pth] = dst
+
+        return dst
 
 
     def umount(self, pth:str) -> None:
@@ -86,7 +80,7 @@ class MountPoint(metaclass=_MountPointMeta):
         log.debug("Umounting {}".format(pth))
         os.system("umount {}".format(pth))
 
-        MountPoint.wait_mount(umount=True)
+        MountPoint.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
@@ -96,7 +90,7 @@ class MountPoint(metaclass=_MountPointMeta):
         """
         Return mounted filesystems
         """
-        return self._mountstore.keys()
+        return self._mountstore.values()
 
 
     def get_mountpoint(self, mpt:str) -> str|None:
@@ -110,4 +104,5 @@ class MountPoint(metaclass=_MountPointMeta):
         """
         Flush all mounts entirely.
         """
-        [self.umount(pth) for pth in self._mountstore.keys()]
+        log.debug("Flushing mountpoints")
+        [self.umount(pth) for pth in self._mountstore.values()]
