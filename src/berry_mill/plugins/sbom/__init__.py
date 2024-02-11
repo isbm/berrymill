@@ -75,7 +75,7 @@ class SbomPlugin(PluginIf):
         # mount
         log.debug("Mounting {} as a loop device to {}".format(fs_p, tdir))
         os.system("mount -o loop {} {}".format(fs_p, tdir))
-        MountPoint.wait_mount()
+        MountPoint.wait_mount(tdir)
 
         # generate SBOM
         tfl:str = ""
@@ -104,7 +104,7 @@ class SbomPlugin(PluginIf):
         # umount
         log.debug("Umounting {}".format(tdir))
         os.system("umount {}".format(tdir))
-        MountPoint.wait_mount(umount=True)
+        MountPoint.wait_mount(tdir, umount=True)
         log.debug("Directory {} umounted".format(tdir))
         shutil.rmtree(tdir)
 
