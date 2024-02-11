@@ -65,6 +65,10 @@ class MountPoint(metaclass=_MountPointMeta):
 
         If mount fails, exception is raised.
         """
+        mpt = self.get_mountpoint(pth)
+        if mpt:
+            return mpt
+
         if not dst:
             dst = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
         os.makedirs(dst)
