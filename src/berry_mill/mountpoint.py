@@ -116,4 +116,4 @@ class MountPoint(metaclass=_MountPointMeta):
         """
         Flush all mounts entirely.
         """
-        [self.umount(pth) for pth in self._mountstore.keys()]
+        [self.umount(pth) for pth in self._mountstore.values()]
