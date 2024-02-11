@@ -58,7 +58,7 @@ class MountPoint:
             return mpt
 
         if not dst:
-            dst = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
+            dst = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
         os.makedirs(dst)
 
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
