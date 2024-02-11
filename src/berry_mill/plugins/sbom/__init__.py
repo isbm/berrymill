@@ -1,12 +1,12 @@
 from typing import Any
-from berry_mill.plugin import PluginIf, PluginArgs, registry
+from berry_mill.plugin import PluginIf, registry
 from berry_mill.cfgh import ConfigHandler
 from berry_mill.mountpoint import MountPoint
 import kiwi.logger
 import os
 import tempfile
 import json
-from berry_mill.imagefinder import ImageFinder
+import shutil
 
 
 log = kiwi.logging.getLogger('kiwi')
@@ -24,6 +24,9 @@ class SbomPlugin(PluginIf):
         """
         Generate SBOM data for a given filesystem
         """
+        imgp = MountPoint().get_image_path(fs_p)
+        assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
+
         # generate SBOM
         tfl:str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
@@ -46,6 +49,8 @@ class SbomPlugin(PluginIf):
         with open(spf_p, "w") as spf:
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
+
+        shutil.move(spf_p, imgp + ".sbom." + format.replace("-", "."))
 
     def check_env(self):
         """

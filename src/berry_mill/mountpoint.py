@@ -58,7 +58,7 @@ class MountPoint:
             return mpt
 
         if not dst:
-            dst = tempfile.TemporaryDirectory(prefix="bml-sbom-").name
+            dst = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
         os.makedirs(dst)
 
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
@@ -93,11 +93,19 @@ class MountPoint:
         return self._mountstore.values()
 
 
-    def get_mountpoint(self, mpt:str) -> str|None:
+    def get_mountpoint(self, img:str) -> str|None:
         """
         Return a mount point
         """
-        return self._mountstore.get(mpt)
+        return self._mountstore.get(img)
+
+    def get_image_path(self, mpt:str) -> str|None:
+        """
+        Get a mounted image location from the existing mountpoint
+        """
+        for i, m in self._mountstore.items():
+            if m == mpt:
+                return i
 
 
     def flush(self):
