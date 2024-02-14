@@ -27,6 +27,9 @@ class SbomPlugin(PluginIf):
         imgp = MountManager().get_image_path(fs_p)
         assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
 
+        loopdev = MountManager().get_loop_device_by_mountpoint(fs_p)
+        assert bool(loopdev), "No loop device found for {} mountpoint".format(fs_p)
+
         # generate SBOM
         tfl:str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
@@ -50,7 +53,7 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        dst = imgp + ".sbom." + format.replace("-", ".")
+        dst = imgp + ".sbom." + self.get_partition_name_from_loopdev(loopdev) + "." + format.replace("-", ".")
         shutil.move(spf_p, dst)
         log.info("SBOM written to {}".format(dst))
 

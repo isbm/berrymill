@@ -27,6 +27,10 @@ class CvePlugin(PluginIf):
         imgp = MountManager().get_image_path(fs_p)
         assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
 
+        loopdev = MountManager().get_loop_device_by_mountpoint(fs_p)
+        assert bool(loopdev), "No loop device found for {} mountpoint".format(fs_p)
+
+
         # generate CVE
         tfl:str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-CVE", delete=False) as tf:
@@ -50,7 +54,7 @@ class CvePlugin(PluginIf):
             log.debug("Writing CVE data to {}".format(spf_p))
             spf.write(out)
 
-        dst = imgp + ".cve." + format.replace("-", ".")
+        dst = imgp + ".cve." + self.get_partition_name_from_loopdev(loopdev) + "." + format.replace("-", ".")
         shutil.move(spf_p, dst)
         log.info("CVE summary is written to {}".format(dst))
 
