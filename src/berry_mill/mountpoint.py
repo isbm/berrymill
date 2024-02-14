@@ -19,9 +19,28 @@ log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
 
 
+class MountPoint:
+    """
+    MountPoint holds all the information about an object,
+    whether it is a single simple image or a partitioned disk device.
+    """
+
+    def __init__(self) -> None:
+        self._partitions:set[str] = set()
+
+    def add(self, pth) -> MountPoint:
+        self._partitions.add(pth)
+        return self
+
+    def get_partitions(self) -> list[str]:
+        """
+        Return mounted partitions
+        """
+        return tuple(self._partitions)
+
 class MountManager:
     """
-    MountPoint in-memory store of all mounted devices.
+    MountManager is an in-memory store of all mounted devices.
     Can be imported and instantiated from anywhere
     """
     _instance:MountManager|None = None
@@ -64,7 +83,7 @@ class MountManager:
 
         MountManager.wait_mount(dst)
         log.debug("Device {} has been mounted successfully".format(pth))
-        self._mountstore[pth] = dst
+        self._mountstore[pth] = MountPoint().add(dst)
 
         return dst
 
@@ -72,6 +91,12 @@ class MountManager:
         """
         Mount a partitioned disk image
         """
+        # Get a list of partitions
+
+        # Setup loops
+
+        # Mount each partition/loop to its own target
+
         raise NotImplementedError("Partitioned image mounts is not implemented yet")
 
     def mount(self, img_ptr:ImagePtr) -> str:
@@ -103,14 +128,17 @@ class MountManager:
         shutil.rmtree(pth)
 
 
-    def get_mountpoints(self) -> list[str]:
+    def get_mountpoints(self) -> list[MountPoint]:
         """
         Return mounted filesystems
         """
-        return self._mountstore.values()
+        p = []
+        for mpt in self._mountstore.values():
+            p += list(mpt.get_partitions())
+        return p
 
 
-    def get_mountpoint(self, img:str) -> str|None:
+    def get_mountpoint(self, img:str) -> MountPoint|None:
         """
         Return a mount point
         """
@@ -121,8 +149,9 @@ class MountManager:
         Get a mounted image location from the existing mountpoint
         """
         for i, m in self._mountstore.items():
-            if m == mpt:
-                return i
+            for p in m.get_partitions():
+                if mpt == p:
+                    return i
 
 
     def flush(self):
@@ -130,4 +159,6 @@ class MountManager:
         Flush all mounts entirely.
         """
         log.debug("Flushing mountpoints")
-        [self.umount(pth) for pth in self._mountstore.values()]
+        for mpt in self.get_mountpoints():
+            log.debug("Unmounting partition at {}".format(mpt))
+            self.umount(mpt)
