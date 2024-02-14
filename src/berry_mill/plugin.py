@@ -139,6 +139,14 @@ class PluginIf(metaclass=PluginIfDeco):
         """
         raise NotImplementedError("Method should be implemented")
 
+    def get_partition_name_from_loopdev(self, devname) -> str:
+        devname = os.path.basename(devname).replace("loop", "")
+        partsect:str = "single"
+        if len(devname.split("p")) == 2:
+            partsect = "prt-{}".format(devname.split("p")[-1])
+        return partsect
+
+
 class PluginArgs:
     """
     Namespace for plugin arguments
