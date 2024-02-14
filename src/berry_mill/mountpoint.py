@@ -94,16 +94,13 @@ class MountManager:
         os.makedirs(dst)
 
         mpt = MountPoint()
-
-        # Acquire loop device
         loopdev = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
-
-        log.debug("Prepared loop device: {}".format(loopdev))
 
         log.debug("Mounting {} as a loop device ({}) to {}".format(img_ptr.path, loopdev, dst))
         os.system("mount {} {}".format(loopdev, dst))
 
         MountManager.wait_mount(dst)
+
         log.debug("Device {} has been mounted successfully".format(loopdev))
         self._mountstore[img_ptr] = mpt.add(dst, loopdev)
 
