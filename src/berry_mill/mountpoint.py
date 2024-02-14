@@ -12,6 +12,8 @@ import time
 import os
 import tempfile
 import shutil
+from berry_mill.imagefinder import ImagePtr
+
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -46,19 +48,15 @@ class MountPoint:
                 break
 
 
-    def mount(self, pth:str, dst:str|None = None) -> str:
+    def __mount_partition_image(self, pth:str) -> str:
         """
-        Mount a specific path to a tempdir. If `dst` is not given,
-        temporary directory is returned.
-
-        If mount fails, exception is raised.
+        Mount a single partition image, return mounted directory
         """
         mpt = self.get_mountpoint(pth)
         if mpt:
             return mpt
 
-        if not dst:
-            dst = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
+        dst:str = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
         os.makedirs(dst)
 
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
@@ -66,11 +64,30 @@ class MountPoint:
 
         MountPoint.wait_mount(dst)
         log.debug("Device {} has been mounted successfully".format(pth))
-
         self._mountstore[pth] = dst
 
         return dst
 
+    def __mount_disk_image(self, imptr:ImagePtr) -> None:
+        """
+        Mount a partitioned disk image
+        """
+        raise NotImplementedError("Partitioned image mounts is not implemented yet")
+
+    def mount(self, img_ptr:ImagePtr) -> str:
+        """
+        Mount a specific path to a tempdir. If `dst` is not given,
+        temporary directory is returned.
+
+        If mount fails, exception is raised.
+        """
+
+        if img_ptr.img_type == ImagePtr.PARTITION_IMAGE:
+            return self.__mount_partition_image(img_ptr.path)
+        elif img_ptr.img_type == ImagePtr.DISK_IMAGE:
+            return self.__mount_disk_image(img_ptr.path)
+
+        raise Exception("Unable to mount image: {}".format(repr(img_ptr)))
 
     def umount(self, pth:str) -> None:
         """
