@@ -252,6 +252,8 @@ class ImageMill:
             mpt = MountPoint()
             for p in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
                 mpt.mount(p.path)
+            if not mpt.get_mountpoints():
+                raise Exception("No mountpoint has been found")
 
             # Start plugins or their workflow
             log.debug("Calling plugin {}".format(self.args.subparser_name))
