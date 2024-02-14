@@ -250,8 +250,8 @@ class ImageMill:
 
             # mount all defined images in `-general` section. NOTE: section starts with a minus.
             mpt = MountPoint()
-            for p in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
-                mpt.mount(p.path)
+            for img_ptr in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
+                mpt.mount(img_ptr)
             if not mpt.get_mountpoints():
                 raise Exception("No mountpoint has been found")
 
