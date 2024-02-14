@@ -50,7 +50,9 @@ class CvePlugin(PluginIf):
             log.debug("Writing CVE data to {}".format(spf_p))
             spf.write(out)
 
-        shutil.move(spf_p, imgp + ".cve." + format.replace("-", "."))
+        dst = imgp + ".cve." + format.replace("-", ".")
+        shutil.move(spf_p, dst)
+        log.info("CVE summary is written to {}".format(dst))
 
     def check_env(self):
         """
