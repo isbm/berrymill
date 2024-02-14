@@ -1,8 +1,10 @@
 # Finds mountable images in specified locations
+from __future__ import annotations
+
+from collections import OrderedDict
 import urllib
 import kiwi.logger
 import os
-
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -12,9 +14,21 @@ class ImagePtr:
     """
     Image pointer that holds image type and its URI path
     """
-    def __init__(self, fs_scheme, fs_path):
-        self.scheme = fs_scheme
-        self.path = fs_path
+
+    # Partitioned disk (bootloader, extended partitions, more rootfses etc)
+    DISK_IMAGE = 0
+
+    # Single image (KIS, container, rootfs etc)
+    PARTITION_IMAGE = 1
+
+
+    def __init__(self, fs_scheme:str, fs_path:str, fs_type:int):
+        self.scheme:str = fs_scheme
+        self.path:str = fs_path
+
+        assert fs_type in [self.DISK_IMAGE, self.PARTITION_IMAGE], "Unknown image type"
+        self.img_type:int = fs_type
+
 
     def __repr__(self) -> str:
         return "<{}, type of {} for {} at {}>".format(self.__class__.__name__, self.scheme, self.path, hex(id(self)))
