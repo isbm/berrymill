@@ -111,9 +111,6 @@ class KiwiBuilder(KiwiParent):
         # options, solely accepted by box-build plugin
         box_options:List[str] = ["--box","ubuntu"]
 
-        if self._kiwiparams.get("debug"):
-            box_options.append("--box-debug")
-
         if self._params.get("cpu"):
             box_options = ["--cpu", self._params.get("cpu","")] + box_options
 
