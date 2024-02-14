@@ -209,6 +209,15 @@ class MountManager:
             log.debug("Unmounting partition at {}".format(mpt))
             self.umount(mpt)
 
+        root_loopdev:str|None = None
         for loopdev in self.get_loop_devices():
-            log.debug("Detaching {} device".format(loopdev))
-            os.system("losetup -d {}".format(loopdev))
+            l = os.path.basename(loopdev)[4:]
+            if "p" in l:
+                root_loopdev = l.split("p")[0]
+            else:
+                root_loopdev = l
+            break
+
+        root_loopdev = "/dev/loop{}".format(root_loopdev)
+        log.debug("Detaching {} device".format(root_loopdev))
+        os.system("losetup -d {}".format(root_loopdev))
