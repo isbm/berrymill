@@ -152,7 +152,7 @@ class MountManager:
         shutil.rmtree(pth)
 
 
-    def get_mountpoints(self) -> list[MountPoint]:
+    def get_mountpoints(self) -> list[str]:
         """
         Return mounted filesystems
         """
@@ -160,6 +160,12 @@ class MountManager:
         for mpt in self._mountstore.values():
             p += list(mpt.get_partitions())
         return p
+
+    def get_loop_devices(self) -> list[str]:
+        d = []
+        for mpt in self._mountstore.values():
+            d += list(mpt.get_loop_devices())
+        return d
 
 
     def get_mountpoint(self, img:str) -> MountPoint|None:
@@ -186,3 +192,7 @@ class MountManager:
         for mpt in self.get_mountpoints():
             log.debug("Unmounting partition at {}".format(mpt))
             self.umount(mpt)
+
+        for loopdev in self.get_loop_devices():
+            log.debug("Detaching {} device".format(loopdev))
+            os.system("losetup -d {}".format(loopdev))
