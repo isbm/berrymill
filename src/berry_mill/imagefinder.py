@@ -25,6 +25,7 @@ class ImagePtr:
     def __init__(self, fs_scheme:str, fs_path:str, fs_type:int):
         self.scheme:str = fs_scheme
         self.path:str = fs_path
+        self.loop:str = ""  # Loop path
 
         assert fs_type in [self.DISK_IMAGE, self.PARTITION_IMAGE], "Unknown image type"
         self.img_type:int = fs_type

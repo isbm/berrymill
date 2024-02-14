@@ -27,9 +27,11 @@ class MountPoint:
 
     def __init__(self) -> None:
         self._partitions:set[str] = set()
+        self._loop_devices:list[str, str] = {}
 
-    def add(self, pth) -> MountPoint:
+    def add(self, pth:str, loopdev:str) -> MountPoint:
         self._partitions.add(pth)
+        self._loop_devices[pth] = loopdev
         return self
 
     def get_partitions(self) -> list[str]:
@@ -37,6 +39,18 @@ class MountPoint:
         Return mounted partitions
         """
         return tuple(self._partitions)
+
+    def get_loop_device(self, pth:str) -> str:
+        loopdev:str|None = self._loop_devices.get(pth)
+        if loopdev is None:
+            raise Exception("The loop device for {} is not found".format(pth))
+        return loopdev
+
+    def get_loop_devices(self) -> list[str]:
+        """
+        Return loop devices
+        """
+        return tuple(self._loop_devices.values())
 
 class MountManager:
     """
@@ -67,23 +81,31 @@ class MountManager:
                 break
 
 
-    def __mount_partition_image(self, pth:str) -> str:
+    def __mount_partition_image(self, img_ptr:ImagePtr) -> str:
         """
         Mount a single partition image, return mounted directory
         """
-        mpt = self.get_mountpoint(pth)
+
+        mpt = self.get_mountpoint(img_ptr.path)
         if mpt:
             return mpt
 
-        dst:str = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
+        dst:str = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(img_ptr.path))).name
         os.makedirs(dst)
 
-        log.debug("Mounting {} as a loop device to {}".format(pth, dst))
-        os.system("mount -o loop {} {}".format(pth, dst))
+        mpt = MountPoint()
+
+        # Acquire loop device
+        loopdev = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
+
+        log.debug("Prepared loop device: {}".format(loopdev))
+
+        log.debug("Mounting {} as a loop device ({}) to {}".format(img_ptr.path, loopdev, dst))
+        os.system("mount {} {}".format(loopdev, dst))
 
         MountManager.wait_mount(dst)
-        log.debug("Device {} has been mounted successfully".format(pth))
-        self._mountstore[pth] = MountPoint().add(dst)
+        log.debug("Device {} has been mounted successfully".format(loopdev))
+        self._mountstore[img_ptr] = mpt.add(dst, loopdev)
 
         return dst
 
@@ -92,8 +114,10 @@ class MountManager:
         Mount a partitioned disk image
         """
         # Get a list of partitions
+        log.debug("Mounting disk image at {}".format(imptr.path))
 
         # Setup loops
+
 
         # Mount each partition/loop to its own target
 
@@ -108,7 +132,7 @@ class MountManager:
         """
 
         if img_ptr.img_type == ImagePtr.PARTITION_IMAGE:
-            return self.__mount_partition_image(img_ptr.path)
+            return self.__mount_partition_image(img_ptr)
         elif img_ptr.img_type == ImagePtr.DISK_IMAGE:
             return self.__mount_disk_image(img_ptr.path)
 
@@ -151,7 +175,7 @@ class MountManager:
         for i, m in self._mountstore.items():
             for p in m.get_partitions():
                 if mpt == p:
-                    return i
+                    return i.path
 
 
     def flush(self):
