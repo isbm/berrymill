@@ -50,7 +50,9 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        shutil.move(spf_p, imgp + ".sbom." + format.replace("-", "."))
+        dst = imgp + ".sbom." + format.replace("-", ".")
+        shutil.move(spf_p, dst)
+        log.info("SBOM written to {}".format(dst))
 
     def check_env(self):
         """
