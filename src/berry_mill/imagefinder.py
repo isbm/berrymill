@@ -44,15 +44,25 @@ class ImageFinder:
         self._i_pth = loc
         self._i_imgs:list[ImagePtr] = self._find_images()
 
+    def __get_file_meta(self, p) -> str:
+        """
+        Get file meta
+        """
+        with os.popen("file {}".format(p)) as fp:
+            return " ".join(list(filter(None, fp.read().split("\n"))))
+
     def _is_filesystem(self, p) -> bool:
         """
         Return True if a given filename is a mountable filesystem
         """
-        out:str = ""
-        with os.popen("file {}".format(p)) as fp:
-            out = " ".join(list(filter(None, fp.read().split("\n"))))
+        return "filesystem" in self.__get_file_meta(p).lower()
 
-        return "filesystem" in out.lower()
+    def _is_disk(self, p) -> bool:
+        """
+        Returns True if a given filename is a partitioned disk image
+        """
+        meta = self.__get_file_meta(p)
+        return "partition" in meta and "sector" in meta and "startsector" in meta
 
     def _find_images(self) -> list[ImagePtr]:
         """
@@ -75,7 +85,9 @@ class ImageFinder:
             for f in os.listdir(imgp):
                 f = os.path.join(imgp, f)
                 if self._is_filesystem(f):
-                    out.append(ImagePtr(upr.scheme, f))
+                    out.append(ImagePtr(upr.scheme, f, ImagePtr.PARTITION_IMAGE))
+                elif self._is_disk(f):
+                    out.append(ImagePtr(upr.scheme, f, ImagePtr.DISK_IMAGE))
         return out
 
     def get_images(self) -> list[ImagePtr]:
