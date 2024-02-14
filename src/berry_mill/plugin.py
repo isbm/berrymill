@@ -145,6 +145,7 @@ def plugins_loader(sp: argparse.ArgumentParser):
     Load plugins and construct their CLI interface
     """
     for p in os.listdir(os.path.join(os.path.dirname(__file__), "plugins")):
+        if "." in p: continue
         try:
             importlib.import_module("berry_mill.plugins." + p)
         except Exception as exc:
