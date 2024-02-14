@@ -1,7 +1,7 @@
 from typing import Any
 from berry_mill.plugin import PluginIf, registry
 from berry_mill.cfgh import ConfigHandler
-from berry_mill.mountpoint import MountPoint
+from berry_mill.mountpoint import MountManager
 import kiwi.logger
 import os
 import tempfile
@@ -24,7 +24,7 @@ class CvePlugin(PluginIf):
         """
         Generate CVE data for a given filesystem
         """
-        imgp = MountPoint().get_image_path(fs_p)
+        imgp = MountManager().get_image_path(fs_p)
         assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
 
         # generate CVE
@@ -50,7 +50,9 @@ class CvePlugin(PluginIf):
             log.debug("Writing CVE data to {}".format(spf_p))
             spf.write(out)
 
-        shutil.move(spf_p, imgp + ".cve." + format.replace("-", "."))
+        dst = imgp + ".cve." + format.replace("-", ".")
+        shutil.move(spf_p, dst)
+        log.info("CVE summary is written to {}".format(dst))
 
     def check_env(self):
         """
@@ -66,7 +68,7 @@ class CvePlugin(PluginIf):
         self.check_env()
         cve_data:dict[str, Any] = self.get_config(cfg)
 
-        for mp in MountPoint().get_mountpoints():
+        for mp in MountManager().get_mountpoints():
             log.debug("Scanning vulnerabilities {}".format(mp))
             self.get_fs_cve(mp, format=cve_data.get("format", "cyclonedx-json"),
                              verbose=cve_data.get("verbose"))

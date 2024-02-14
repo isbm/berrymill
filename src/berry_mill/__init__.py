@@ -20,7 +20,7 @@ def main():
     try:
         mill.run()
     except Exception as exc:
-        log.error("Run error:", exc)
+        log.error("Runtime error: {}".format(exc))
         if mill.args.debug:
             raise
     finally:

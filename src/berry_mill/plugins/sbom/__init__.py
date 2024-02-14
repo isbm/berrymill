@@ -1,7 +1,7 @@
 from typing import Any
 from berry_mill.plugin import PluginIf, registry
 from berry_mill.cfgh import ConfigHandler
-from berry_mill.mountpoint import MountPoint
+from berry_mill.mountpoint import MountManager
 import kiwi.logger
 import os
 import tempfile
@@ -24,7 +24,7 @@ class SbomPlugin(PluginIf):
         """
         Generate SBOM data for a given filesystem
         """
-        imgp = MountPoint().get_image_path(fs_p)
+        imgp = MountManager().get_image_path(fs_p)
         assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
 
         # generate SBOM
@@ -50,7 +50,9 @@ class SbomPlugin(PluginIf):
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
 
-        shutil.move(spf_p, imgp + ".sbom." + format.replace("-", "."))
+        dst = imgp + ".sbom." + format.replace("-", ".")
+        shutil.move(spf_p, dst)
+        log.info("SBOM written to {}".format(dst))
 
     def check_env(self):
         """
@@ -68,7 +70,7 @@ class SbomPlugin(PluginIf):
         self.check_env()
         sbom_data:dict[str, Any] = self.get_config(cfg)
 
-        for mp in MountPoint().get_mountpoints():
+        for mp in MountManager().get_mountpoints():
             log.debug("Generating SBOM data for {}".format(mp))
             self.get_fs_sbom(mp, format=sbom_data.get("format", "spdx-json"),
                              verbose=sbom_data.get("verbose"))

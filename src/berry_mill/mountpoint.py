@@ -12,6 +12,8 @@ import time
 import os
 import tempfile
 import shutil
+from berry_mill.imagefinder import ImagePtr
+
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
@@ -19,14 +21,47 @@ log.set_color_format()
 
 class MountPoint:
     """
-    MountPoint in-memory store of all mounted devices.
+    MountPoint holds all the information about an object,
+    whether it is a single simple image or a partitioned disk device.
+    """
+
+    def __init__(self) -> None:
+        self._partitions:set[str] = set()
+        self._loop_devices:list[str, str] = {}
+
+    def add(self, pth:str, loopdev:str) -> MountPoint:
+        self._partitions.add(pth)
+        self._loop_devices[pth] = loopdev
+        return self
+
+    def get_partitions(self) -> list[str]:
+        """
+        Return mounted partitions
+        """
+        return tuple(self._partitions)
+
+    def get_loop_device(self, pth:str) -> str:
+        loopdev:str|None = self._loop_devices.get(pth)
+        if loopdev is None:
+            raise Exception("The loop device for {} is not found".format(pth))
+        return loopdev
+
+    def get_loop_devices(self) -> list[str]:
+        """
+        Return loop devices
+        """
+        return tuple(self._loop_devices.values())
+
+class MountManager:
+    """
+    MountManager is an in-memory store of all mounted devices.
     Can be imported and instantiated from anywhere
     """
-    _instance:MountPoint|None = None
+    _instance:MountManager|None = None
 
-    def __new__(cls) -> MountPoint:
+    def __new__(cls) -> MountManager:
         if cls._instance is None:
-            cls._instance = super(MountPoint, cls).__new__(cls)
+            cls._instance = super(MountManager, cls).__new__(cls)
             cls._instance._mountstore = OrderedDict()
         return cls._instance
 
@@ -46,31 +81,59 @@ class MountPoint:
                 break
 
 
-    def mount(self, pth:str, dst:str|None = None) -> str:
+    def __mount_partition_image(self, img_ptr:ImagePtr) -> str:
+        """
+        Mount a single partition image, return mounted directory
+        """
+
+        mpt = self.get_mountpoint(img_ptr.path)
+        if mpt:
+            return mpt
+
+        dst:str = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(img_ptr.path))).name
+        os.makedirs(dst)
+
+        mpt = MountPoint()
+        loopdev = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
+
+        log.debug("Mounting {} as a loop device ({}) to {}".format(img_ptr.path, loopdev, dst))
+        os.system("mount {} {}".format(loopdev, dst))
+
+        MountManager.wait_mount(dst)
+
+        log.debug("Device {} has been mounted successfully".format(loopdev))
+        self._mountstore[img_ptr] = mpt.add(dst, loopdev)
+
+        return dst
+
+    def __mount_disk_image(self, imptr:ImagePtr) -> None:
+        """
+        Mount a partitioned disk image
+        """
+        # Get a list of partitions
+        log.debug("Mounting disk image at {}".format(imptr.path))
+
+        # Setup loops
+
+
+        # Mount each partition/loop to its own target
+
+        raise NotImplementedError("Partitioned image mounts is not implemented yet")
+
+    def mount(self, img_ptr:ImagePtr) -> str:
         """
         Mount a specific path to a tempdir. If `dst` is not given,
         temporary directory is returned.
 
         If mount fails, exception is raised.
         """
-        mpt = self.get_mountpoint(pth)
-        if mpt:
-            return mpt
 
-        if not dst:
-            dst = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(pth))).name
-        os.makedirs(dst)
+        if img_ptr.img_type == ImagePtr.PARTITION_IMAGE:
+            return self.__mount_partition_image(img_ptr)
+        elif img_ptr.img_type == ImagePtr.DISK_IMAGE:
+            return self.__mount_disk_image(img_ptr.path)
 
-        log.debug("Mounting {} as a loop device to {}".format(pth, dst))
-        os.system("mount -o loop {} {}".format(pth, dst))
-
-        MountPoint.wait_mount(dst)
-        log.debug("Device {} has been mounted successfully".format(pth))
-
-        self._mountstore[pth] = dst
-
-        return dst
-
+        raise Exception("Unable to mount image: {}".format(repr(img_ptr)))
 
     def umount(self, pth:str) -> None:
         """
@@ -80,7 +143,7 @@ class MountPoint:
         log.debug("Umounting {}".format(pth))
         os.system("umount {}".format(pth))
 
-        MountPoint.wait_mount(pth, umount=True)
+        MountManager.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
@@ -90,10 +153,19 @@ class MountPoint:
         """
         Return mounted filesystems
         """
-        return self._mountstore.values()
+        p = []
+        for mpt in self._mountstore.values():
+            p += list(mpt.get_partitions())
+        return p
+
+    def get_loop_devices(self) -> list[str]:
+        d = []
+        for mpt in self._mountstore.values():
+            d += list(mpt.get_loop_devices())
+        return d
 
 
-    def get_mountpoint(self, img:str) -> str|None:
+    def get_mountpoint(self, img:str) -> MountPoint|None:
         """
         Return a mount point
         """
@@ -104,8 +176,9 @@ class MountPoint:
         Get a mounted image location from the existing mountpoint
         """
         for i, m in self._mountstore.items():
-            if m == mpt:
-                return i
+            for p in m.get_partitions():
+                if mpt == p:
+                    return i.path
 
 
     def flush(self):
@@ -113,4 +186,10 @@ class MountPoint:
         Flush all mounts entirely.
         """
         log.debug("Flushing mountpoints")
-        [self.umount(pth) for pth in self._mountstore.values()]
+        for mpt in self.get_mountpoints():
+            log.debug("Unmounting partition at {}".format(mpt))
+            self.umount(mpt)
+
+        for loopdev in self.get_loop_devices():
+            log.debug("Detaching {} device".format(loopdev))
+            os.system("losetup -d {}".format(loopdev))
