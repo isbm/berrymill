@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import os
+import sys
 import importlib
 import argparse
 import yaml
 import kiwi.logger
+import traceback
 
 from typing import Any
 from types import ModuleType
@@ -59,6 +61,13 @@ class PluginIfDeco(type):
                 clsd["run"](self, cfg)
             except Exception as exc:
                 log.error(exc)
+
+                # Don't hate me for this... :)
+                if "-d" in sys.argv or "--debug" in sys.argv:
+                    print("-" * 80)
+                    traceback.print_exception(exc, limit=None, file=sys.stderr)
+                    print("-" * 80)
+
             cls.teardown(self)
         setattr(cls, 'run', run)
 
