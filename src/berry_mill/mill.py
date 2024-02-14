@@ -10,7 +10,7 @@ from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader
 from berry_mill.kiwrap import KiwiParent
-from berry_mill.mountpoint import MountPoint
+from berry_mill.mountpoint import MountManager
 from berry_mill.imagefinder import ImageFinder
 
 from .cfgh import ConfigHandler, Autodict
@@ -249,7 +249,7 @@ class ImageMill:
             # TODO: 'build' and 'prepare' should be part of this as well, but just built-ins.
 
             # mount all defined images in `-general` section. NOTE: section starts with a minus.
-            mpt = MountPoint()
+            mpt = MountManager()
             for img_ptr in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
                 mpt.mount(img_ptr)
             if not mpt.get_mountpoints():

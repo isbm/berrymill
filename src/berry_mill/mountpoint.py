@@ -19,16 +19,16 @@ log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()
 
 
-class MountPoint:
+class MountManager:
     """
     MountPoint in-memory store of all mounted devices.
     Can be imported and instantiated from anywhere
     """
-    _instance:MountPoint|None = None
+    _instance:MountManager|None = None
 
-    def __new__(cls) -> MountPoint:
+    def __new__(cls) -> MountManager:
         if cls._instance is None:
-            cls._instance = super(MountPoint, cls).__new__(cls)
+            cls._instance = super(MountManager, cls).__new__(cls)
             cls._instance._mountstore = OrderedDict()
         return cls._instance
 
@@ -62,7 +62,7 @@ class MountPoint:
         log.debug("Mounting {} as a loop device to {}".format(pth, dst))
         os.system("mount -o loop {} {}".format(pth, dst))
 
-        MountPoint.wait_mount(dst)
+        MountManager.wait_mount(dst)
         log.debug("Device {} has been mounted successfully".format(pth))
         self._mountstore[pth] = dst
 
@@ -97,7 +97,7 @@ class MountPoint:
         log.debug("Umounting {}".format(pth))
         os.system("umount {}".format(pth))
 
-        MountPoint.wait_mount(pth, umount=True)
+        MountManager.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
