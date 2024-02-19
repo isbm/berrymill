@@ -13,8 +13,11 @@ class UqList(list):
 
 
 class Loader:
+    
     def __init__(self) -> None:
         self.__i_stack = UqList()
+        self.is_derived: bool = False
+        self.main_appliance_pth: str = ""
 
     def _traverse(self, pth: str) -> None:
         """
@@ -30,9 +33,11 @@ class Loader:
 
         l_iht:list[ET.Element]|None = ApplianceDescription.find_all("inherit", doc)
         if l_iht:
+            self.is_derived = True
             self.__i_stack.append(next(iter(l_iht)).attrib["path"])
             self._traverse(self.__i_stack[-1])
         else:
+            self.main_appliance_pth = pth
             self.__i_stack.append(pth)
 
     def _flatten(self) -> str:
