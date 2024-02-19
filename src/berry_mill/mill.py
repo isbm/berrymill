@@ -296,4 +296,4 @@ class ImageMill:
             shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
         for symlink in self._created_syms:
             os.remove(symlink)
-            self._created_syms.remove(symlink)
+        self._created_syms = []
