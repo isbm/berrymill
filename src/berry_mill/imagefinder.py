@@ -50,7 +50,7 @@ class ImageFinder:
         Get file meta
         """
         with os.popen("file {}".format(p)) as fp:
-            return " ".join(list(filter(None, fp.read().split("\n"))))
+            return " ".join(list(filter(None, fp.read().split("\n")))).lower()
 
     def _is_filesystem(self, p) -> bool:
         """
@@ -63,7 +63,7 @@ class ImageFinder:
         Returns True if a given filename is a partitioned disk image
         """
         meta = self.__get_file_meta(p)
-        return "partition" in meta and "sector" in meta and "startsector" in meta
+        return ("partition" in meta and "sector" in meta and "startsector" in meta) or "dos/mbr boot sector" in meta
 
     def _find_images(self) -> list[ImagePtr]:
         """
@@ -85,10 +85,13 @@ class ImageFinder:
 
             for f in os.listdir(imgp):
                 f = os.path.join(imgp, f)
+                if f.split(".")[-1].lower() not in ["qcow2", "raw"]: continue # Skip possible junk
                 if self._is_filesystem(f):
                     out.append(ImagePtr(upr.scheme, f, ImagePtr.PARTITION_IMAGE))
                 elif self._is_disk(f):
                     out.append(ImagePtr(upr.scheme, f, ImagePtr.DISK_IMAGE))
+                else:
+                    log.warning(f"Undetected image: {f}")
         return out
 
     def get_images(self) -> list[ImagePtr]:
