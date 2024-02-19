@@ -91,15 +91,15 @@ class MountManager:
         os.makedirs(dst)
 
         mpt = MountPoint()
-        loopdev = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
+        img_ptr.loop = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
 
-        log.debug("Mounting {} as a loop device ({}) to {}".format(img_ptr.path, loopdev, dst))
-        os.system("mount {} {}".format(loopdev, dst))
+        log.debug("Mounting {} as a loop device ({}) to {}".format(img_ptr.path, img_ptr.loop, dst))
+        os.system("mount {} {}".format(img_ptr.loop, dst))
 
         MountManager.wait_mount(dst)
 
-        log.debug("Device {} has been mounted successfully".format(loopdev))
-        self._mountstore[img_ptr] = mpt.add(dst, loopdev)
+        log.debug("Device {} has been mounted successfully".format(img_ptr.loop))
+        self._mountstore[img_ptr] = mpt.add(dst, img_ptr.loop)
 
         return dst
 
@@ -112,13 +112,13 @@ class MountManager:
 
         # Setup loops
         mpt = MountPoint()
-        main_loop_dev = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
+        img_ptr.loop = os.popen("losetup --show -Pf {}".format(img_ptr.path)).read().strip()
 
         loop_devices:list[str] = []
         # Get all other loop devs
         for dev in os.listdir("/dev"):
             dev = "/dev/{}".format(dev)
-            if dev.startswith(main_loop_dev) and dev != main_loop_dev:
+            if dev.startswith(img_ptr.loop) and dev != img_ptr.loop:
                 log.debug("Registering loop device {}".format(dev))
                 loop_devices.append(dev)
 
@@ -198,6 +198,19 @@ class MountManager:
             for p in m.get_partitions():
                 if mpt == p:
                     return i.path
+
+    def get_partition_mountpoint_by_ord(self, num:int) -> str|None:
+        """
+        Get partition mountpoint by its order.
+
+        :param pth (str): Configured path where built images are searched, assuming one image per a path
+        :param num (int): Partition number
+        """
+        for img_ptr, mpt in self._mountstore.items():
+            for pdir in mpt.get_partitions():
+                if num == int(os.path.basename(mpt.get_loop_device(pdir))[4:].split("p")[-1]):
+                    return pdir
+
 
 
     def flush(self):

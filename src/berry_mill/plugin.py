@@ -139,6 +139,7 @@ class PluginIf(metaclass=PluginIfDeco):
         """
         raise NotImplementedError("Method should be implemented")
 
+    # TODO: Probably must be moved to mount manager?
     def get_partition_name_from_loopdev(self, devname) -> str:
         devname = os.path.basename(devname).replace("loop", "")
         partsect:str = "single"
