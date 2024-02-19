@@ -1,7 +1,11 @@
 from berry_mill.plugin import PluginIf, PluginArgs, registry
 from berry_mill.cfgh import ConfigHandler
+from berry_mill.mountpoint import MountManager
+from urllib.parse import urlparse
 
 import copy
+import os
+import shutil
 
 class RootOverlay(PluginIf):
     """
@@ -12,6 +16,19 @@ class RootOverlay(PluginIf):
     """
 
     ID = "overlay"
+
+    def _abs_p(self, pth:str) -> str:
+        """
+        Expand path
+        """
+        uri = urlparse(pth)
+        assert uri.scheme == "dir", "Wrong path definition"
+        if uri.hostname is not None: # Path is relative
+            pth = "./{}{}".format(uri.hostname, uri.path)
+        else:
+            pth = uri.path
+
+        return pth
 
     def run(self, cfg:ConfigHandler):
         """
@@ -26,6 +43,15 @@ class RootOverlay(PluginIf):
                 else:
                     raise Exception("URI must be in dir:// scheme: {}".format(r))
             p_cfg["roots"] = roots
+
+        for pn in p_cfg.get("partitions", []):
+            mp = MountManager().get_partition_mountpoint_by_ord(pn)
+            if mp is None:
+                raise Exception("Could not find a mountpoint for partition {}".format(pn))
+
+            for r in p_cfg.get("roots", []):
+                r = self._abs_p(r)
+                shutil.copytree(r, mp, symlinks=True, dirs_exist_ok=True)
 
         print("Running plugin {}".format(self.title))
         print(p_cfg)
