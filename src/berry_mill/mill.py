@@ -45,6 +45,7 @@ class ImageMill:
         """
         self._bac_appliance_abspth:str = ""
         self._tmp_backup_dir:str = ""
+        self._created_syms:list[str] = []
 
         # Display just help if run alone
         if len(sys.argv) == 1:
@@ -162,17 +163,27 @@ class ImageMill:
                 self.cfg.raw_unsafe_config()["repos"]["local"][arch].update(jr[arch])
         return
 
-    def _construct_final_appliance(self) -> None:
+    def _construct_final_build_dir(self) -> None:
         """
         Constructs final kiwi appliance which is used by kiwi
         1. moves the appliance description to a tmp dir, so kiwi wont use this "wrong" one
         2. Constructs the right appliance and safes it named as the one passed to berrymill orginially
         """
-        final_rendered_xml_string = Loader().load(self._appliance_abspath)
+        appliance_loader: Loader = Loader()
+        final_rendered_xml_string = appliance_loader.load(self._appliance_abspath)
         shutil.move(self._appliance_abspath, self._bac_appliance_abspth)
         with open(self._appliance_abspath, "w") as ma:
-            ma.write(final_rendered_xml_string)
-
+            ma.write(final_rendered_xml_string)   
+        if appliance_loader.is_derived:
+            main_appliance_dir = os.path.dirname(os.path.abspath(appliance_loader.main_appliance_pth))
+            for kiwifile in os.listdir(main_appliance_dir):
+                src = os.path.join(main_appliance_dir, kiwifile)
+                dst = os.path.join(self._appliance_path, kiwifile)
+                if not os.path.exists(dst):
+                    os.symlink(src, dst)
+                    self._created_syms.append(dst)
+                
+            
     def _check_opts(self) -> bool:
         """
         Check if options are correct.
@@ -211,7 +222,7 @@ class ImageMill:
 
         if self.args.subparser_name == "build":
             self._set_appliance_paths()
-            self._construct_final_appliance()
+            self._construct_final_build_dir()
             # parameter "cross" implies a amd64 host and an arm64 target-arch
             if self.args.cross:
                 self.args.arch = "arm64"
@@ -236,7 +247,7 @@ class ImageMill:
                 )
         elif self.args.subparser_name == "prepare":
             self._set_appliance_paths()
-            self._construct_final_appliance()
+            self._construct_final_build_dir()
             kiwip = KiwiPreparer(
                 self._appliance_descr,
                 root=self.args.root,
@@ -283,3 +294,6 @@ class ImageMill:
             shutil.move(self._bac_appliance_abspth, self._appliance_abspath)
         if self._tmp_backup_dir:
             shutil.rmtree(self._tmp_backup_dir, ignore_errors=True)
+        for symlink in self._created_syms:
+            os.remove(symlink)
+            self._created_syms.remove(symlink)
