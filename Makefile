@@ -8,6 +8,10 @@ help:
 	@printf '\ttar    - make source tarfile for packaging and distribution\n'
 	@printf '\tman    - generate manpages\n'
 	@printf '\tbuild  - build Berrymill locally\n'
+	@printf '\tclean  - cleanup everything'
+
+build:
+	python3 setup.py build
 
 man:
 	pandoc --standalone --to man doc/manpages/berrymill.8.md -o doc/manpages/berrymill.8
@@ -30,3 +34,9 @@ tar:
 
 	tar -C package -czvf package/${ARC_N}.tar.gz ${ARC_N}
 	rm -rf package/${ARC_N}
+
+clean:
+	rm -rf package
+	rm -rf build
+	rm doc/manpages/berrymill.8
+
