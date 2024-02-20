@@ -9,3 +9,5 @@ dist/
 build/
 *Berrymill.egg*
 tmp/
+package/*
+doc/manpages/berrymill.8
