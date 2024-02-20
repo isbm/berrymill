@@ -10,7 +10,7 @@ help:
 	@printf '\tbuild  - build Berrymill locally\n'
 
 man:
-	@echo TODO
+	pandoc --standalone --to man doc/manpages/berrymill.8.md -o doc/manpages/berrymill.8
 
 tar:
 	rm -rf package/${ARC_N}
