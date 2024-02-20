@@ -118,7 +118,7 @@ class ImageMill:
         Return Appliance Dirname, Basename
         """
 
-        appliance_path: str = os.path.dirname(image or ".")
+        appliance_path: str = os.path.abspath(os.path.dirname(image or "."))
         if appliance_path == ".":
             appliance_path = ""
 
@@ -130,7 +130,7 @@ class ImageMill:
             for pth in os.listdir(appliance_path or "."):
                 if pth.split('.')[-1] in ["kiwi", "xml"]:
                     appliance_descr = pth
-                    appliance_path = os.getcwd()
+                    appliance_path = os.path.abspath(os.getcwd())
                     break
 
         if not appliance_descr:
@@ -180,6 +180,8 @@ class ImageMill:
                 src = os.path.join(main_appliance_dir, kiwifile)
                 dst = os.path.join(self._appliance_path, kiwifile)
                 if not os.path.exists(dst):
+                    if os.path.isdir(src) and not os.path.basename(src) == "root":
+                        continue
                     os.symlink(src, dst)
                     self._created_syms.append(dst)
                 
