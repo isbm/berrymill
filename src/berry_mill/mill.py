@@ -231,7 +231,6 @@ class ImageMill:
 
             if not self.args.local and is_vm() and not has_virtualization():
                 log.warning(no_nested_warning)
-                raise SystemExit()
 
             os.environ["KIWI_BOXED_PLUGIN_CFG"] = \
                 self.cfg.raw_unsafe_config().get("boxed_plugin_conf", "/etc/berrymill/kiwi_boxed_plugin.yml")

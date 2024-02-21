@@ -27,13 +27,13 @@ def has_virtualization() -> bool:
     # CPU supports VM
     with open("/proc/cpuinfo") as fr:
         if not [l for l in fr.readlines() if "vmx flags" in l]:
-            log.error("CPU does not have vmx flags")
+            log.warning("CPU does not have vmx flags")
             return False
 
     # KVM module loaded?
     mods = [x.split(" ")[0] for x in os.popen("lsmod").readlines()[1:]]
     if "kvm_intel" not in mods and "kvm_amd" not in mods:
-        log.error("No KVM kernel module loaded")
+        log.warning("No KVM kernel module loaded")
         return False
 
     # Nested is enabled in kvm_* module?
@@ -43,7 +43,7 @@ def has_virtualization() -> bool:
             nested = True
             break
     if not nested:
-        log.error("KVM module does not support nested virtualisation")
+        log.warning("KVM module does not support nested virtualisation")
         return False
 
     # Nested virtualisation enabled system-wide
@@ -51,7 +51,7 @@ def has_virtualization() -> bool:
     kvm_np = kvm_np.format("intel") if os.path.exists(kvm_np.format("intel")) else kvm_np.format("amd")
     with open(kvm_np) as fr:
         if fr.read().strip() not in ["y", "Y", "1"]:
-            log.error("Nested virtualisation is not enabled")
+            log.warning("Nested virtualisation is not enabled")
             return False
 
     return True
