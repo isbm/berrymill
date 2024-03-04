@@ -127,6 +127,7 @@ class KiwiParent:
                 response = requests.get(s_url, allow_redirects=True)
             except Exception as e:
                 log.error(f"Download key error: {e}")
+                return None
             # check reponse OK
             if response.status_code == HTTPStatus.OK:
                 with open(g_path, 'xb') as f_rel:
