@@ -1,4 +1,5 @@
 *__pycache__/
+.venv/
 /src/berrymill.conf
 doc/build/*
 doc/source/_*/*
