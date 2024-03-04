@@ -126,7 +126,7 @@ class KiwiParent:
             try:
                 response = requests.get(s_url, allow_redirects=True)
             except Exception as e:
-                log.warning(f"Download key error: {e}")
+                log.warning(f"Unable to download key: {e}")
                 return None
             # check reponse OK
             if response.status_code == HTTPStatus.OK:
