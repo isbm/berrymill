@@ -1,5 +1,5 @@
 [build-system]
-requires      = ["setuptools>=59.0.0", "wheel"]
+requires = ["setuptools>=59.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,7 +16,11 @@ classifiers = [
 ]
 keywords = ["appliance", "builder", "kiwi"]
 dependencies = [
-    "inquirer", "kiwi", "kiwi-boxed-plugin", "typing_extensions", "qemu"
+    "inquirer",
+    "kiwi",
+    "kiwi-boxed-plugin",
+    "typing_extensions",
+    "qemu",
 ]
 requires-python = ">=3.10"
 
@@ -32,11 +36,15 @@ berrymill = "berry_mill:main"
 [tool.bumpver]
 current_version = "0.2"
 version_pattern = "MAJOR.MINOR"
-commit_message  = "Bump version {old_version} -> {new_version}"
-commit          = true
-tag             = true
-push            = false
+commit_message = "Bump version {old_version} -> {new_version}"
+commit = true
+tag = true
+push = false
 
 [tool.bumpver.file_patterns]
 "pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
 "src/berry_mill/__init__.py" = ["{version}"]
+
+[tool.black]
+line-length = 130
+skip-magic-trailing-comma = false
