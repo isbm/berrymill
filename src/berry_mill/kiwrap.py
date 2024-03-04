@@ -123,7 +123,10 @@ class KiwiParent:
             return g_path
         else:
             s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/Release.key", "")
-            response = requests.get(s_url, allow_redirects=True)
+            try:
+                response = requests.get(s_url, allow_redirects=True)
+            except Exception as e:
+                log.error(f"Download key error: {e}")
             # check reponse OK
             if response.status_code == HTTPStatus.OK:
                 with open(g_path, 'xb') as f_rel:
