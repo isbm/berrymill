@@ -265,7 +265,7 @@ class ImageMill:
             for img_ptr in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
                 mpt.mount(img_ptr)
             if not mpt.get_mountpoints():
-                raise Exception("No mountpoint has been found")
+                raise Exception("No mountpoint has been found. NOTE: image files should have .raw or .qcow2 extension!")
 
             # Start plugins or their workflow
             log.debug("Calling plugin {}".format(self.args.subparser_name))
