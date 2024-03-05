@@ -1,0 +1,22 @@
+name: Black Code Formatter
+run-name: Check if code formatted according to the standard
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Black Formatter (dry-run)
+        run: black --check src/berry_mill
