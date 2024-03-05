@@ -1,7 +1,7 @@
 import platform
 import os
-from typing import Dict
-import kiwi.logger
+from typing import Dict  # type: ignore
+import kiwi.logger  # type: ignore
 
 archfix: Dict[str, str] = {
     "x86_64": "amd64",

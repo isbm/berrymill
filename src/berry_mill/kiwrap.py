@@ -1,17 +1,17 @@
 from __future__ import annotations
 from abc import abstractmethod
 import sys
-import kiwi.logger
+import kiwi.logger  # type: ignore
 from typing import Any, List
 from typing_extensions import Unpack
 import os
 import shutil
 import tempfile
-import requests
-import inquirer
+import requests  # type: ignore
+import inquirer  # type: ignore
 import subprocess
 from http import HTTPStatus
-from lxml import etree
+from lxml import etree  # type: ignore
 from urllib.parse import ParseResult, urljoin, urlparse
 from typing import Dict
 

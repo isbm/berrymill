@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 from collections import OrderedDict
-import kiwi.logger
+import kiwi.logger  # type: ignore
 import time
 import os
 import tempfile

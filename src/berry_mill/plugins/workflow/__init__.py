@@ -1,7 +1,7 @@
 from typing import Any
 from berry_mill.plugin import PluginIf, PluginArgs, registry
 from berry_mill.cfgh import ConfigHandler
-import kiwi.logger
+import kiwi.logger  # type: ignore
 
 log = kiwi.logging.getLogger('kiwi')
 log.set_color_format()

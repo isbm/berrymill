@@ -5,8 +5,8 @@ import os
 import sys
 import importlib
 import argparse
-import yaml
-import kiwi.logger
+import yaml  # type: ignore
+import kiwi.logger  # type: ignore
 import traceback
 
 from typing import Any

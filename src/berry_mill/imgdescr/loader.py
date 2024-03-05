@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Any
-import lxml.etree as ET
+import lxml.etree as ET  # type: ignore [import-untyped]
 from berry_mill.imgdescr.descr import ApplianceDescription
 
 class UqList(list):

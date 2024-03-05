@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import os
 import logging
-import yaml
-from yaml.scanner import ScannerError as YamlScannerError
+import yaml  # type: ignore
+from yaml.scanner import ScannerError as YamlScannerError  # type: ignore
 import os.path
 import xml.dom.minidom
-from typing import Any
-import lxml.etree as ET
+from typing import Any, Callable
+import lxml.etree as ET  # type: ignore
 
 log = logging.getLogger("kiwi")
 

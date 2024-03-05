@@ -1,7 +1,7 @@
 from typing import List
 from typing_extensions import Unpack
-import kiwi.logger
-from kiwi.exceptions import KiwiPrivilegesError, KiwiRootDirExists
+import kiwi.logger  # type: ignore
+from kiwi.exceptions import KiwiPrivilegesError, KiwiRootDirExists  # type: ignore
 from .kiwiapp import KiwiAppPrepare
 from .kiwrap import KiwiParent
 from .params import KiwiPrepParams

@@ -4,8 +4,8 @@ import argparse
 import shutil
 from tempfile import mkdtemp
 from typing import Tuple
-import kiwi.logger
-import yaml
+import kiwi.logger  # type: ignore
+import yaml  # type: ignore
 from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader

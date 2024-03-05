@@ -1,6 +1,6 @@
 from typing import Dict
-from kiwi.tasks.system_build import SystemBuildTask
-import kiwi.logger
+from kiwi.tasks.system_build import SystemBuildTask  # type: ignore
+import kiwi.logger  # type: ignore
 
 log = kiwi.logging.getLogger('kiwi')
 

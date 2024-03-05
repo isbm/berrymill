@@ -1,9 +1,9 @@
 import copy
-import yaml
+import yaml  # type: ignore
 import os
 import sys
 from typing import Any, List
-import kiwi.logger
+import kiwi.logger  # type: ignore
 
 log = kiwi.logging.getLogger('kiwi')
 

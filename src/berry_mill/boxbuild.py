@@ -3,9 +3,9 @@ Interface Module to kiwi's boxbuidtaks
 """
 
 from typing import List
-from kiwi_boxed_plugin.tasks.system_boxbuild import SystemBoxbuildTask
-import kiwi.logger
-import kiwi.tasks.system_build
+from kiwi_boxed_plugin.tasks.system_boxbuild import SystemBoxbuildTask  # type: ignore
+import kiwi.logger  # type: ignore
+import kiwi.tasks.system_build  # type: ignore
 
 
 log = kiwi.logging.getLogger('kiwi')

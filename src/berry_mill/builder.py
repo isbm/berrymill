@@ -7,11 +7,11 @@ import tempfile
 from urllib.parse import urlparse, quote
 from typing import Dict, List
 from platform import machine
-import kiwi.logger
+import kiwi.logger  # type: ignore
 from typing_extensions import Unpack
-from lxml import etree
-from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists
-from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox
+from lxml import etree  # type: ignore
+from kiwi.exceptions import KiwiError, KiwiPrivilegesError, KiwiRootDirExists  # type: ignore
+from berry_mill.kiwiapp import KiwiAppLocal, KiwiAppBox  # type: ignore
 from .kiwrap import KiwiParent
 from .params import KiwiBuildParams
 

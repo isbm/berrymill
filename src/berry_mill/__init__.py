@@ -6,7 +6,7 @@ def main():
     from berry_mill import ImageMill
     from typing import Any
     import sys
-    import kiwi.logger
+    import kiwi.logger  # type: ignore
 
     log = kiwi.logging.getLogger('kiwi')
 

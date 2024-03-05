@@ -2,7 +2,7 @@ from typing import Any
 from berry_mill.plugin import PluginIf, registry
 from berry_mill.cfgh import ConfigHandler
 from berry_mill.mountpoint import MountManager
-import kiwi.logger
+import kiwi.logger  # type: ignore
 import os
 import tempfile
 import json
