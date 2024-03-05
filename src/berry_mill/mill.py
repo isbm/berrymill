@@ -4,8 +4,8 @@ import argparse
 import shutil
 from tempfile import mkdtemp
 from typing import Tuple
-import kiwi.logger
-import yaml
+import kiwi.logger  # type: ignore
+import yaml  # type: ignore
 from berry_mill import plugin
 
 from berry_mill.imgdescr.loader import Loader
@@ -21,7 +21,7 @@ from .builder import KiwiBuilder
 from .sysinfo import has_virtualization, is_vm
 
 
-log = kiwi.logging.getLogger('kiwi')
+log = kiwi.logging.getLogger("kiwi")
 log.set_color_format()
 
 no_nested_warning: str = str(
@@ -39,13 +39,14 @@ class ImageMill:
     """
     ImageMill class
     """
+
     def __init__(self):
         """
         Constructor
         """
-        self._bac_appliance_abspth:str = ""
-        self._tmp_backup_dir:str = ""
-        self._created_syms:list[str] = []
+        self._bac_appliance_abspth: str = ""
+        self._tmp_backup_dir: str = ""
+        self._created_syms: list[str] = []
 
         # Display just help if run alone
         if len(sys.argv) == 1:
@@ -54,10 +55,13 @@ class ImageMill:
         p: argparse.ArgumentParser = argparse.ArgumentParser(
             prog="berrymill",
             description="berrymill is a root filesystem generator for embedded devices",
-            epilog="Have a lot of fun!")
+            epilog="Have a lot of fun!",
+        )
         # default arguments
         self._add_default_args(p)
-        sub_p = p.add_subparsers(help="Course of action for berrymill", dest="subparser_name")
+        sub_p: argparse._SubParsersAction[argparse.ArgumentParser] = p.add_subparsers(
+            help="Course of action for berrymill", dest="subparser_name"
+        )
         # prepare specific arguments
         prepare_p: argparse.ArgumentParser = sub_p.add_parser("prepare", help="prepare sysroot")
         self._add_prepare_args(prepare_p)
@@ -128,7 +132,7 @@ class ImageMill:
 
         if not appliance_path:
             for pth in os.listdir(appliance_path or "."):
-                if pth.split('.')[-1] in ["kiwi", "xml"]:
+                if pth.split(".")[-1] in ["kiwi", "xml"]:
                     appliance_descr = pth
                     appliance_path = os.path.abspath(os.getcwd())
                     break
@@ -173,7 +177,7 @@ class ImageMill:
         final_rendered_xml_string = appliance_loader.load(self._appliance_abspath)
         shutil.move(self._appliance_abspath, self._bac_appliance_abspth)
         with open(self._appliance_abspath, "w") as ma:
-            ma.write(final_rendered_xml_string)   
+            ma.write(final_rendered_xml_string)
         if appliance_loader.is_derived:
             main_appliance_dir = os.path.dirname(os.path.abspath(appliance_loader.main_appliance_pth))
             for kiwifile in os.listdir(main_appliance_dir):
@@ -184,8 +188,7 @@ class ImageMill:
                         continue
                     os.symlink(src, dst)
                     self._created_syms.append(dst)
-                
-            
+
     def _check_opts(self) -> bool:
         """
         Check if options are correct.
@@ -204,9 +207,9 @@ class ImageMill:
         self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
         os.chdir(self._appliance_path)
 
-        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._tmp_backup_dir = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
         self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+        self._bac_appliance_abspth = os.path.join(self._tmp_backup_dir, self._appliance_descr)
 
     def run(self) -> None:
         """
@@ -232,8 +235,9 @@ class ImageMill:
             if not self.args.local and is_vm() and not has_virtualization():
                 log.warning(no_nested_warning)
 
-            os.environ["KIWI_BOXED_PLUGIN_CFG"] = \
-                self.cfg.raw_unsafe_config().get("boxed_plugin_conf", "/etc/berrymill/kiwi_boxed_plugin.yml")
+            os.environ["KIWI_BOXED_PLUGIN_CFG"] = self.cfg.raw_unsafe_config().get(
+                "boxed_plugin_conf", "/etc/berrymill/kiwi_boxed_plugin.yml"
+            )
             kiwip = KiwiBuilder(
                 self._appliance_descr,
                 box_memory=self.args.box_memory,
@@ -244,8 +248,8 @@ class ImageMill:
                 cpu=self.args.cpu,
                 local=self.args.local,
                 target_dir=self.args.target_dir,
-                no_accel=self.args.no_accel
-                )
+                no_accel=self.args.no_accel,
+            )
         elif self.args.subparser_name == "prepare":
             self._set_appliance_paths()
             self._construct_final_build_dir()
@@ -254,8 +258,8 @@ class ImageMill:
                 root=self.args.root,
                 debug=self.args.debug,
                 profile=self.args.profile,
-                allow_existing_root=self.args.allow_existing_root
-                )
+                allow_existing_root=self.args.allow_existing_root,
+            )
         elif self.args.subparser_name is not None:
             # Main modular entry point.
             # TODO: 'build' and 'prepare' should be part of this as well, but just built-ins.
@@ -265,7 +269,7 @@ class ImageMill:
             for img_ptr in ImageFinder(*self.cfg.config.get("-general", {}).get("images", [])).get_images():
                 mpt.mount(img_ptr)
             if not mpt.get_mountpoints():
-                raise Exception("No mountpoint has been found")
+                raise Exception("No mountpoint has been found. NOTE: image files should have .raw or .qcow2 extension!")
 
             # Start plugins or their workflow
             log.debug("Calling plugin {}".format(self.args.subparser_name))

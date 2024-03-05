@@ -1,23 +1,23 @@
 from __future__ import annotations
 from abc import abstractmethod
 import sys
-import kiwi.logger
+import kiwi.logger  # type: ignore
 from typing import Any, List
 from typing_extensions import Unpack
 import os
 import shutil
 import tempfile
-import requests
-import inquirer
+import requests  # type: ignore
+import inquirer  # type: ignore
 import subprocess
 from http import HTTPStatus
-from lxml import etree
+from lxml import etree  # type: ignore
 from urllib.parse import ParseResult, urljoin, urlparse
 from typing import Dict
 
 from berry_mill.params import KiwiParams
 
-log = kiwi.logging.getLogger('kiwi')
+log = kiwi.logging.getLogger("kiwi")
 
 
 class KiwiParent:
@@ -34,13 +34,13 @@ class KiwiParent:
         self._trusted_gpg_d: str = "/etc/apt/trusted.gpg.d"
         self._tmpdir: str = tempfile.mkdtemp(prefix="berrymill-keys-", dir="/tmp")
         self._kiwiparams: KiwiParams = pkw
-        self._kiwi_options: List[str] = [f'--kiwi-file={descr}']
+        self._kiwi_options: List[str] = [f"--kiwi-file={descr}"]
         self._initialized: bool = False
 
         if self._kiwiparams.get("debug"):
             self._kiwi_options.append("--debug")
 
-        log.info("Using appliance \"{}\" located at \"{}\"".format(self._appliance_descr, self._appliance_path))
+        log.info('Using appliance "{}" located at "{}"'.format(self._appliance_descr, self._appliance_path))
         try:
             config_tree = etree.parse(f"{self._appliance_descr}")
         except Exception as err:
@@ -67,7 +67,7 @@ class KiwiParent:
                 self._kiwi_options += ["--profile", profile]
             else:
                 self.cleanup()
-                log.error(f"\'{profile}\' is not a valid profile. Available: {profiles}")
+                log.error(f"'{profile}' is not a valid profile. Available: {profiles}")
                 sys.exit(1)
 
         self._initialized = True
@@ -77,7 +77,7 @@ class KiwiParent:
         Add a repository for the builder
         """
         if reponame:
-            key_path: str = self._get_repokeys(reponame, repodata)
+            key_path: str | None = self._get_repokeys(reponame, repodata)
             if key_path is not None:
                 repodata.setdefault("key", "file://" + key_path)
                 self._check_repokey(repodata, reponame)
@@ -96,25 +96,27 @@ class KiwiParent:
         Verify wether the downloaded file is a GPG key
         """
         try:
-            return bool(subprocess.run(['gpg', '--dearmor', key_path], capture_output=True, text=True).returncode == os.EX_OK)
+            return bool(subprocess.run(["gpg", "--dearmor", key_path], capture_output=True, text=True).returncode == os.EX_OK)
 
         except Exception as e:
             log.warning(f"An error occurred: {e}")
             return False
 
-    def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str|None:
+    def _get_repokeys(self, reponame: str, repodata: Dict[str, str]) -> str | None:
         """
         Download repository keys to a temporary directory
         """
         # Check if repo name and date are defined
-        for repo_iter, excep_iter in [(repodata, "Repository data not defined"),
-                                      (reponame, "Repository name not defined"),
-                                      (repodata.get('url'), "URL not found")]:
+        for repo_iter, excep_iter in [
+            (repodata, "Repository data not defined"),
+            (reponame, "Repository name not defined"),
+            (repodata.get("url"), "URL not found"),
+        ]:
             if not repo_iter:
                 raise Exception(excep_iter)
 
         url: ParseResult = urlparse(repodata["url"])
-        g_path: str|None = os.path.join(self._tmpdir, f"{reponame}_release.key")
+        g_path: str | None = os.path.join(self._tmpdir, f"{reponame}_release.key")
         s_url: str = ""
         if repodata.get("components", "/") != "/":
             s_url = urljoin(f"{url.scheme}://{url.netloc}/{url.path}/dists/{repodata['name']}", "")
@@ -129,8 +131,8 @@ class KiwiParent:
                 log.warning(f"Unable to download key: {e}")
                 return None
             # check reponse OK
-            if response.status_code == HTTPStatus.OK:
-                with open(g_path, 'xb') as f_rel:
+            if response.status_code == HTTPStatus.OK and g_path is not None:
+                with open(g_path, "xb") as f_rel:
                     f_rel.write(response.content)
             else:
                 log.warning(f"Wrong url defined for repo {reponame}")
@@ -150,10 +152,14 @@ class KiwiParent:
                 keylist: List[str] = os.listdir(self._trusted_gpg_d)
                 selected = self._key_selection(reponame, keylist)
                 if selected:
-                    repodata["key"] = ParseResult(scheme="file",
-                                                  path=os.path.join(self._trusted_gpg_d, selected),
-                                                  params="", query="", fragment="",
-                                                  netloc="").geturl()
+                    repodata["key"] = ParseResult(
+                        scheme="file",
+                        path=os.path.join(self._trusted_gpg_d, selected),
+                        params="",
+                        query="",
+                        fragment="",
+                        netloc="",
+                    ).geturl()
                     self._check_repokey(repodata, reponame)
                     return
             else:
@@ -164,15 +170,16 @@ class KiwiParent:
     def _key_selection(self, reponame: str, options: List[str]) -> str | None:
         none_of_above = "none of the above"
         question = [
-            inquirer.List("choice",
-                          message="Choose the right key for {}:".format(reponame),
-                          choices=options + [none_of_above],
-                          default=none_of_above,
-                          carousel=True
-                          ),
+            inquirer.List(
+                "choice",
+                message="Choose the right key for {}:".format(reponame),
+                choices=options + [none_of_above],
+                default=none_of_above,
+                carousel=True,
+            ),
         ]
         answer = inquirer.prompt(question)
-        # Logging wont work here 
+        # Logging wont work here
         print("You selected:", answer["choice"])
 
         return answer["choice"] != none_of_above and answer["choice"] or None

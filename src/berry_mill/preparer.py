@@ -1,12 +1,12 @@
 from typing import List
 from typing_extensions import Unpack
-import kiwi.logger
-from kiwi.exceptions import KiwiPrivilegesError, KiwiRootDirExists
+import kiwi.logger  # type: ignore
+from kiwi.exceptions import KiwiPrivilegesError, KiwiRootDirExists  # type: ignore
 from .kiwiapp import KiwiAppPrepare
 from .kiwrap import KiwiParent
 from .params import KiwiPrepParams
 
-log = kiwi.logging.getLogger('kiwi')
+log = kiwi.logging.getLogger("kiwi")
 
 
 class KiwiPreparer(KiwiParent):
@@ -15,9 +15,7 @@ class KiwiPreparer(KiwiParent):
     """
 
     def __init__(self, descr: str, **kw: Unpack[KiwiPrepParams]):
-        super().__init__(descr=descr,
-                         profile=kw.get("profile", ""),
-                         debug=kw.get("debug", False))
+        super().__init__(descr=descr, profile=kw.get("profile", ""), debug=kw.get("debug", False))
 
         self._params: KiwiPrepParams = kw
 

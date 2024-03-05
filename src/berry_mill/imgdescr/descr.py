@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import os
 import logging
-import yaml
-from yaml.scanner import ScannerError as YamlScannerError
+import yaml  # type: ignore
+from yaml.scanner import ScannerError as YamlScannerError  # type: ignore
 import os.path
 import xml.dom.minidom
-from typing import Any
-import lxml.etree as ET
+from typing import Any, Callable
+import lxml.etree as ET  # type: ignore
 
 log = logging.getLogger("kiwi")
+
 
 class ApplianceDescription:
     __INHERIT = "inherit"
@@ -20,9 +21,9 @@ class ApplianceDescription:
     __P_RA = "remove_any"
     __P_ST = "set"
 
-    def __init__(self, descr: str, parent: str = None) -> ApplianceDescription:
+    def __init__(self, descr: str, parent: str | None = None) -> None:
         self.s_dom: ET.Element = ET.fromstring(descr.encode("utf-8"))
-        self.p_dom: ET.Element|None = ET.fromstring(parent.encode("utf-8")) if parent is not None else None
+        self.p_dom: ET.Element = ET.fromstring(parent.encode("utf-8")) if parent is not None else None
 
         self._resolve()
         self._apply()
@@ -32,8 +33,11 @@ class ApplianceDescription:
         Export appliance description to an XML string.
         """
         out = []
-        for l in xml.dom.minidom.parseString(ET.tostring(node if node is not None else self.p_dom, encoding="utf-8")
-                                             .decode("utf-8")).toprettyxml(indent="  ").split("\n"):
+        for l in (
+            xml.dom.minidom.parseString(ET.tostring(node if node is not None else self.p_dom, encoding="utf-8").decode("utf-8"))
+            .toprettyxml(indent="  ")
+            .split("\n")
+        ):
             if l.strip():
                 out.append(l.rstrip())
         return "\n".join(out)
@@ -50,7 +54,7 @@ class ApplianceDescription:
             return
 
         assert self.p_dom is not None, "No inherited descriptions found"
-        assert "path" in self.p_dom.attrib, "Inherited element should contain \"path\" attribute"
+        assert "path" in self.p_dom.attrib, 'Inherited element should contain "path" attribute'
         assert os.path.exists(self.p_dom.attrib["path"]), "Unable to find inherited description"
 
         with open(self.p_dom.attrib["path"]) as ihf:
@@ -69,22 +73,29 @@ class ApplianceDescription:
             if op.tag in [self.__P_AD, self.__P_RM, self.__P_MG, self.__P_RP, self.__P_RA, self.__P_ST]:
                 self.__class__.__dict__[f"_{op.tag}"](self, op)
 
-    def frame(f):
+    def frame(f) -> Callable[[ApplianceDescription, Any], None]:
         def w(ref, *a, **kw):
-            f.__globals__["frame"] = f.__code__.co_name[1:]
-            return f(ref, *a, **kw)
+            f.__globals__["frame"] = f.__code__.co_name[1:]  # type: ignore
+            return f(ref, *a, **kw)  # type: ignore
+
         return w
 
     @staticmethod
-    def find_all(name: str, e: ET.Element, attrs: dict[str] = None) -> list[ET.Element]:
+    def find_all(name: str, e: ET.Element, attrs: dict[str, str] | None = None) -> list[ET.Element]:
         nodes = set()
-        [nodes.add(c) if c.tag == name and (not attrs or c.attrib == attrs)
-         else nodes.update(ApplianceDescription.find_all(name, c, attrs=attrs)) for c in e]
+        [
+            (
+                nodes.add(c)  # type: ignore [func-returns-value]
+                if c.tag == name and (not attrs or c.attrib == attrs)
+                else nodes.update(ApplianceDescription.find_all(name, c, attrs=attrs))  # type: ignore [func-returns-value]
+            )
+            for c in e
+        ]
 
         return list(nodes)
 
     @staticmethod
-    def find_any(name: str, e: ET.Element, attrs: dict[str] = None) -> set[ET.Element]:
+    def find_any(name: str, e: ET.Element, attrs: dict[str, str] | None = None) -> set[ET.Element]:
         nodes = set()
         if attrs is None:
             attrs = {}
@@ -94,7 +105,7 @@ class ApplianceDescription:
                 if k not in node.attrib or node.attrib[k] != v:
                     matches = False
                     break
-            matches and nodes.add(node)
+            matches and nodes.add(node)  # type: ignore [func-returns-value]
         return nodes
 
     @staticmethod
@@ -111,21 +122,24 @@ class ApplianceDescription:
         while parent.getparent() is not None:
             parent = parent.getparent()
             path.insert(0, parent.tag)
-        return '/' + '/'.join(path)
+        return "/" + "/".join(path)
 
     @staticmethod
     def get_last(e: ET.Element) -> list[ET.Element]:
         out: list[ET.Element] = []
-        len(e) and [out.extend(ApplianceDescription.get_last(c)) for c in e] or out.append(e)
+        len(e) and [out.extend(ApplianceDescription.get_last(c)) for c in e] or out.append(e)  # type: ignore [func-returns-value]
 
         return out
 
     @staticmethod
-    def get_next(e: ET.Element) -> ET.Element|None:
+    def get_next(e: ET.Element) -> ET.Element | None:
         for s_tag in e:
-            if isinstance(s_tag, ET._Comment): continue
+            if isinstance(s_tag, ET._Comment):
+                continue
             if s_tag is not None:
                 return s_tag
+
+        return None
 
     def _add(self, e: ET.Element) -> None:
         """
@@ -134,7 +148,8 @@ class ApplianceDescription:
         for c in e:
             # Elements
             for tc in self.find_all(c.tag, self.p_dom):
-                if c.attrib != tc.attrib: continue
+                if c.attrib != tc.attrib:
+                    continue
                 [tc.append(mv_c) for mv_c in c]
 
             # Aggregates
@@ -148,7 +163,7 @@ class ApplianceDescription:
                 p = self.get_parent(self.p_dom, tc)
                 p is not None and p.append(c)
 
-    @frame
+    @frame  # type: ignore [arg-type]
     def _remove(self, e: ET.Element) -> None:
         """
         Remove inherited elements
@@ -158,11 +173,16 @@ class ApplianceDescription:
                 # Aggregate
                 tgt_aggr: ET.Element = None
                 for tgt_aggr in self.find_all(s_tag.tag, self.p_dom):
-                    if tgt_aggr.attrib == s_tag.attrib and \
-                        "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame]) == self.get_xpath(tgt_aggr):
-                        [[t_tag.attrib == r_tag.attrib and t_tag.getparent().remove(t_tag)
-                          for t_tag in ApplianceDescription.get_last(tgt_aggr)]
-                          for r_tag in ApplianceDescription.get_last(s_tag)]
+                    if tgt_aggr.attrib == s_tag.attrib and "/".join(
+                        [x for x in self.get_xpath(s_tag).split("/") if x != frame]  # type: ignore [name-defined]
+                    ) == self.get_xpath(tgt_aggr):
+                        [
+                            [
+                                t_tag.attrib == r_tag.attrib and t_tag.getparent().remove(t_tag)
+                                for t_tag in ApplianceDescription.get_last(tgt_aggr)
+                            ]
+                            for r_tag in ApplianceDescription.get_last(s_tag)
+                        ]
             else:
                 # Elements
                 for tc in self.find_all(s_tag.tag, self.p_dom):
@@ -170,7 +190,7 @@ class ApplianceDescription:
                         p = self.get_parent(self.p_dom, tc)
                         p is not None and p.remove(tc)
 
-    @frame
+    @frame  # type: ignore [arg-type]
     def _merge(self, e: ET.Element) -> None:
         """
         Merge inherited elements
@@ -179,7 +199,7 @@ class ApplianceDescription:
         if s_tag is None:
             return
 
-        e_xp: str = "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame])
+        e_xp: str = "/".join([x for x in self.get_xpath(s_tag).split("/") if x != frame])  # type: ignore [name-defined]
         for t_tag in ApplianceDescription.find_all(s_tag.tag, self.p_dom, s_tag.attrib):
             if self.get_xpath(t_tag) == e_xp:
                 for sc in s_tag:
@@ -194,7 +214,7 @@ class ApplianceDescription:
         """
         Replace inherited elements
         """
-        s_tag:ET.Element = ApplianceDescription.get_next(e)
+        s_tag: ET.Element = ApplianceDescription.get_next(e)
         if s_tag is None:
             return
 
@@ -216,7 +236,6 @@ class ApplianceDescription:
             return
 
         [t.getparent().remove(t) for t in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib)]
-
 
     def _set(self, e: ET.Element) -> None:
         """

@@ -1,6 +1,7 @@
 """
 Interafce Module for Kiwi Tasks (general)
 """
+
 import os
 import sys
 import pathlib
@@ -18,6 +19,7 @@ class KiwiApp(ABC):
     Posing as a costum API for calling kiwi programmatically
     Functions as Interface between Berrymill and Kiwi-ng Wrappers
     """
+
     def __init__(self, argv: List[str], repos: Dict[str, Dict[str, str]]):
         self._repos = repos
         sys.argv = argv
@@ -39,6 +41,7 @@ class KiwiAppPrepare(KiwiApp):
     """
     Interface between Berrymill and Kiwi-ng Prepare Wrapper
     """
+
     def run(self) -> None:
         """
         create $HOME/.gnupg if needed and run prepare task
@@ -51,6 +54,7 @@ class KiwiAppLocal(KiwiApp):
     """
     Interface between Berrymill and Kiwi-ng build Wrapper
     """
+
     def run(self) -> None:
         """
         create $HOME/.gnupg if needed and run local build task process
@@ -73,7 +77,7 @@ class KiwiAppBox(KiwiApp):
 
     def run(self) -> None:
         repostring: str = self._generate_repo_string(self._repos)
-        
+
         BoxBuildTask(repostring).process()
 
     def _get_relative_path(self) -> str:
@@ -98,19 +102,19 @@ class KiwiAppBox(KiwiApp):
 
         for repo_name in repos:
             repo_content = repos.get(repo_name, dict())
-            components: List[str] = repo_content.get("components", "/").split(',')
+            components: List[str] = repo_content.get("components", "/").split(",")
             for component in components:
                 repo_build_options.append("--add-repo")
                 # syntax of --add-repo value:
                 # source,type,alias,priority,imageinclude,package_gpgcheck,{signing_keys},component,distribution,repo_gpgcheck
                 repo_build_options.append(
-                    f"{repo_content.get('url')}," +
-                    f"{repo_content.get('type')}," +
-                    f"{repo_name},,,," +
-                    f"{{{repo_content.get('key')}}}," +
-                    f"{component if component != '/' else ''}," +
-                    f"{repo_content.get('name', '')}," +
-                    "false"
+                    f"{repo_content.get('url')},"
+                    + f"{repo_content.get('type')},"
+                    + f"{repo_name},,,,"
+                    + f"{{{repo_content.get('key')}}},"
+                    + f"{component if component != '/' else ''},"
+                    + f"{repo_content.get('name', '')},"
+                    + "false"
                 )
 
         return " ".join(repo_build_options)

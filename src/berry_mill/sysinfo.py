@@ -1,7 +1,7 @@
 import platform
 import os
-from typing import Dict
-import kiwi.logger
+from typing import Dict  # type: ignore
+import kiwi.logger  # type: ignore
 
 archfix: Dict[str, str] = {
     "x86_64": "amd64",
@@ -56,16 +56,24 @@ def has_virtualization() -> bool:
 
     return True
 
+
 def is_vm() -> bool:
     """
     Detect if the current machine is a VM
     """
-    assert bool(list(filter(None, [os.path.exists("{}/lshw".format(p)) for p in ["/usr/bin", "/usr/sbin", "/sbin", "/bin"]]))), "lshw utility is missing"
+    assert bool(
+        list(filter(None, [os.path.exists("{}/lshw".format(p)) for p in ["/usr/bin", "/usr/sbin", "/sbin", "/bin"]]))
+    ), "lshw utility is missing"
     # Crude test on vendors
-    vendors:list[str] = set(filter(None, map(lambda l:l.startswith("vendor:")
-                                             and l.split(":")[-1].strip()
-                                             or "", [x.strip().lower() for x in
-                                                     os.popen("lshw 2> /dev/null").readlines()])))
+    vendors: set[str] = set(
+        filter(
+            None,
+            map(
+                lambda l: l.startswith("vendor:") and l.split(":")[-1].strip() or "",
+                [x.strip().lower() for x in os.popen("lshw 2> /dev/null").readlines()],
+            ),
+        )
+    )
     for v in ["qemu", "virtualbox", "vmware"]:
         if v in vendors:
             return True

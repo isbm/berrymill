@@ -2,14 +2,14 @@ from typing import Any
 from berry_mill.plugin import PluginIf, registry
 from berry_mill.cfgh import ConfigHandler
 from berry_mill.mountpoint import MountManager
-import kiwi.logger
+import kiwi.logger  # type: ignore
 import os
 import tempfile
 import json
 import shutil
 
 
-log = kiwi.logging.getLogger('kiwi')
+log = kiwi.logging.getLogger("kiwi")
 log.set_color_format()
 
 
@@ -18,20 +18,20 @@ class SbomPlugin(PluginIf):
     Plugin to scan filesystems and generate SBOM in various formats
     """
 
-    ID:str = "sbom"
+    ID: str = "sbom"
 
-    def get_fs_sbom(self, fs_p:str, format:str, verbose=False):
+    def get_fs_sbom(self, fs_p: str, format: str, verbose=False):
         """
         Generate SBOM data for a given filesystem
         """
-        imgp = MountManager().get_image_path(fs_p)
-        assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
+        imgp: str | None = MountManager().get_image_path(fs_p)
+        assert imgp is not None, "No image path found for {} mountpoint".format(fs_p)
 
         loopdev = MountManager().get_loop_device_by_mountpoint(fs_p)
         assert bool(loopdev), "No loop device found for {} mountpoint".format(fs_p)
 
         # generate SBOM
-        tfl:str = ""
+        tfl: str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
             tfl = tf.name
 
@@ -48,7 +48,7 @@ class SbomPlugin(PluginIf):
         os.remove(tfl)
         log.debug("SBOM tempfile {} was removed".format(tfl))
 
-        spf_p:str = fs_p + "." + format.replace("-", ".")
+        spf_p: str = fs_p + "." + format.replace("-", ".")
         with open(spf_p, "w") as spf:
             log.debug("Writing SBOM to {}".format(spf_p))
             spf.write(out)
@@ -61,22 +61,23 @@ class SbomPlugin(PluginIf):
         """
         Check the environment
         """
-        for p, m in (["/usr/bin/syft", "Syft is not installed"],
-                     ["/usr/bin/file", "File type command (/usr/bin/file) is not found"]):
+        for p, m in (
+            ["/usr/bin/syft", "Syft is not installed"],
+            ["/usr/bin/file", "File type command (/usr/bin/file) is not found"],
+        ):
             assert os.path.exists(p), m
         assert os.getuid() == 0, "Plugin {} requires root priviledges".format(self.ID)
 
-    def run(self, cfg:ConfigHandler):
+    def run(self, cfg: ConfigHandler):
         """
         Run SBOM plugin
         """
         self.check_env()
-        sbom_data:dict[str, Any] = self.get_config(cfg)
+        sbom_data: dict[str, Any] = self.get_config(cfg)
 
         for mp in MountManager().get_mountpoints():
             log.debug("Generating SBOM data for {}".format(mp))
-            self.get_fs_sbom(mp, format=sbom_data.get("format", "spdx-json"),
-                             verbose=sbom_data.get("verbose"))
+            self.get_fs_sbom(mp, format=sbom_data.get("format", "spdx-json"), verbose=sbom_data.get("verbose"))
 
 
 # Register plugin
