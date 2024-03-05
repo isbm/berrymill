@@ -131,8 +131,8 @@ class KiwiParent:
                 log.warning(f"Unable to download key: {e}")
                 return None
             # check reponse OK
-            if response.status_code == HTTPStatus.OK:
-                with open(g_path, 'xb') as f_rel:
+            if response.status_code == HTTPStatus.OK and g_path is not None:
+                with open(g_path, "xb") as f_rel:
                     f_rel.write(response.content)
             else:
                 log.warning(f"Wrong url defined for repo {reponame}")

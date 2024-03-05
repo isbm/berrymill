@@ -67,7 +67,7 @@ class ImageFinder:
         """
         Find images with filesystems
         """
-        out:list[str] = []
+        out: list[ImagePtr] = []
         for p in self._i_pth:
             log.debug("Looking for images in {}".format(p))
             if not "://" in p:
@@ -97,4 +97,4 @@ class ImageFinder:
         """
         Get found images
         """
-        return tuple(self._i_imgs)
+        return self._i_imgs

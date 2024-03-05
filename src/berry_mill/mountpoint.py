@@ -26,15 +26,15 @@ class MountPoint:
     """
 
     def __init__(self) -> None:
-        self._partitions:set[str] = set()
-        self._loop_devices:list[str, str] = {}
+        self._partitions: set[str] = set()
+        self._loop_devices: dict[str, str] = {}
 
     def add(self, pth: str, loopdev: str) -> MountPoint:
         self._partitions.add(pth)
         self._loop_devices[pth] = loopdev
         return self
 
-    def get_partitions(self) -> list[str]:
+    def get_partitions(self) -> tuple[str, ...]:
         """
         Return mounted partitions
         """
@@ -43,11 +43,12 @@ class MountPoint:
     def get_loop_device(self, pth: str) -> str | None:
         return self._loop_devices.get(pth)
 
-    def get_loop_devices(self) -> list[str]:
+    def get_loop_devices(self) -> tuple[str, ...]:
         """
         Return loop devices
         """
         return tuple(self._loop_devices.values())
+
 
 class MountManager:
     """
@@ -56,6 +57,7 @@ class MountManager:
     """
 
     _instance: MountManager | None = None
+    _mountstore: OrderedDict
 
     def __new__(cls) -> MountManager:
         if cls._instance is None:
@@ -78,14 +80,13 @@ class MountManager:
                 log.debug("System unmounted")
                 break
 
-
-    def __mount_partition_image(self, img_ptr:ImagePtr) -> str:
+    def __mount_partition_image(self, img_ptr: ImagePtr) -> MountPoint:
         """
         Mount a single partition image, return mounted directory
         """
 
-        mpt = self.get_mountpoint(img_ptr.path)
-        if mpt:
+        mpt: MountPoint | None = self.get_mountpoint(img_ptr.path)
+        if mpt is not None:
             return mpt
 
         dst: str = tempfile.TemporaryDirectory(prefix="bml-{}-mnt-".format(os.path.basename(img_ptr.path))).name
@@ -102,7 +103,7 @@ class MountManager:
         log.debug("Device {} has been mounted successfully".format(img_ptr.loop))
         self._mountstore[img_ptr] = mpt.add(dst, img_ptr.loop)
 
-        return dst
+        return mpt
 
     def __mount_disk_image(self, img_ptr: ImagePtr) -> None:
         """
@@ -146,9 +147,9 @@ class MountManager:
         """
 
         if img_ptr.img_type == ImagePtr.PARTITION_IMAGE:
-            return self.__mount_partition_image(img_ptr)
+            self.__mount_partition_image(img_ptr)
         elif img_ptr.img_type == ImagePtr.DISK_IMAGE:
-            return self.__mount_disk_image(img_ptr)
+            self.__mount_disk_image(img_ptr)
 
         raise Exception("Unable to mount image: {}".format(repr(img_ptr)))
 

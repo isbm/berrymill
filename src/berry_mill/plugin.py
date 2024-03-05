@@ -22,8 +22,9 @@ class PluginRegistry:
     """
     Plugin registry to keep the references on each plugin
     """
+
     def __init__(self) -> None:
-        self.__registry = {}
+        self.__registry: dict = {}
 
     def __call__(self, __object: Any) -> PluginRegistry:
         if issubclass(__object.__class__, PluginIf):
@@ -38,7 +39,7 @@ class PluginRegistry:
     def plugins(self) -> list[str]:
         return sorted(self.__registry.keys())
 
-    def __getitem__(self, __name: str) -> PluginRegistry|None:
+    def __getitem__(self, __name: str) -> PluginIf | None:
         return __name in self.__registry and self.__registry[__name] or None
 
     def call(self, cfg: ConfigHandler, pname: str, *args, **kw) -> Any:
@@ -54,6 +55,8 @@ registry = PluginRegistry()
 
 
 class PluginIfDeco(type):
+    ID: str
+
     def __init__(cls, name, base, clsd):
         def run(self, cfg: ConfigHandler):
             log.debug("Running {} plugin".format(cls.ID))

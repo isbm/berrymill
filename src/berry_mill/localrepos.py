@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 class Repodata:
     def __init__(self) -> None:
         self.type: str = ""
-        self.components: Tuple[str, ...] | None # Not mandatory
+        self.components: Tuple[str, ...]  # Not mandatory
         self.url: str = ""
         self.trusted: bool = False
         self.name: str = ""
@@ -54,7 +54,7 @@ class Repodata:
         """
         Serialise the repodata to the JSON format
         """
-        data = {}
+        data: dict = {}
         for arch in self.attrs.get("arch", "amd64").split(","):
             if data.get(arch) is None:
                 data[arch] = {}

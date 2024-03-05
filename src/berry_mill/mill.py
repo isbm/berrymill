@@ -207,9 +207,9 @@ class ImageMill:
         self._appliance_path, self._appliance_descr = self._get_appliance_path_info(self.args.image)
         os.chdir(self._appliance_path)
 
-        self._tmp_backup_dir: str = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
+        self._tmp_backup_dir = mkdtemp(prefix="berrymill-tmp-", dir="/tmp")
         self._appliance_abspath: str = os.path.join(os.getcwd(), self._appliance_descr)
-        self._bac_appliance_abspth: str = os.path.join(self._tmp_backup_dir, self._appliance_descr)
+        self._bac_appliance_abspth = os.path.join(self._tmp_backup_dir, self._appliance_descr)
 
     def run(self) -> None:
         """

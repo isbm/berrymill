@@ -24,14 +24,14 @@ class SbomPlugin(PluginIf):
         """
         Generate SBOM data for a given filesystem
         """
-        imgp = MountManager().get_image_path(fs_p)
-        assert bool(imgp), "No image path found for {} mountpoint".format(fs_p)
+        imgp: str | None = MountManager().get_image_path(fs_p)
+        assert imgp is not None, "No image path found for {} mountpoint".format(fs_p)
 
         loopdev = MountManager().get_loop_device_by_mountpoint(fs_p)
         assert bool(loopdev), "No loop device found for {} mountpoint".format(fs_p)
 
         # generate SBOM
-        tfl:str = ""
+        tfl: str = ""
         with tempfile.NamedTemporaryFile(suffix="-bml-SBOM", delete=False) as tf:
             tfl = tf.name
 

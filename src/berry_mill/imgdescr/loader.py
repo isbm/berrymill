@@ -26,14 +26,14 @@ class Loader:
         Traverse the inheritance path
         """
         self.__i_stack.append(pth)
-        doc: ET.Element|None = None
+        doc: ET.Element | None = None
         try:
             with open(pth) as fp:
                 doc = ET.fromstring(fp.read().encode("utf-8"))
         except Exception as exc:
             raise IOError(f'Exception while accessing "{pth}": {exc}')
 
-        l_iht:list[ET.Element]|None = ApplianceDescription.find_all("inherit", doc)
+        l_iht: list[ET.Element] | None = ApplianceDescription.find_all("inherit", doc)
         if l_iht:
             self.is_derived = True
             self.__i_stack.append(next(iter(l_iht)).attrib["path"])
