@@ -148,8 +148,10 @@ class MountManager:
 
         if img_ptr.img_type == ImagePtr.PARTITION_IMAGE:
             self.__mount_partition_image(img_ptr)
+            return
         elif img_ptr.img_type == ImagePtr.DISK_IMAGE:
             self.__mount_disk_image(img_ptr)
+            return
 
         raise Exception("Unable to mount image: {}".format(repr(img_ptr)))
 
