@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 import urllib
-import kiwi.logger# type: ignore
+import kiwi.logger  # type: ignore
 import os
 
 log = kiwi.logging.getLogger("kiwi")
