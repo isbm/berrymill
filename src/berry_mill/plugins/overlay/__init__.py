@@ -7,6 +7,7 @@ import copy
 import os
 import shutil
 
+
 class RootOverlay(PluginIf):
     """
     Root overlay plugin allows to choose between different
@@ -17,26 +18,26 @@ class RootOverlay(PluginIf):
 
     ID = "overlay"
 
-    def _abs_p(self, pth:str) -> str:
+    def _abs_p(self, pth: str) -> str:
         """
         Expand path
         """
         uri = urlparse(pth)
         assert uri.scheme == "dir", "Wrong path definition"
-        if uri.hostname is not None: # Path is relative
+        if uri.hostname is not None:  # Path is relative
             pth = "./{}{}".format(uri.hostname, uri.path)
         else:
             pth = uri.path
 
         return pth
 
-    def run(self, cfg:ConfigHandler):
+    def run(self, cfg: ConfigHandler):
         """
         Run overlay plugin
         """
         p_cfg = copy.deepcopy(cfg.config[self.ID])
         if self.args.dir:
-            roots:list[str] = []
+            roots: list[str] = []
             for r in self.args.dir.split(","):
                 if r.startswith("dir://"):
                     roots.append(r)
@@ -56,6 +57,11 @@ class RootOverlay(PluginIf):
         print("Running plugin {}".format(self.title))
         print(p_cfg)
 
+
 # Register plugin
-registry(RootOverlay(title="overlay rootfs with specific artifacts",
-                     argmap=[PluginArgs("-r", "--dir", help="overlay directories, comma-separated")]))
+registry(
+    RootOverlay(
+        title="overlay rootfs with specific artifacts",
+        argmap=[PluginArgs("-r", "--dir", help="overlay directories, comma-separated")],
+    )
+)

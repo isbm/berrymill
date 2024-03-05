@@ -2,15 +2,16 @@ from berry_mill.mill import ImageMill
 
 version = "0.2"
 
+
 def main():
     from berry_mill import ImageMill
     from typing import Any
     import sys
     import kiwi.logger  # type: ignore
 
-    log = kiwi.logging.getLogger('kiwi')
+    log = kiwi.logging.getLogger("kiwi")
 
-    mill:Any = None
+    mill: Any = None
     try:
         mill = ImageMill()
     except Exception as exc:

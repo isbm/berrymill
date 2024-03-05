@@ -3,17 +3,19 @@ from typing import Any
 import lxml.etree as ET  # type: ignore [import-untyped]
 from berry_mill.imgdescr.descr import ApplianceDescription
 
+
 class UqList(list):
     """
     List that acts like a Set, skipping elements that already exist.
     """
+
     def append(self, __object: Any) -> None:
         if __object not in self:
             super().append(__object)
 
 
 class Loader:
-    
+
     def __init__(self) -> None:
         self.__i_stack = UqList()
         self.is_derived: bool = False
@@ -29,7 +31,7 @@ class Loader:
             with open(pth) as fp:
                 doc = ET.fromstring(fp.read().encode("utf-8"))
         except Exception as exc:
-            raise IOError(f"Exception while accessing \"{pth}\": {exc}")
+            raise IOError(f'Exception while accessing "{pth}": {exc}')
 
         l_iht:list[ET.Element]|None = ApplianceDescription.find_all("inherit", doc)
         if l_iht:
@@ -47,7 +49,7 @@ class Loader:
         self.__i_stack.reverse()
 
         # init base
-        descr:ApplianceDescription|None = None
+        descr: ApplianceDescription | None = None
         with open(next(iter(self.__i_stack))) as fd:
             descr = ApplianceDescription(fd.read())
 

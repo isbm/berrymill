@@ -2,7 +2,7 @@ from typing import Dict
 from kiwi.tasks.system_prepare import SystemPrepareTask  # type: ignore
 import kiwi.logger  # type: ignore
 
-log = kiwi.logging.getLogger('kiwi')
+log = kiwi.logging.getLogger("kiwi")
 
 
 class PrepareTask(SystemPrepareTask):
@@ -18,7 +18,7 @@ class PrepareTask(SystemPrepareTask):
         super().__init__()
         self.repos: Dict[str, Dict[str, str]] = repos
 
-    def load_xml_description(self, description_directory: str, kiwi_file: str = '') -> None:
+    def load_xml_description(self, description_directory: str, kiwi_file: str = "") -> None:
         super().load_xml_description(description_directory, kiwi_file)
 
         self.xml_state.delete_repository_sections()
@@ -27,7 +27,7 @@ class PrepareTask(SystemPrepareTask):
             repodata: Dict[str, str] = self.repos.get(reponame, dict())
 
             components: str | None = repodata.get("components", "/")
-            components = components if components != '/' else None
+            components = components if components != "/" else None
             if components:
                 components = components.replace(",", " ")
             distro = repodata.get("name")
@@ -38,5 +38,5 @@ class PrepareTask(SystemPrepareTask):
                 repo_signing_keys=[repodata.get("key")],
                 components=components,
                 distribution=distro,
-                repo_gpgcheck=False
+                repo_gpgcheck=False,
             )

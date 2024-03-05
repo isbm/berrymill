@@ -32,8 +32,11 @@ class ApplianceDescription:
         Export appliance description to an XML string.
         """
         out = []
-        for l in xml.dom.minidom.parseString(ET.tostring(node if node is not None else self.p_dom, encoding="utf-8")
-                                             .decode("utf-8")).toprettyxml(indent="  ").split("\n"):
+        for l in (
+            xml.dom.minidom.parseString(ET.tostring(node if node is not None else self.p_dom, encoding="utf-8").decode("utf-8"))
+            .toprettyxml(indent="  ")
+            .split("\n")
+        ):
             if l.strip():
                 out.append(l.rstrip())
         return "\n".join(out)
@@ -50,7 +53,7 @@ class ApplianceDescription:
             return
 
         assert self.p_dom is not None, "No inherited descriptions found"
-        assert "path" in self.p_dom.attrib, "Inherited element should contain \"path\" attribute"
+        assert "path" in self.p_dom.attrib, 'Inherited element should contain "path" attribute'
         assert os.path.exists(self.p_dom.attrib["path"]), "Unable to find inherited description"
 
         with open(self.p_dom.attrib["path"]) as ihf:
@@ -194,7 +197,7 @@ class ApplianceDescription:
         """
         Replace inherited elements
         """
-        s_tag:ET.Element = ApplianceDescription.get_next(e)
+        s_tag: ET.Element = ApplianceDescription.get_next(e)
         if s_tag is None:
             return
 
@@ -216,7 +219,6 @@ class ApplianceDescription:
             return
 
         [t.getparent().remove(t) for t in ApplianceDescription.find_any(s_tag.tag, self.p_dom, s_tag.attrib)]
-
 
     def _set(self, e: ET.Element) -> None:
         """
