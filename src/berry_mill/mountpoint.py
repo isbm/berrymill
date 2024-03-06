@@ -109,6 +109,7 @@ class MountManager:
 
     _instance: MountManager | None = None
     _mountstore: OrderedDict
+    _mount_data: MountData | None = None
 
     def __new__(cls) -> MountManager:
         if cls._instance is None:
@@ -212,13 +213,14 @@ class MountManager:
         Exception is raised on failure
         """
         log.debug("Umounting {}".format(pth))
-        os.system("umount {}".format(pth))
+        os.system("umount {} 2>/dev/null".format(pth))
 
         MountManager.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
 
+    @MountData.update_mount_data
     def get_mountpoints(self) -> list[str]:
         """
         Return mounted filesystems
@@ -228,12 +230,14 @@ class MountManager:
             p += list(mpt.get_partitions())
         return p
 
+    @MountData.update_mount_data
     def get_loop_devices(self) -> list[str]:
         d = []
         for mpt in self._mountstore.values():
             d += list(mpt.get_loop_devices())
         return d
 
+    @MountData.update_mount_data
     def get_loop_device_by_mountpoint(self, mpt: str) -> str | None:
         for i, m in self._mountstore.items():
             dev = m.get_loop_device(mpt)
@@ -241,12 +245,14 @@ class MountManager:
                 return dev
         return None
 
+    @MountData.update_mount_data
     def get_mountpoint(self, img: str) -> MountPoint | None:
         """
         Return a mount point
         """
         return self._mountstore.get(img)
 
+    @MountData.update_mount_data
     def get_image_path(self, mpt: str) -> str | None:
         """
         Get a mounted image location from the existing mountpoint
@@ -291,3 +297,5 @@ class MountManager:
         root_loopdev = "/dev/loop{}".format(root_loopdev)
         log.debug("Detaching {} device".format(root_loopdev))
         os.system("losetup -d {}".format(root_loopdev))
+
+        self._mount_data = None
