@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 from collections import OrderedDict
+from typing import Any, Callable
 import kiwi.logger  # type: ignore
 import time
 import os
@@ -17,6 +18,56 @@ from berry_mill.imagefinder import ImagePtr
 
 log = kiwi.logging.getLogger("kiwi")
 log.set_color_format()  # ddd
+
+
+class MountData:
+    """
+    Mount data (basically just a parsed output of "mount" command)
+    """
+
+    def __init__(self) -> None:
+        self.__mount_data: list[list[str]] = []
+        for l in [x.strip() for x in os.popen("mount").read().split(os.linesep)]:
+            tk: list[str] = l.split(" ")
+            if len(tk) == 6:
+                self.__mount_data.append([x for x in tk if x not in ["on", "type"]])
+
+    @staticmethod
+    def update_mount_data(m) -> Callable[..., Any]:
+        """
+        Update mount data
+        """
+
+        def w(self, *args, **kw) -> Any:
+            if self._mount_data is None:
+                self._mount_data = MountData()
+            return m(self, *args, **kw)
+
+        return w
+
+    @staticmethod
+    def _a2t(attrs: str) -> list[str]:
+        return attrs[1 : len(attrs) - 1].split(",")
+
+    def get_attrs_by_dev(self, device: str) -> tuple[str, ...] | tuple[()]:
+        """
+        Return attributes of a mountpoint by device
+        """
+        for md in self.__mount_data:
+            dev, _, _, attrs = md
+            if dev == device:
+                return tuple(MountData._a2t(attrs))
+        return ()
+
+    def get_attrs_by_mpt(self, mountpoint: str) -> tuple[str, ...] | tuple[()]:
+        """
+        Return attributes of a mountpoint by its location directory
+        """
+        for md in self.__mount_data:
+            _, mpt, _, attrs = md
+            if mpt == mountpoint:
+                return tuple(MountData._a2t(attrs))
+        return ()
 
 
 class MountPoint:
