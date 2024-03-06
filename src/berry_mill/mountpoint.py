@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 from collections import OrderedDict
+from typing import Any, Callable
 import kiwi.logger  # type: ignore
 import time
 import os
@@ -17,6 +18,56 @@ from berry_mill.imagefinder import ImagePtr
 
 log = kiwi.logging.getLogger("kiwi")
 log.set_color_format()  # ddd
+
+
+class MountData:
+    """
+    Mount data (basically just a parsed output of "mount" command)
+    """
+
+    def __init__(self) -> None:
+        self.__mount_data: list[list[str]] = []
+        for l in [x.strip() for x in os.popen("mount").read().split(os.linesep)]:
+            tk: list[str] = l.split(" ")
+            if len(tk) == 6:
+                self.__mount_data.append([x for x in tk if x not in ["on", "type"]])
+
+    @staticmethod
+    def update_mount_data(m) -> Callable[..., Any]:
+        """
+        Update mount data
+        """
+
+        def w(self, *args, **kw) -> Any:
+            if self._mount_data is None:
+                self._mount_data = MountData()
+            return m(self, *args, **kw)
+
+        return w
+
+    @staticmethod
+    def _a2t(attrs: str) -> list[str]:
+        return attrs[1 : len(attrs) - 1].split(",")
+
+    def get_attrs_by_dev(self, device: str) -> tuple[str, ...] | tuple[()]:
+        """
+        Return attributes of a mountpoint by device
+        """
+        for md in self.__mount_data:
+            dev, _, _, attrs = md
+            if dev == device:
+                return tuple(MountData._a2t(attrs))
+        return ()
+
+    def get_attrs_by_mpt(self, mountpoint: str) -> tuple[str, ...] | tuple[()]:
+        """
+        Return attributes of a mountpoint by its location directory
+        """
+        for md in self.__mount_data:
+            _, mpt, _, attrs = md
+            if mpt == mountpoint:
+                return tuple(MountData._a2t(attrs))
+        return ()
 
 
 class MountPoint:
@@ -58,6 +109,7 @@ class MountManager:
 
     _instance: MountManager | None = None
     _mountstore: OrderedDict
+    _mount_data: MountData | None = None
 
     def __new__(cls) -> MountManager:
         if cls._instance is None:
@@ -120,7 +172,7 @@ class MountManager:
         # Get all other loop devs
         for dev in os.listdir("/dev"):
             dev = "/dev/{}".format(dev)
-            if dev.startswith(img_ptr.loop) and dev != img_ptr.loop:
+            if dev.startswith(img_ptr.loop) and dev != img_ptr.loop and dev[len(img_ptr.loop) :].startswith("p"):
                 log.debug("Registering loop device {}".format(dev))
                 loop_devices.append(dev)
 
@@ -161,13 +213,14 @@ class MountManager:
         Exception is raised on failure
         """
         log.debug("Umounting {}".format(pth))
-        os.system("umount {}".format(pth))
+        os.system("umount {} 2>/dev/null".format(pth))
 
         MountManager.wait_mount(pth, umount=True)
         log.debug("Directory {} umounted".format(pth))
 
         shutil.rmtree(pth)
 
+    @MountData.update_mount_data
     def get_mountpoints(self) -> list[str]:
         """
         Return mounted filesystems
@@ -177,12 +230,14 @@ class MountManager:
             p += list(mpt.get_partitions())
         return p
 
+    @MountData.update_mount_data
     def get_loop_devices(self) -> list[str]:
         d = []
         for mpt in self._mountstore.values():
             d += list(mpt.get_loop_devices())
         return d
 
+    @MountData.update_mount_data
     def get_loop_device_by_mountpoint(self, mpt: str) -> str | None:
         for i, m in self._mountstore.items():
             dev = m.get_loop_device(mpt)
@@ -190,12 +245,14 @@ class MountManager:
                 return dev
         return None
 
+    @MountData.update_mount_data
     def get_mountpoint(self, img: str) -> MountPoint | None:
         """
         Return a mount point
         """
         return self._mountstore.get(img)
 
+    @MountData.update_mount_data
     def get_image_path(self, mpt: str) -> str | None:
         """
         Get a mounted image location from the existing mountpoint
@@ -206,6 +263,16 @@ class MountManager:
                     return i.path
         return None
 
+    @MountData.update_mount_data
+    def is_writable(self, mountpoint: str) -> bool:
+        """
+        Return True is a mountpoint is writable.
+        """
+        assert self._mount_data is not None, "Mount data wasnt updated"
+        attrs: tuple[str, ...] | tuple[()] = self._mount_data.get_attrs_by_mpt(mountpoint=mountpoint)
+        return "rw" in attrs and "ro" not in attrs
+
+    @MountData.update_mount_data
     def get_partition_mountpoint_by_ord(self, num: int) -> str | None:
         """
         Get partition mountpoint by its order.
@@ -225,7 +292,6 @@ class MountManager:
         """
         log.debug("Flushing mountpoints")
         for mpt in self.get_mountpoints():
-            log.debug("Unmounting partition at {}".format(mpt))
             self.umount(mpt)
 
         root_loopdev: str | None = None
@@ -240,3 +306,5 @@ class MountManager:
         root_loopdev = "/dev/loop{}".format(root_loopdev)
         log.debug("Detaching {} device".format(root_loopdev))
         os.system("losetup -d {}".format(root_loopdev))
+
+        self._mount_data = None
