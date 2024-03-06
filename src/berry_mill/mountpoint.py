@@ -172,7 +172,7 @@ class MountManager:
         # Get all other loop devs
         for dev in os.listdir("/dev"):
             dev = "/dev/{}".format(dev)
-            if dev.startswith(img_ptr.loop) and dev != img_ptr.loop:
+            if dev.startswith(img_ptr.loop) and dev != img_ptr.loop and dev[len(img_ptr.loop) :].startswith("p"):
                 log.debug("Registering loop device {}".format(dev))
                 loop_devices.append(dev)
 
