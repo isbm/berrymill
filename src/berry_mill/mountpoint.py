@@ -292,7 +292,6 @@ class MountManager:
         """
         log.debug("Flushing mountpoints")
         for mpt in self.get_mountpoints():
-            log.debug("Unmounting partition at {}".format(mpt))
             self.umount(mpt)
 
         root_loopdev: str | None = None
