@@ -263,6 +263,16 @@ class MountManager:
                     return i.path
         return None
 
+    @MountData.update_mount_data
+    def is_writable(self, mountpoint: str) -> bool:
+        """
+        Return True is a mountpoint is writable.
+        """
+        assert self._mount_data is not None, "Mount data wasnt updated"
+        attrs: tuple[str, ...] | tuple[()] = self._mount_data.get_attrs_by_mpt(mountpoint=mountpoint)
+        return "rw" in attrs and "ro" not in attrs
+
+    @MountData.update_mount_data
     def get_partition_mountpoint_by_ord(self, num: int) -> str | None:
         """
         Get partition mountpoint by its order.
