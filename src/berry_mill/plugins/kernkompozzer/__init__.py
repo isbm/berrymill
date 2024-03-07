@@ -1,5 +1,11 @@
 from berry_mill import plugin
 from berry_mill.cfgh import ConfigHandler
+from types import ModuleType
+
+try:
+    import embdgen  # type: ignore
+except ImportError:
+    embdgen = None
 
 
 class Kernkompozzer(plugin.PluginIf):
@@ -13,6 +19,8 @@ class Kernkompozzer(plugin.PluginIf):
         """
         Called by berrymill during the main exec
         """
+        assert embdgen is not None, "Embdgen module is not installed"
+
         print(cfg.config[self.ID])
         print("KKZ with params:", self.runtime_args, self.runtime_kw)
 
