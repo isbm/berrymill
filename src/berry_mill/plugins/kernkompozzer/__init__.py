@@ -1,11 +1,116 @@
 from berry_mill import plugin
 from berry_mill.cfgh import ConfigHandler
 from types import ModuleType
+from berry_mill.plugins import PluginException
+
+import os
+import kiwi.logger  # type: ignore
+import shutil
+import tempfile
+import glob
 
 try:
     import embdgen  # type: ignore
 except ImportError:
     embdgen = None
+
+log = kiwi.logging.getLogger("kiwi")
+log.set_color_format()
+
+
+class _Flow:
+    class HvConf:
+        HV_DEFAULT_BUILD_DIR = "build"
+        HV_BUILD_DIR: str = "output-dir"
+        HV_PDATA: str = "part-data"
+        HV_PDATA_EL: list[str] = ["kernel", "initrd"]
+        HV_BOOTSTRAP_IMG: str = "bootstrap-image"
+        HV_DEV_TREE: str = "device-tree"
+        HV_SECTION: str = "hypervisor"
+        HV_CONFIG: str = "hv-conf"
+        HV_CONFIG_ENTRY: str = "hv-conf-entry"
+
+    def __init__(self, cfg: dict) -> None:
+        self.cfg: dict = cfg
+        self.wd: str = os.path.abspath(".") + "/" + self.cfg.get(self.HvConf.HV_BUILD_DIR, self.HvConf.HV_DEFAULT_BUILD_DIR)
+        os.makedirs(self.wd, exist_ok=True)
+        self._wtd: str = tempfile.mkdtemp(dir=self.wd)
+        os.makedirs(self._wtd, exist_ok=True)
+
+    @staticmethod
+    def _p2a(p: str) -> str:
+        assert p.startswith("dir://") or p.startswith("file://"), f'Path {p} should have "dir://" schema'
+        p = p.replace("file://", "dir://")  # file:// here is an alias for a directory path and only for config visualisation
+        if p.startswith("dir:///"):
+            return p[6:]
+        return os.path.abspath(".") + "/" + p[6:]
+
+    def _cleanup(self) -> None:
+        """
+        Cleanup everything
+        """
+        log.debug(f"Removing temporary {self._wtd}")
+        shutil.rmtree(self._wtd)
+
+    def _extract_uboot(self):
+        bsip: str | None = self.cfg.get(self.HvConf.HV_SECTION, {}).get(self.HvConf.HV_BOOTSTRAP_IMG)
+        if bsip is None:
+            raise PluginException(Kernkompozzer.ID, "Bootstrap image path is not defined in the configuration")
+        bsip = self._p2a(bsip)
+        if not os.path.exists(bsip):
+            raise PluginException(Kernkompozzer.ID, f"No such file or directory: {bsip}")
+        log.info(f"Extracting bootstrap image to {self._wtd}")
+        os.system(f"l4image -i {bsip} --workdir {self._wtd} extract")
+
+    def _copy_dtb(self):
+        dtb: str | None = self.cfg.get(self.HvConf.HV_SECTION, {}).get(self.HvConf.HV_DEV_TREE)
+        if dtb is None:
+            raise PluginException(Kernkompozzer.ID, "No device tree directory configured")
+        dtb = self._p2a(dtb)
+        if not os.path.exists(dtb):
+            raise PluginException(Kernkompozzer.ID, f"Path {dtb} does not exists")
+
+        dtf: list[str] = glob.glob(os.path.join(dtb, "*.dtb"))
+        assert len(dtf) > 0, "No device tree files has been found"
+        log.info("Copying device tree files")
+        for f in dtf:
+            shutil.copy(f, self._wtd)
+
+    def _copy_prt_data(self, part_id: str) -> None:
+        pth: str = self._p2a(self.cfg[self.HvConf.HV_PDATA].get(part_id, ""))
+        for tgt in self.HvConf.HV_PDATA_EL:
+            if not pth:
+                continue
+            dst = os.path.join(self._wtd, os.path.basename(part_id))
+            log.info(f"Copying {pth} as {dst}")
+            shutil.copy(pth, dst)
+
+    def _create_bootstrap(self):
+        btp_img: str = self._p2a(self.cfg[self.HvConf.HV_SECTION][self.HvConf.HV_BOOTSTRAP_IMG])
+        modlist: str = os.path.join(self._p2a(self.cfg[self.HvConf.HV_SECTION][self.HvConf.HV_CONFIG]), "modules.list")
+        entry = self.cfg[self.HvConf.HV_SECTION][self.HvConf.HV_CONFIG_ENTRY]
+        bimg: str = os.path.join(self._wtd, "bootstrap.uimage")
+        cmd = f"l4image -i {btp_img} -o {bimg} create --modules-list-file {modlist} --search-path {self._wtd} --entry {entry} > /dev/null"
+        if os.system(cmd):
+            raise PluginException(Kernkompozzer.ID, "Error while creating bootstrap image (see above log)")
+
+    def __call__(self, *args: plugin.Any, **kwds: plugin.Any) -> plugin.Any:
+        try:
+            assert self.cfg.get(self.HvConf.HV_PDATA), "No partitions found in the configuration"
+            assert self.cfg.get(self.HvConf.HV_SECTION), "No hypervisor section found"
+            assert self.cfg[self.HvConf.HV_SECTION].get(self.HvConf.HV_CONFIG), "No hypervisor scripts/configuration found"
+
+            # HV part
+            self._extract_uboot()
+            self._copy_dtb()
+
+            # Partitions
+            for p_id in self.cfg.get(self.HvConf.HV_PDATA, []):
+                self._copy_prt_data(part_id=p_id)
+            self._create_bootstrap()
+        finally:
+            os.system(f"tree {self.wd}")
+            self._cleanup()
 
 
 class Kernkompozzer(plugin.PluginIf):
@@ -15,14 +120,29 @@ class Kernkompozzer(plugin.PluginIf):
 
     ID = "kern-hv"
 
+    def _check_env(self) -> None:
+        """
+        Check necessary artifacts in the environment
+        """
+        for b in ["l4image"]:
+            if shutil.which(b) is None:
+                raise PluginException(self.ID, f'"{b}" is not installed or is not available')
+
+    def setup(self, *args, **kw) -> None:
+        """
+        Setup the plugin (this method is auto-called elsewhere)
+        """
+        log.debug("Autosetup up module")
+        self._check_env()
+
+        return super().setup(*args, **kw)
+
     def run(self, cfg: ConfigHandler):
         """
         Called by berrymill during the main exec
         """
         assert embdgen is not None, "Embdgen module is not installed"
-
-        print(cfg.config[self.ID])
-        print("KKZ with params:", self.runtime_args, self.runtime_kw)
+        _Flow(cfg.config[self.ID])()
 
 
 # Register plugin
