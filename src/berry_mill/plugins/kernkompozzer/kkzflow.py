@@ -7,6 +7,7 @@ from berry_mill import plugin
 from berry_mill.mountpoint import MountManager
 from berry_mill.plugins import PluginException
 from berry_mill.logger import log
+from berry_mill.plugins.kernkompozzer.embedgen import EmbdGen, BuildLocation
 
 
 class KkzFlow:
@@ -46,6 +47,7 @@ class KkzFlow:
         """
         log.debug(f"Removing temporary {self._wtd}")
         shutil.rmtree(self._wtd)
+        BuildLocation().remove()
 
     def _extract_uboot(self) -> None:
         bsip: str | None = self.cfg.get(self.HvConf.HV_SECTION, {}).get(self.HvConf.HV_BOOTSTRAP_IMG)
@@ -109,7 +111,8 @@ class KkzFlow:
             os.symlink(sp, dp)
 
     def _write_image(self) -> None:
-        pass
+        shutil.copy(os.path.join(self._wtd, "bootstrap.uimage"), self.wd)
+        EmbdGen(self._wtd)()
 
     def __call__(self, *args: plugin.Any, **kwds: plugin.Any) -> plugin.Any:
         try:
@@ -129,7 +132,5 @@ class KkzFlow:
             self._setup_rootfs()
             self._write_image()
         finally:
-            os.system(f"tree {self.wd}")
-
             log.info("Cleaning up, shutting down")
             self._cleanup()
