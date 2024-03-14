@@ -1,6 +1,7 @@
 from berry_mill import plugin
 from berry_mill.cfgh import ConfigHandler
 from types import ModuleType
+from berry_mill.mountpoint import MountManager
 from berry_mill.plugins import PluginException
 
 import os
@@ -39,6 +40,7 @@ class _Flow:
 
     @staticmethod
     def _p2a(p: str) -> str:
+        assert type(p) == str, f"Path {p} is not a string"
         assert p.startswith("dir://") or p.startswith("file://"), f'Path {p} should have "dir://" schema'
         p = p.replace("file://", "dir://")  # file:// here is an alias for a directory path and only for config visualisation
         if p.startswith("dir:///"):
@@ -82,7 +84,7 @@ class _Flow:
             if not pth:
                 continue
             dst = os.path.join(self._wtd, os.path.basename(part_id))
-            log.info(f"Copying {pth} as {dst}")
+            log.debug(f"Copying {pth} as {dst}")
             shutil.copy(pth, dst)
 
     def _create_bootstrap(self):
@@ -91,8 +93,27 @@ class _Flow:
         entry = self.cfg[self.HvConf.HV_SECTION][self.HvConf.HV_CONFIG_ENTRY]
         bimg: str = os.path.join(self._wtd, "bootstrap.uimage")
         cmd = f"l4image -i {btp_img} -o {bimg} create --modules-list-file {modlist} --search-path {self._wtd} --entry {entry} > /dev/null"
+
+        log.info("Creating bootstrap image with the new content")
         if os.system(cmd):
             raise PluginException(Kernkompozzer.ID, "Error while creating bootstrap image (see above log)")
+
+    def _setup_rootfs(self):
+        log.info("Setting up rootfs image(s)")
+        imgmap: dict[str, str] = {}
+        img_p: str
+        for img_p in MountManager().get_images():
+            img_f: str = os.path.basename(img_p)
+
+            for m_tgt, m_src in self.cfg["image-map"].items():
+                if m_src == img_f:
+                    imgmap[os.path.join(self._wtd, m_tgt)] = os.path.abspath(img_p)
+
+        assert imgmap, "Could not find any corresponding images"
+
+        for dp, sp in imgmap.items():
+            log.debug(f"Symlinking {sp} as {dp}")
+            os.symlink(sp, dp)
 
     def __call__(self, *args: plugin.Any, **kwds: plugin.Any) -> plugin.Any:
         try:
@@ -107,9 +128,13 @@ class _Flow:
             # Partitions
             for p_id in self.cfg.get(self.HvConf.HV_PDATA, []):
                 self._copy_prt_data(part_id=p_id)
+
             self._create_bootstrap()
+            self._setup_rootfs()
         finally:
             os.system(f"tree {self.wd}")
+
+            log.info("Cleaning up, shutting down")
             self._cleanup()
 
 
