@@ -2,14 +2,10 @@ from berry_mill import plugin
 from berry_mill.cfgh import ConfigHandler
 from berry_mill.plugins import PluginException
 from berry_mill.plugins.kernkompozzer.kkzflow import KkzFlow
+from berry_mill.plugins.kernkompozzer import embedgen
 from berry_mill.logger import log
 
 import shutil
-
-try:
-    import embdgen  # type: ignore
-except ImportError:
-    embdgen = None
 
 
 class Kernkompozzer(plugin.PluginIf):
@@ -40,7 +36,7 @@ class Kernkompozzer(plugin.PluginIf):
         """
         Called by berrymill during the main exec
         """
-        assert embdgen is not None, "Embdgen module is not installed"
+        assert embedgen.is_valid, "Embdgen module is not installed"
         KkzFlow(id=self.ID, cfg=cfg.config[self.ID])()
 
 
