@@ -16,6 +16,7 @@ class KkzFlow:
     class HvConf:
         HV_DEFAULT_BUILD_DIR = "build"
         HV_BUILD_DIR: str = "output-dir"
+        HV_BUILD_IMGNAME: str = "output-image"
         HV_PDATA: str = "part-data"
         HV_PDATA_EL: list[str] = ["kernel", "initrd"]
         HV_BOOTSTRAP_IMG: str = "bootstrap-image"
@@ -23,6 +24,7 @@ class KkzFlow:
         HV_SECTION: str = "hypervisor"
         HV_CONFIG: str = "hv-conf"
         HV_CONFIG_ENTRY: str = "hv-conf-entry"
+        HV_IMG_LAYOUT: str = "image-layout"
 
     def __init__(self, id: str, cfg: dict) -> None:
         self.ID = id
@@ -112,13 +114,16 @@ class KkzFlow:
 
     def _write_image(self) -> None:
         shutil.copy(os.path.join(self._wtd, "bootstrap.uimage"), self.wd)
-        EmbdGen(self._wtd)()
+        EmbdGen(
+            self._wtd, cfg=self.cfg[self.HvConf.HV_IMG_LAYOUT], img_fname=self.cfg.get(self.HvConf.HV_BUILD_IMGNAME, "output.raw")
+        )()
 
     def __call__(self, *args: plugin.Any, **kwds: plugin.Any) -> plugin.Any:
         try:
             assert self.cfg.get(self.HvConf.HV_PDATA), "No partitions found in the configuration"
             assert self.cfg.get(self.HvConf.HV_SECTION), "No hypervisor section found"
             assert self.cfg[self.HvConf.HV_SECTION].get(self.HvConf.HV_CONFIG), "No hypervisor scripts/configuration found"
+            assert self.cfg[self.HvConf.HV_IMG_LAYOUT], "No image layout defined"
 
             # HV part
             self._extract_uboot()
