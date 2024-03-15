@@ -9,8 +9,8 @@ import yaml  # type: ignore
 embdgen: ModuleType | None
 try:
     import embdgen  # type: ignore
-    from embdgen.core.config.Factory import Factory as ConfigFactory
-    from embdgen.core.utils.image import BuildLocation
+    from embdgen.core.config.Factory import Factory as ConfigFactory  # type: ignore
+    from embdgen.core.utils.image import BuildLocation  # type: ignore
 except ImportError:
     embdgen = None
 
