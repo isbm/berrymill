@@ -10,6 +10,10 @@ embdgen: ModuleType | None
 try:
     import embdgen  # type: ignore
     from embdgen.core.config.Factory import Factory as ConfigFactory  # type: ignore
+
+    # This import is required in kkzflow, during the plugin init
+    # and is deliberately not imported directly from the embdgen
+    # for the reason to avoid to duplicate this whole check
     from embdgen.core.utils.image import BuildLocation  # type: ignore
 except ImportError:
     embdgen = None
@@ -28,26 +32,17 @@ class EmbdGen:
         self.wd: str = wd
         self.cfg: dict[Any, Any] = cfg
         self.output_fname: str = img_fname
-        self.__dump_config()
-
-    def __dump_config(self) -> None:
-        # XXX: Temporary method that dumps the config file into a temp workdir.
-        #      This should be removed, once embdgen lib supports loading cfg from
-        #      preparsed data.
-        with open(file=os.path.join(self.wd, "embdgen.conf"), mode="w") as fp:
-            fp.write(yaml.dump(self.cfg))
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         d = os.path.abspath(os.path.curdir)
         os.chdir(self.wd)
 
-        cfg_file = Path(os.path.join(self.wd, "embdgen.conf"))
         cfg_out = Path(f"../{self.output_fname}")
 
         bconf = self.f_label.by_type("yaml")
         assert bconf is not None, "Unable to initialise embdgen runner"
 
-        label = bconf().load(cfg_file)
+        label = bconf().load_str(yaml.dump(self.cfg))
 
         log.info("Preparing image")
         label.prepare()
