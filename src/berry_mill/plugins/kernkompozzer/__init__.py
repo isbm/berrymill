@@ -19,6 +19,9 @@ class Kernkompozzer(plugin.PluginIf):
         """
         Check necessary artifacts in the environment
         """
+        # Is embdgen python module installed?
+        assert embedgen.is_valid, "Embdgen module is not installed"
+
         for b in ["l4image"]:
             if shutil.which(b) is None:
                 raise PluginException(self.ID, f'"{b}" is not installed or is not available')
@@ -36,7 +39,6 @@ class Kernkompozzer(plugin.PluginIf):
         """
         Called by berrymill during the main exec
         """
-        assert embedgen.is_valid, "Embdgen module is not installed"
         KkzFlow(id=self.ID, cfg=cfg.config[self.ID])()
 
 
