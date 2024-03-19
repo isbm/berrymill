@@ -180,9 +180,10 @@ class ImageMill:
             ma.write(final_rendered_xml_string)
         if appliance_loader.is_derived:
             main_appliance_dir = os.path.dirname(os.path.abspath(appliance_loader.main_appliance_pth))
-            for kiwifile in os.listdir(main_appliance_dir):
-                src = os.path.join(main_appliance_dir, kiwifile)
-                dst = os.path.join(self._appliance_path, kiwifile)
+            log.debug(f"Base Appliance detected under: {main_appliance_dir}")
+            for kiwifile in os.scandir(main_appliance_dir):
+                src = kiwifile.path
+                dst = os.path.join(self._appliance_path, kiwifile.name)
                 if not os.path.exists(dst):
                     if os.path.isdir(src) and not os.path.basename(src) == "root":
                         continue
