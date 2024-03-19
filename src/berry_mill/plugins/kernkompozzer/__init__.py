@@ -22,7 +22,8 @@ class Kernkompozzer(plugin.PluginIf):
         # Is embdgen python module installed?
         assert embedgen.is_valid, "Embdgen module is not installed"
 
-        for b in ["l4image"]:
+        # Required system executables
+        for b in ["l4image", "mkfs.ext4", "mcopy", "fakeroot", "mkfs.vfat", "e2fsck", "resize2fs", "veritysetup"]:
             if shutil.which(b) is None:
                 raise PluginException(self.ID, f'"{b}" is not installed or is not available')
 
