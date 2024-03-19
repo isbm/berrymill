@@ -3,6 +3,7 @@
 MK_PATH := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ARC_V := $(shell cat src/berry_mill/__init__.py | grep 'version = ' | sed -e 's/.*=//g' -e 's/[" ]//g')
 ARC_N := berrymill-${ARC_V}
+MAN_P := $(basename $(notdir $(wildcard doc/manpages/*.md)))
 
 help:
 	@printf 'Available commands:\n'
@@ -15,7 +16,9 @@ build:
 	python3 setup.py build
 
 man:
-	pandoc --standalone --to man doc/manpages/berrymill.8.md -o doc/manpages/berrymill.8
+	for mp in ${MAN_P}; do \
+		pandoc --standalone --to man doc/manpages/$$mp.md -o doc/manpages/$$mp ; \
+	done
 
 tar:
 	for d in __pycache__ .mypy_cache; do \
@@ -42,5 +45,7 @@ tar:
 clean:
 	rm -rf package
 	rm -rf build
-	rm doc/manpages/berrymill.8
 
+	for mp in ${MAN_P}; do \
+		rm doc/manpages/$$mp ; \
+	done
