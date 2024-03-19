@@ -12,18 +12,35 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout Embdgen
         uses: actions/checkout@v4
+        with:
+          repository: Elektrobit/embdgen
+          ref: master
+          path: 'embdgen'
 
-      - name: Install dependencies
+      - name: Install embdgen deps
+        run: |
+          cd embdgen
+          python -m pip install --upgrade pip
+          #pip install -r requirements.txt
+          pip install -e embdgen-core
+          pip install -e embdgen-config-yaml
+          pip install -e embdgen-cominit
+
+      - name: Install general dependencies
         run: |
           sudo apt-get update
           sudo apt-get install mtools e2fsprogs cryptsetup-bin dosfstools fdisk libparted-dev fakeroot
 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
       - name: Install pip deps
         run: |
+          ls -lah ../
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+          
       - name: Run MyPy
         run: mypy --check-untyped-defs src/berry_mill

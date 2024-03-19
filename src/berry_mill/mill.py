@@ -273,10 +273,11 @@ class ImageMill:
 
             # Start plugins or their workflow
             log.debug("Calling plugin {}".format(self.args.subparser_name))
-            plugin.registry.call(self.cfg, self.args.subparser_name)
-
-            # Cleanup/unmount everything
-            mpt.flush()
+            try:
+                plugin.registry.call(self.cfg, self.args.subparser_name)
+            finally:
+                # Cleanup/unmount everything
+                mpt.flush()
             return
         else:
             raise argparse.ArgumentError(argument=None, message="No Action defined (build, prepare) or any of available plugins")

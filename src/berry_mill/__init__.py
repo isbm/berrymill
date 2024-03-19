@@ -1,10 +1,14 @@
 from berry_mill.mill import ImageMill
+from berry_mill.plugins import PluginException
 
 version = "0.2"
 
 
-def main():
-    from berry_mill import ImageMill
+def main() -> None:
+    """
+    Main runtime
+    """
+
     from typing import Any
     import sys
     import kiwi.logger  # type: ignore
@@ -20,8 +24,10 @@ def main():
 
     try:
         mill.run()
+    except PluginException as exc:
+        log.error(exc)
     except Exception as exc:
-        log.error("Runtime error: {}".format(exc))
+        log.error(msg=f"Runtime error: {exc}")
         if mill.args.debug:
             raise
     finally:

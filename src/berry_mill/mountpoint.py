@@ -231,6 +231,13 @@ class MountManager:
         return p
 
     @MountData.update_mount_data
+    def get_images(self) -> list[str]:
+        """
+        Return mounted images
+        """
+        return [iptr.path for iptr in self._mountstore.keys()]
+
+    @MountData.update_mount_data
     def get_loop_devices(self) -> list[str]:
         d = []
         for mpt in self._mountstore.values():
