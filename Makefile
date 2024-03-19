@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := help
 
+MK_PATH := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 ARC_V := $(shell cat src/berry_mill/__init__.py | grep 'version = ' | sed -e 's/.*=//g' -e 's/[" ]//g')
 ARC_N := berrymill-${ARC_V}
 
@@ -17,6 +18,9 @@ man:
 	pandoc --standalone --to man doc/manpages/berrymill.8.md -o doc/manpages/berrymill.8
 
 tar:
+	for d in __pycache__ .mypy_cache; do \
+		find ${MK_PATH}/src -type d -name '$$d' -exec rm -rf {} + ; \
+	done
 	rm -rf package/${ARC_N}
 	mkdir -p package/${ARC_N}
 	for f in LICENSE README.md requirements.txt setup.cfg setup.py pytest.ini pyproject.toml; do \
