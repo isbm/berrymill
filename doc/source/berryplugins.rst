@@ -5,3 +5,4 @@ Berrymill Plugins
    :maxdepth: 1
 
    berryplugins/kernkompozzer
+   berryplugins/overlay
