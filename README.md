@@ -15,6 +15,10 @@ mill.
 embedded devices. It integrates Kiwi image builder to the
 Ubuntu/Debian distributions, allowing building images locally.
 
+## Documentation
+
+Documentation is available online here: berrymill.readthedocs.io
+
 ## Use Cases
 
 ### Build an Image Locally
