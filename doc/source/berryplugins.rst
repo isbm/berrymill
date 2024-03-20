@@ -9,6 +9,7 @@ Berrymill Plugins
    berryplugins/overlay
    berryplugins/cve
    berryplugins/sbom
+   berryplugins/wfl
 
 .. note::
    This section contains *optional* plugins, available for Berrymill as framework
