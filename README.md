@@ -17,7 +17,8 @@ Ubuntu/Debian distributions, allowing building images locally.
 
 ## Documentation
 
-Documentation is available online here: berrymill.readthedocs.io
+Documentation is available online at [berrymill.readthedocs.io](https://berrymill.readthedocs.io).
+It relies on the Kiwi documentation and only describes the difference as well as own plugins.
 
 ## Use Cases
 
