@@ -1,5 +1,5 @@
-Plugin "cve"
-----------------
+Plugin "Intrusion Detection" (cve)
+----------------------------------
 
 .. note::
     Description of a plugin for the Berrymill framework.
