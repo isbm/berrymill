@@ -8,6 +8,7 @@ Berrymill Plugins
    berryplugins/kernkompozzer
    berryplugins/overlay
    berryplugins/cve
+   berryplugins/sbom
 
 .. note::
    This section contains *optional* plugins, available for Berrymill as framework
