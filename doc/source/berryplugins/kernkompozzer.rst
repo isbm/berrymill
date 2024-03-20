@@ -5,42 +5,6 @@ Plugin "kern-hv"
     Description of a plugin for the Berrymill framework.
     This plugin might be not available in your particular installation.
 
-Plugin for the Berrymill framework, which is designed to construct
-booting image on QEMU or hardware, including a l4re Hypervisor from
-`Kernkonzept <l4re Hypervisor: https://github.com/kernkonzept/l4re-core>`_.
-
-The **kern-hv** plugin can be used alone separately, or can be chained
-within the **workflow** plugin.
-
-Configuration
-=============
-
-As any **berrymill** plugin, the whole configuration is in the common
-``project.conf`` file, which should be placed to the root of the current
-project. This file contains all configuration for all possible plugins
-and defines everything.
-
-Working image(s) are always defined in the ``project.conf`` file at the
-beginning of it. At the beginnin, in general section which is called ``-general``
-*(note the leading "minus")* and the list ``images``. Each list item in the ``images``
-is a directory with ``dir://`` schema, telling Berrymill where to look for the
-images. Image files can be only named with ``.qcow2`` or ``.raw`` file
-extensions. The section ``images`` should contain **at least one**
-path.
-
-.. warning::
-    Scheme with two slashes like so ``dir://my/path`` refers to a *relative* path as ``my/path``.
-    An absolute path like ``/my/path`` should have three slashes, like so: ``dir:///my/path``.
-
-Example:
-
-.. code-block:: yaml
-
-    -general:
-      images:
-        - dir://at/least/one/path/to/my/images
-        - dir://another/optional/path/to/my/images
-        - dir:///this/is/an/absolute/path
 
 As any other plugin, the specific section starts from the same **id**
 of the plugin, namely ``kern-hv``.
