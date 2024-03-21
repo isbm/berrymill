@@ -26,7 +26,7 @@ tar:
 	done
 	rm -rf package/${ARC_N}
 	mkdir -p package/${ARC_N}
-	for f in LICENSE README.md requirements.txt setup.cfg setup.py pytest.ini pyproject.toml; do \
+	for f in Makefile LICENSE README.md requirements.txt setup.cfg setup.py pytest.ini pyproject.toml; do \
 		cp $$f package/${ARC_N} ; \
 	done
 	for d in src test doc config; do \
