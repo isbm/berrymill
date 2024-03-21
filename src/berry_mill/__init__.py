@@ -1,7 +1,7 @@
 from berry_mill.mill import ImageMill
 from berry_mill.plugins import PluginException
 
-version = "0.2"
+version = "0.3"
 
 
 def main() -> None:
