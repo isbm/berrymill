@@ -1,4 +1,4 @@
-%CVE(1) Version 0.3 | Berrymill Documentation
+%CVE(1) Version 0.2 | Berrymill Documentation
 
 NAME
 ====

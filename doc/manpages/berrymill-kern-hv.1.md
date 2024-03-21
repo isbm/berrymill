@@ -1,4 +1,4 @@
-%KERN-HV(1) Version 0.3 | Berrymill Documentation
+%KERN-HV(1) Version 0.2 | Berrymill Documentation
 
 NAME
 ====
