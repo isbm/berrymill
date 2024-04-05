@@ -36,10 +36,11 @@ class ImagePtr:
 class ImageFinder:
     SCHEMES: list[str] = ["dir", "oci"]
 
-    def __init__(self, *loc) -> None:
+    def __init__(self, *loc):
         """
         ImageFinder takes array of locations where images are.
         """
+        self._cached_metas: dict[str, str] = {}
         self._i_pth = loc
         self._i_imgs: list[ImagePtr] = self._find_images()
 
@@ -47,8 +48,11 @@ class ImageFinder:
         """
         Get file meta
         """
-        with os.popen("file {}".format(p)) as fp:
-            return " ".join(list(filter(None, fp.read().split("\n")))).lower()
+        if p not in self._cached_metas:
+            with os.popen("file {}".format(p)) as fp:
+                self._cached_metas[p] = " ".join(list(filter(None, fp.read().split("\n")))).lower()
+
+        return self._cached_metas[p]
 
     def _is_qemu(self, p) -> bool:
         """
