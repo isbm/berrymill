@@ -50,6 +50,13 @@ class ImageFinder:
         with os.popen("file {}".format(p)) as fp:
             return " ".join(list(filter(None, fp.read().split("\n")))).lower()
 
+    def _is_qemu(self, p) -> bool:
+        """
+        Return True if a given filename is a QEMU disk image
+        """
+        meta = self.__get_file_meta(p)
+        return " qemu " in meta and " image " in meta
+
     def _is_filesystem(self, p) -> bool:
         """
         Return True if a given filename is a mountable filesystem
@@ -89,6 +96,11 @@ class ImageFinder:
                     out.append(ImagePtr(upr.scheme, f, ImagePtr.PARTITION_IMAGE))
                 elif self._is_disk(f):
                     out.append(ImagePtr(upr.scheme, f, ImagePtr.DISK_IMAGE))
+                elif self._is_qemu(f):
+                    log.warn(f"{f} is a QEMU image")
+                    log.warn(
+                        "Currently QEMU images direct mount is not supported. Please convert it to RAW format using 'qemu-image' utility."
+                    )
                 else:
                     log.warning(f"Undetected image: {f}")
         return out
